@@ -1,10 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-
-// Configuration for OpenAI API
-const API_URL = "https://api.openai.com/v1/chat/completions";
-const MODEL = "gpt-3.5-turbo"; // You can change this to a different model if desired
+import { supabase } from "@/integrations/supabase/client";
 
 export function useOpenAI() {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,51 +10,15 @@ export function useOpenAI() {
     setIsLoading(true);
     
     try {
-      // Define a system message that guides the AI to respond appropriately for kids
-      const systemMessage = `You are WonderWhiz, an educational AI assistant designed for children aged ${ageRange}. 
-      Your responses should be:
-      - Engaging, friendly, and encouraging
-      - Age-appropriate in language and content (for ${ageRange} year olds)
-      - Educational and factually accurate
-      - Concise (2-3 paragraphs maximum)
-      - Focused on explaining complex topics in simple terms
-      - Free of any inappropriate content
-      - Written with short sentences and simple vocabulary
-      - Structured with paragraph breaks for readability`;
-      
-      // For local development/testing without API key, fall back to mock responses
-      const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-      
-      if (!OPENAI_API_KEY) {
-        console.warn("No OpenAI API key found. Using mock responses instead.");
-        return generateMockResponse(prompt);
-      }
-      
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: "system", content: systemMessage },
-            { role: "user", content: prompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 500
-        })
+      const { data, error } = await supabase.functions.invoke('generate-response', {
+        body: { prompt, ageRange, requestType: 'text' }
       });
       
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("OpenAI API error:", error);
-        throw new Error(error.error?.message || "Failed to generate response");
+      if (error) {
+        throw new Error(error.message || "Failed to generate response");
       }
       
-      const data = await response.json();
-      return data.choices[0].message.content;
+      return data.content;
     } catch (error) {
       console.error("Error generating response:", error);
       toast.error("Oops! Something went wrong. Falling back to sample responses.");
@@ -67,7 +28,7 @@ export function useOpenAI() {
     }
   };
   
-  // Fallback mock responses when API key isn't available
+  // Fallback mock responses when API requests fail
   const generateMockResponse = (prompt: string) => {
     // Simulate API call with timeout
     return new Promise<string>(resolve => {
@@ -92,36 +53,15 @@ export function useOpenAI() {
     setIsLoading(true);
     
     try {
-      // For local development/testing without API key, fall back to mock responses
-      const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-      
-      if (!OPENAI_API_KEY) {
-        console.warn("No OpenAI API key found. Using mock image URLs instead.");
-        return generateMockImageUrl(prompt);
-      }
-      
-      const response = await fetch("https://api.openai.com/v1/images/generations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          prompt: `Create a child-friendly, educational illustration of: ${prompt}. The image should be colorful, engaging, and suitable for children.`,
-          n: 1,
-          size: "1024x1024",
-          response_format: "url"
-        })
+      const { data, error } = await supabase.functions.invoke('generate-response', {
+        body: { prompt, requestType: 'image' }
       });
       
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("OpenAI API error:", error);
-        throw new Error(error.error?.message || "Failed to generate image");
+      if (error) {
+        throw new Error(error.message || "Failed to generate image");
       }
       
-      const data = await response.json();
-      return data.data[0].url;
+      return data.imageUrl;
     } catch (error) {
       console.error("Error generating image:", error);
       toast.error("Oops! Couldn't create an image right now. Using a placeholder instead.");
@@ -131,7 +71,7 @@ export function useOpenAI() {
     }
   };
   
-  // Fallback mock image URLs when API key isn't available
+  // Fallback mock image URLs when API requests fail
   const generateMockImageUrl = (prompt: string) => {
     // Return different image URLs based on the prompt
     if (prompt.toLowerCase().includes("dinosaur")) {
@@ -150,56 +90,15 @@ export function useOpenAI() {
     setIsLoading(true);
     
     try {
-      // For local development/testing without API key, fall back to mock responses
-      const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-      
-      if (!OPENAI_API_KEY) {
-        console.warn("No OpenAI API key found. Using mock quiz data instead.");
-        return generateMockQuiz(topic);
-      }
-      
-      const systemMessage = `You are an educational quiz generator for children. Create a single multiple-choice question about the topic provided. The response must be in the following JSON format exactly, with no additional text:
-      {
-        "question": "The question text here",
-        "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-        "correctAnswer": 0
-      }
-      Where "correctAnswer" is the index (0-3) of the correct option in the "options" array.
-      Make sure the question is appropriate for children, factually accurate, and educational.`;
-      
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: "system", content: systemMessage },
-            { role: "user", content: `Create a quiz question about: ${topic}` }
-          ],
-          temperature: 0.7,
-          max_tokens: 300
-        })
+      const { data, error } = await supabase.functions.invoke('generate-response', {
+        body: { prompt: topic, requestType: 'quiz' }
       });
       
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("OpenAI API error:", error);
-        throw new Error(error.error?.message || "Failed to generate quiz");
+      if (error) {
+        throw new Error(error.message || "Failed to generate quiz");
       }
       
-      const data = await response.json();
-      const quizText = data.choices[0].message.content;
-      
-      // Parse the JSON response
-      try {
-        return JSON.parse(quizText);
-      } catch (parseError) {
-        console.error("Error parsing quiz JSON:", parseError);
-        return generateMockQuiz(topic);
-      }
+      return data;
     } catch (error) {
       console.error("Error generating quiz:", error);
       toast.error("Oops! Couldn't create a quiz right now. Using a sample quiz instead.");
@@ -209,7 +108,7 @@ export function useOpenAI() {
     }
   };
   
-  // Fallback mock quiz when API key isn't available
+  // Fallback mock quiz when API requests fail
   const generateMockQuiz = (topic: string) => {
     // Mock quiz based on topic
     if (topic.toLowerCase().includes("dinosaur")) {

@@ -1,32 +1,20 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ChatInterface from "@/components/ChatInterface";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
-import { toast } from "sonner";
 
 const Chat = () => {
   const navigate = useNavigate();
   const ageRange = localStorage.getItem("wonderwhiz_age_range") || "8-10";
   const avatar = localStorage.getItem("wonderwhiz_avatar") || "explorer";
-  const [apiKeyWarningShown, setApiKeyWarningShown] = useState(false);
   
   useEffect(() => {
     // If user hasn't completed onboarding, redirect them
     if (!ageRange || !avatar) {
       navigate("/");
     }
-    
-    // Check if OpenAI API key is set
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    if (!apiKey && !apiKeyWarningShown) {
-      toast.info(
-        "No OpenAI API key found. Using sample responses instead. Add your API key to enable AI-generated content.",
-        { duration: 8000, id: "api-key-warning" }
-      );
-      setApiKeyWarningShown(true);
-    }
-  }, [ageRange, avatar, navigate, apiKeyWarningShown]);
+  }, [ageRange, avatar, navigate]);
   
   const getAvatarEmoji = () => {
     switch (avatar) {
