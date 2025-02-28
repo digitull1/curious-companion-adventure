@@ -161,6 +161,61 @@
   .quiz-answer-incorrect {
     @apply border-destructive bg-destructive/10;
   }
+  
+  /* New button styles with pixel-perfect attention to detail */
+  .btn-wonder {
+    @apply relative overflow-hidden rounded-full bg-gradient-wonder px-6 py-3 font-medium text-white shadow-wonder transition-all duration-300;
+  }
+  
+  .btn-wonder:hover {
+    @apply shadow-wonder-lg -translate-y-0.5;
+  }
+  
+  .btn-wonder:active {
+    @apply translate-y-0 shadow-wonder;
+  }
+  
+  .btn-wonder::after {
+    @apply absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 content-[''];
+    background: linear-gradient(rgba(255,255,255,0.2), transparent);
+  }
+  
+  .btn-wonder:hover::after {
+    @apply opacity-100;
+  }
+  
+  /* Feature card with magical hover state */
+  .feature-card {
+    @apply relative bg-white rounded-3xl p-8 shadow-wonder transition-all duration-500 overflow-hidden border border-transparent z-10;
+  }
+  
+  .feature-card:hover {
+    @apply shadow-wonder-lg -translate-y-1 border-wonder-purple/10;
+  }
+  
+  .feature-card::before {
+    @apply absolute inset-0 bg-gradient-wonder opacity-0 transition-opacity duration-500 content-[''] z-[-1];
+    mask-image: radial-gradient(circle at bottom right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%);
+  }
+  
+  .feature-card:hover::before {
+    @apply opacity-5;
+  }
+  
+  /* Magical orb - decorative element */
+  .magical-orb {
+    @apply absolute rounded-full bg-gradient-wonder opacity-20 blur-2xl pointer-events-none;
+    animation: float 15s ease-in-out infinite;
+  }
+  
+  /* Pixar-like illustration style */
+  .illustration-container {
+    @apply relative inline-block;
+  }
+  
+  .illustration-shadow {
+    @apply absolute bottom-0 left-1/2 w-4/5 h-4 bg-black/10 rounded-full blur-sm -translate-x-1/2;
+  }
 }
 
 /* Story link with underline animation */
@@ -236,9 +291,17 @@
   }
 }
 
-/* Enhanced text styles */
+/* Apple-like text gradients */
 .text-gradient-wonder {
   @apply bg-gradient-wonder bg-clip-text text-transparent;
+}
+
+.text-gradient-purple {
+  @apply bg-gradient-purple bg-clip-text text-transparent;
+}
+
+.text-gradient-teal {
+  @apply bg-gradient-teal bg-clip-text text-transparent;
 }
 
 /* Message animation for the chat interface */
@@ -255,4 +318,51 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Levitating element animation */
+@keyframes levitate {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.animate-levitate {
+  animation: levitate 6s ease-in-out infinite;
+}
+
+/* Glow pulse animation */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(155, 135, 245, 0.5),
+                0 0 25px rgba(155, 135, 245, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(155, 135, 245, 0.8),
+                0 0 40px rgba(155, 135, 245, 0.5);
+  }
+}
+
+.animate-glow {
+  animation: glow-pulse 3s infinite;
+}
+
+/* Sparkle animation */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.sparkle {
+  @apply absolute rounded-full bg-white pointer-events-none;
+  animation: sparkle 2s infinite;
 }
