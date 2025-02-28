@@ -103,7 +103,7 @@
   }
 
   .chat-bubble-ai {
-    @apply bg-white text-foreground rounded-2xl p-4 rounded-tl-none shadow-wonder;
+    @apply bg-white text-foreground rounded-2xl p-4 rounded-tl-none shadow-wonder border border-muted/50;
   }
 
   /* Learning block styles */
@@ -176,4 +176,83 @@
 /* Button with bounce effect */
 .btn-bounce {
   @apply active:scale-95 transition-transform;
+}
+
+/* New animations */
+@keyframes slide-right {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-slide-right {
+  animation: slide-right 3s linear infinite;
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: gradient-shift 15s ease infinite;
+  background-size: 400% 400%;
+}
+
+/* Enhanced existing animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(10px) rotate(-2deg);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+/* Enhanced text styles */
+.text-gradient-wonder {
+  @apply bg-gradient-wonder bg-clip-text text-transparent;
+}
+
+/* Message animation for the chat interface */
+.message-appear {
+  animation: message-appear 0.3s forwards;
+}
+
+@keyframes message-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
