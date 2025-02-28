@@ -216,6 +216,134 @@
   .illustration-shadow {
     @apply absolute bottom-0 left-1/2 w-4/5 h-4 bg-black/10 rounded-full blur-sm -translate-x-1/2;
   }
+  
+  /* Award badge style */
+  .award-badge {
+    @apply relative overflow-hidden rounded-full flex items-center justify-center;
+    background: conic-gradient(from 0deg, #FBBF24, #F87171, #8B5CF6, #14B8A6, #FBBF24);
+  }
+  
+  .award-badge::after {
+    @apply absolute inset-1 rounded-full bg-white content-[''];
+  }
+  
+  .award-badge-content {
+    @apply absolute z-10 flex items-center justify-center text-xs font-bold;
+  }
+  
+  /* Point Counter */
+  .point-counter {
+    @apply relative bg-gradient-wonder text-white rounded-full py-1 px-3 text-sm font-bold shadow-wonder;
+  }
+  
+  .point-counter::before {
+    @apply absolute inset-0 rounded-full opacity-0 content-[''];
+    background: linear-gradient(rgba(255,255,255,0.3), transparent);
+    animation: badge-pulse 2s infinite;
+  }
+  
+  /* Trophy element */
+  .trophy {
+    @apply relative overflow-hidden bg-gradient-yellow rounded-full p-3 shadow-wonder;
+  }
+  
+  .trophy::after {
+    @apply absolute inset-0 opacity-50 content-[''];
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+    background-size: 200% 100%;
+    animation: trophy-shine 2s infinite;
+  }
+  
+  /* Achievement unlock animation */
+  .achievement-unlock {
+    @apply relative overflow-hidden rounded-xl bg-gradient-to-r from-wonder-purple via-wonder-blue to-wonder-teal p-0.5;
+    animation: gradient-shift 3s ease infinite;
+  }
+  
+  .achievement-content {
+    @apply bg-white rounded-[calc(0.75rem-1px)] p-4;
+  }
+  
+  /* Progress bar */
+  .progress-track {
+    @apply relative h-2 w-full rounded-full bg-muted/50 overflow-hidden;
+  }
+  
+  .progress-bar {
+    @apply absolute top-0 left-0 h-full bg-gradient-wonder rounded-full transition-all duration-500;
+  }
+  
+  /* Learning path node */
+  .learning-path-node {
+    @apply relative h-10 w-10 rounded-full border-4 border-white bg-gradient-wonder shadow-wonder z-10 flex items-center justify-center text-white font-bold;
+  }
+  
+  .learning-path-connector {
+    @apply absolute top-1/2 left-[calc(0%+20px)] h-1 bg-gradient-wonder rounded-full -z-10 -translate-y-1/2;
+  }
+  
+  /* Certificate styles */
+  .certificate {
+    @apply relative bg-white overflow-hidden rounded-xl border-8 border-wonder-yellow p-8 shadow-wonder;
+    background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 5v1H5V0zm1 5v1H5L0 1v1L4 6h1z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  
+  .certificate::before,
+  .certificate::after {
+    @apply absolute content-[''] w-40 h-40 rounded-full opacity-10;
+  }
+  
+  .certificate::before {
+    @apply top-0 right-0 bg-wonder-yellow translate-x-1/2 -translate-y-1/2;
+  }
+  
+  .certificate::after {
+    @apply bottom-0 left-0 bg-wonder-purple -translate-x-1/2 translate-y-1/2;
+  }
+  
+  /* Table of Contents style */
+  .toc-item {
+    @apply relative pl-8 py-2 border-l-2 border-muted transition-all;
+  }
+  
+  .toc-item::before {
+    @apply absolute left-0 top-1/2 w-4 h-4 rounded-full bg-muted -translate-x-1/2 -translate-y-1/2 transition-all content-[''];
+  }
+  
+  .toc-item:hover {
+    @apply border-wonder-purple;
+  }
+  
+  .toc-item:hover::before {
+    @apply bg-wonder-purple scale-110;
+  }
+  
+  .toc-item-active {
+    @apply border-wonder-purple font-medium;
+  }
+  
+  .toc-item-active::before {
+    @apply bg-wonder-purple scale-110;
+  }
+  
+  /* Concept map connection */
+  .concept-connection {
+    @apply relative h-px bg-wonder-purple/30;
+  }
+  
+  .concept-connection::after {
+    @apply absolute top-0 left-0 h-full w-1/2 bg-wonder-purple content-[''];
+    animation: slide-right 2s linear infinite;
+  }
+  
+  /* Activity card */
+  .activity-card {
+    @apply relative rounded-xl overflow-hidden border-2 border-muted p-4 hover:border-wonder-purple/50 transition-all;
+  }
+  
+  .activity-card-tag {
+    @apply absolute top-0 right-0 bg-gradient-wonder text-white text-xs py-1 px-3 rounded-bl-lg font-medium;
+  }
 }
 
 /* Story link with underline animation */
@@ -337,12 +465,12 @@
 /* Glow pulse animation */
 @keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 5px rgba(155, 135, 245, 0.5),
-                0 0 25px rgba(155, 135, 245, 0.3);
+    box-shadow: 0 0 5px rgba(139, 92, 246, 0.5),
+                0 0 25px rgba(139, 92, 246, 0.3);
   }
   50% {
-    box-shadow: 0 0 10px rgba(155, 135, 245, 0.8),
-                0 0 40px rgba(155, 135, 245, 0.5);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.8),
+                0 0 40px rgba(139, 92, 246, 0.5);
   }
 }
 
