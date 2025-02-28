@@ -7,8 +7,12 @@ import QuizBlock from "./QuizBlock";
 import CodeBlock from "./CodeBlock";
 import VoiceInput from "./VoiceInput";
 import TypingIndicator from "./TypingIndicator";
+import TableOfContents from "./TableOfContents";
+import AgeRangeSelector from "./AgeRangeSelector";
+import RelatedTopicsCard from "./RelatedTopicsCard";
 import { useOpenAI } from "@/hooks/useOpenAI";
-import { BookOpen, Crown, Eraser, Image, Lightbulb, Search, Send, Sparkles, Star } from "lucide-react";
+import { BookOpen, Crown, Eraser, Image, Lightbulb, Search, Send, Sparkles, Star, CheckCircle, ListTodo } from "lucide-react";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -26,32 +30,42 @@ interface Message {
     snippet: string;
     language: string;
   };
+  tableOfContents?: string[];
+  isIntroduction?: boolean;
 }
 
 interface ChatInterfaceProps {
   ageRange: string;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ ageRange }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ ageRange: initialAgeRange }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      text: "Hi there! I'm your WonderWhiz assistant. I'm here to help you learn about anything you're curious about. What would you like to explore today?",
+      text: "Hi there! I'm your WonderWhiz assistant, created by leading IB educationalists and Cambridge University child psychologists. I'm here to help you learn fascinating topics in depth. What would you like to explore today?",
       isUser: false,
       blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
-      showBlocks: true
+      showBlocks: true,
+      isIntroduction: true
     }
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [showTypingIndicator, setShowTypingIndicator] = useState(false);
+  const [ageRange, setAgeRange] = useState(initialAgeRange);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [showAgeSelector, setShowAgeSelector] = useState(false);
+  const [topicSectionsGenerated, setTopicSectionsGenerated] = useState(false);
+  const [completedSections, setCompletedSections] = useState<string[]>([]);
+  const [relatedTopics, setRelatedTopics] = useState<string[]>([]);
   const { isLoading, generateResponse, generateImage, generateQuiz } = useOpenAI();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
   const [streakCount, setStreakCount] = useState(0);
   const [points, setPoints] = useState(0);
+  const [learningProgress, setLearningProgress] = useState(0);
   
   const suggestedPrompts = [
     "Tell me about dinosaurs",
@@ -87,8 +101,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ ageRange }) => {
     }
   };
 
+  const handleAgeRangeChange = (newRange: string) => {
+    setAgeRange(newRange);
+    localStorage.setItem("wonderwhiz_age_range", newRange);
+    setShowAgeSelector(false);
+    toast.success(`Learning content will now be tailored for age ${newRange}!`);
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isProcessing) return;
+
+    // Reset topic sections if starting a new conversation
+    if (topicSectionsGenerated && !selectedTopic) {
+      setTopicSectionsGenerated(false);
+      setCompletedSections([]);
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -102,60 +129,86 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ ageRange }) => {
     setShowTypingIndicator(true);
 
     try {
-      // Check for code snippet request
-      const isCodeRequest = inputValue.toLowerCase().includes("code") && 
-        (inputValue.toLowerCase().includes("example") || 
-         inputValue.toLowerCase().includes("show me") || 
-         inputValue.toLowerCase().includes("how to"));
+      // Check if this is a new topic request (not a follow-up on sections)
+      const isNewTopicRequest = !selectedTopic && !topicSectionsGenerated;
       
-      const response = await generateResponse(inputValue, ageRange);
-      
-      // Simulate a delay for typing effect
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setShowTypingIndicator(false);
-      
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: response,
-        isUser: false,
-        blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
-        showBlocks: true
-      };
-      
-      // If it seems like a code request, add a code snippet
-      if (isCodeRequest) {
-        // Generate a simple code example based on topic
-        let codeSnippet = "";
-        let language = "javascript";
-        
-        if (inputValue.toLowerCase().includes("python")) {
-          language = "python";
-          codeSnippet = `# A simple Python example
-def greet(name):
-    """This function greets the person passed in as a parameter"""
-    return f"Hello, {name}!"
+      // If it's a new topic, generate table of contents
+      if (isNewTopicRequest) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setShowTypingIndicator(false);
 
-# Call the function
-print(greet("World"))  # Output: Hello, World!`;
-        } else {
-          codeSnippet = `// A simple JavaScript example
-function greet(name) {
-  // This function greets the person passed in as a parameter
-  return \`Hello, \${name}!\`;
-}
-
-// Call the function
-console.log(greet("World"));  // Output: Hello, World!`;
+        // Ask about age range customization if not recently shown
+        if (!showAgeSelector) {
+          setShowAgeSelector(true);
         }
         
-        aiMessage.code = {
-          snippet: codeSnippet,
-          language: language
+        // Generate table of contents for encyclopedia-style approach
+        const tocResponse = await generateResponse(`Generate a concise table of contents with 4-5 sections for learning about: ${inputValue}. Format as a numbered list.`, ageRange);
+        
+        // Parse the TOC into sections
+        const sections = tocResponse
+          .split(/\d+\./)
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+        
+        // Create introduction message with TOC
+        const tocMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: `I'd love to teach you about ${inputValue}! Here's what we'll explore:`,
+          isUser: false,
+          tableOfContents: sections,
+          isIntroduction: true
         };
+        
+        setMessages(prev => [...prev, tocMessage]);
+        setSelectedTopic(inputValue);
+        setTopicSectionsGenerated(true);
+        
+        // Suggest related topics based on the main topic
+        const relatedTopicsResponse = await generateResponse(`Generate 5 related topics to ${inputValue} that might interest a learner. Format as a short comma-separated list.`, ageRange);
+        setRelatedTopics(relatedTopicsResponse.split(",").map(topic => topic.trim()));
+        
+        // Add points for starting a new learning journey
+        setPoints(prev => prev + 25);
+        setLearningProgress(10);
+        
+      } else {
+        // Handle follow-up messages or section explorations
+        const response = await generateResponse(inputValue, ageRange);
+        
+        // Simulate a delay for typing effect
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setShowTypingIndicator(false);
+        
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: response,
+          isUser: false,
+          blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
+          showBlocks: true
+        };
+        
+        // Check if this is a request to explore a specific TOC section
+        const matchedSection = selectedTopic && messages.find(m => m.tableOfContents)?.tableOfContents?.find(
+          section => inputValue.toLowerCase().includes(section.toLowerCase())
+        );
+        
+        if (matchedSection && !completedSections.includes(matchedSection)) {
+          // Mark this section as completed
+          setCompletedSections(prev => [...prev, matchedSection]);
+          
+          // Add more points for completing a section
+          setPoints(prev => prev + 15);
+          
+          // Update learning progress
+          const totalSections = messages.find(m => m.tableOfContents)?.tableOfContents?.length || 5;
+          const newProgress = Math.min(100, 10 + (completedSections.length + 1) * (90 / totalSections));
+          setLearningProgress(newProgress);
+        }
+        
+        setMessages(prev => [...prev, aiMessage]);
       }
-
-      setMessages(prev => [...prev, aiMessage]);
       
       // Increment points for each interaction
       setPoints(prev => prev + 10);
@@ -182,20 +235,20 @@ console.log(greet("World"));  // Output: Hello, World!`;
       
       switch (type) {
         case "did-you-know":
-          blockResponse = await generateResponse(`Give me an interesting fact related to: ${messageText}`, ageRange);
+          blockResponse = await generateResponse(`Give me an interesting fact related to: ${messageText} that would amaze a ${ageRange} year old. Be fun and educational.`, ageRange);
           break;
         case "mind-blowing":
-          blockResponse = await generateResponse(`Tell me something mind-blowing about the science related to: ${messageText}`, ageRange);
+          blockResponse = await generateResponse(`Tell me something mind-blowing about the science related to: ${messageText} that would fascinate a ${ageRange} year old. Use an enthusiastic tone.`, ageRange);
           break;
         case "amazing-stories":
-          blockResponse = await generateResponse(`Share an amazing story or legend related to: ${messageText}`, ageRange);
+          blockResponse = await generateResponse(`Share an amazing story or legend related to: ${messageText} appropriate for a ${ageRange} year old. Keep it engaging and educational.`, ageRange);
           break;
         case "see-it":
           blockResponse = "Here's a visual representation I created for you:";
-          imagePrompt = messageText;
+          imagePrompt = `${messageText} in a style that appeals to ${ageRange} year old children, educational, detailed, colorful`;
           break;
         case "quiz":
-          blockResponse = "Let's test your knowledge with a quick quiz!";
+          blockResponse = "Let's test your knowledge with a quick quiz! Get all answers right to earn bonus points! 🎯";
           quiz = await generateQuiz(messageText);
           break;
       }
@@ -241,9 +294,27 @@ console.log(greet("World"));  // Output: Hello, World!`;
         text: "Chat cleared! What would you like to explore now?",
         isUser: false,
         blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
-        showBlocks: true
+        showBlocks: true,
+        isIntroduction: true
       }
     ]);
+    setSelectedTopic(null);
+    setTopicSectionsGenerated(false);
+    setCompletedSections([]);
+    setLearningProgress(0);
+  };
+
+  const handleTocSectionClick = (section: string) => {
+    setInputValue(`Tell me about "${section}" in detail`);
+    inputRef.current?.focus();
+  };
+
+  const handleRelatedTopicClick = (topic: string) => {
+    clearChat();
+    setInputValue(`Tell me about ${topic}`);
+    setTimeout(() => {
+      handleSendMessage();
+    }, 100);
   };
 
   return (
@@ -275,12 +346,36 @@ console.log(greet("World"));  // Output: Hello, World!`;
               <div className="font-bold text-sm">{points}</div>
             </div>
           </div>
+          
+          {topicSectionsGenerated && (
+            <>
+              <div className="h-8 border-l border-muted mx-2"></div>
+              <div className="flex items-center">
+                <div className="h-8 w-8 rounded-full bg-gradient-teal flex items-center justify-center text-white shadow-sm">
+                  <ListTodo className="h-4 w-4" />
+                </div>
+                <div className="ml-2">
+                  <div className="text-xs text-muted-foreground">Progress</div>
+                  <div className="w-24 h-2 bg-gray-200 rounded-full mt-1">
+                    <div 
+                      className="h-full bg-gradient-wonder rounded-full" 
+                      style={{ width: `${learningProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
         
         <div className="flex space-x-2">
-          <div className="point-counter">
+          <button 
+            className="point-counter flex items-center gap-1 bg-gradient-wonder/10 hover:bg-gradient-wonder/20 px-3 py-1 rounded-full text-wonder-purple text-sm font-medium transition-colors"
+            onClick={() => setShowAgeSelector(true)}
+          >
             Age: {ageRange}
-          </div>
+            <CheckCircle className="h-3 w-3 ml-1" />
+          </button>
         </div>
       </div>
       
@@ -289,6 +384,13 @@ console.log(greet("World"));  // Output: Hello, World!`;
           {messages.map((message) => (
             <React.Fragment key={message.id}>
               <ChatMessage message={message.text} isUser={message.isUser}>
+                {message.tableOfContents && (
+                  <TableOfContents 
+                    sections={message.tableOfContents} 
+                    completedSections={completedSections}
+                    onSectionClick={handleTocSectionClick}
+                  />
+                )}
                 {message.imagePrompt && (
                   <ImageBlock prompt={message.imagePrompt} />
                 )}
@@ -318,6 +420,15 @@ console.log(greet("World"));  // Output: Hello, World!`;
                   ))}
                 </div>
               )}
+              
+              {message.isIntroduction && relatedTopics.length > 0 && (
+                <div className="mb-8">
+                  <RelatedTopicsCard 
+                    topics={relatedTopics} 
+                    onTopicClick={handleRelatedTopicClick}
+                  />
+                </div>
+              )}
             </React.Fragment>
           ))}
           
@@ -326,6 +437,14 @@ console.log(greet("World"));  // Output: Hello, World!`;
           <div ref={messagesEndRef} />
         </div>
       </div>
+      
+      {showAgeSelector && (
+        <AgeRangeSelector 
+          currentRange={ageRange} 
+          onSelect={handleAgeRangeChange}
+          onClose={() => setShowAgeSelector(false)}
+        />
+      )}
       
       {suggestedPrompts.length > 0 && messages.length < 3 && (
         <div className="px-4 mb-4">
@@ -372,7 +491,7 @@ console.log(greet("World"));  // Output: Hello, World!`;
               value={inputValue}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder="Ask me anything..."
+              placeholder={selectedTopic ? `Ask me about ${selectedTopic} or explore a section...` : "Ask me anything..."}
               disabled={isProcessing}
               className="w-full pl-12 pr-16 py-4 rounded-full border border-wonder-purple/20 focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 shadow-wonder"
             />
