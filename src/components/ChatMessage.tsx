@@ -25,7 +25,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
   return (
     <div 
       ref={messageRef}
-      className={`mb-4 ${isUser ? 'ml-auto max-w-[85%]' : 'mr-auto max-w-[85%]'}`}
+      className={`mb-6 ${isUser ? 'ml-auto max-w-[85%]' : 'mr-auto max-w-[85%]'}`}
       style={{ opacity: 0 }} // Start with opacity 0 before animation
     >
       <div className={isUser ? 'chat-bubble-user' : 'chat-bubble-ai'}>

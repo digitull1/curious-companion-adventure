@@ -56,7 +56,7 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
   return (
     <button
       onClick={onClick}
-      className={`learning-block h-32 min-w-[210px] flex flex-col justify-between hover-scale ${className}`}
+      className={`learning-block h-32 min-w-[220px] flex flex-col justify-between hover-scale ${className}`}
     >
       <div className="flex items-center">
         {icon}
