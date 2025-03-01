@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import ChatMessage from "./ChatMessage";
 import LearningBlock, { BlockType } from "./LearningBlock";
@@ -320,7 +319,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ ageRange: initialAgeRange
   return (
     <div className="flex flex-col h-full">
       {/* Stats Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b px-4 py-2 flex items-center justify-between">
+      <div className="chat-header px-4 py-2 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex items-center">
             <div className="h-8 w-8 rounded-full bg-gradient-rainbow flex items-center justify-center text-white shadow-sm">
@@ -379,10 +378,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ ageRange: initialAgeRange
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4" ref={chatHistoryRef}>
+      <div className="chat-messages" ref={chatHistoryRef}>
         <div className="max-w-4xl mx-auto">
           {messages.map((message) => (
-            <React.Fragment key={message.id}>
+            <div key={message.id}>
               <ChatMessage message={message.text} isUser={message.isUser}>
                 {message.tableOfContents && (
                   <TableOfContents 
@@ -429,7 +428,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ ageRange: initialAgeRange
                   />
                 </div>
               )}
-            </React.Fragment>
+            </div>
           ))}
           
           {showTypingIndicator && <TypingIndicator />}
@@ -466,7 +465,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ ageRange: initialAgeRange
         </div>
       )}
       
-      <div className="p-4 bg-gradient-to-r from-white/95 to-wonder-background/95 backdrop-blur-md border-t">
+      <div className="chat-input bg-gradient-to-r from-white/95 to-wonder-background/95 backdrop-blur-md">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-2">
             <button

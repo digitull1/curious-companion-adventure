@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
@@ -88,7 +87,7 @@ const Index = () => {
   }, []);
   
   return (
-    <div className="min-h-screen overflow-hidden bg-gradient-to-b from-wonder-background via-white to-wonder-background relative">
+    <div className="index-container bg-gradient-to-b from-wonder-background via-white to-wonder-background">
       {/* Hero Section with enhanced visual magic */}
       <section 
         ref={heroRef} 
@@ -121,7 +120,7 @@ const Index = () => {
           {[...Array(20)].map((_, i) => (
             <div 
               key={i}
-              className="sparkle"
+              className="sparkle absolute"
               style={{
                 width: `${Math.random() * 6 + 2}px`,
                 height: `${Math.random() * 6 + 2}px`,
@@ -163,7 +162,7 @@ const Index = () => {
           </div>
           
           {/* Headline with enhanced typography and animation */}
-          <h1 className="text-6xl font-bold mb-4 leading-tight tracking-tight relative">
+          <h1 className="text-5xl sm:text-6xl font-bold mb-4 leading-tight tracking-tight relative">
             <span className="text-gradient-purple">Where </span>
             <span className="text-gradient-wonder relative inline-block">
               Curiosity
@@ -202,7 +201,7 @@ const Index = () => {
             
             <button
               onClick={() => navigate("/onboarding")}
-              className="relative btn-wonder group px-10 py-5 text-lg rounded-full bg-gradient-rainbow"
+              className="relative btn-wonder group px-10 py-5 text-lg rounded-full bg-gradient-rainbow text-white font-medium"
             >
               <span className="relative z-10 inline-flex items-center">
                 Begin Your Learning Adventure
@@ -225,6 +224,7 @@ const Index = () => {
         ref={featuresSectionRef}
         className="relative py-24 px-6 bg-gradient-to-b from-white to-wonder-background overflow-hidden"
       >
+        {/* Section heading with elegant design */}
         <div className="max-w-6xl mx-auto">
           {/* Section heading with elegant design */}
           <div className="relative mb-16 text-center">
@@ -240,7 +240,7 @@ const Index = () => {
           </div>
           
           {/* Feature cards with premium styling */}
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="feature-card opacity-0" style={{transitionDelay: '0.1s'}}>
               <div className="flex flex-col items-center text-center h-full">
                 <div className="illustration-container mb-6">
@@ -310,7 +310,7 @@ const Index = () => {
             <div className="relative mx-auto max-w-3xl">
               <div className="learning-path-connector w-[calc(100%-40px)]"></div>
               
-              <div className="flex justify-between">
+              <div className="flex justify-between flex-wrap gap-y-8">
                 <div className="flex flex-col items-center gap-3">
                   <div className="learning-path-node">1</div>
                   <div className="text-center">
@@ -430,7 +430,7 @@ const Index = () => {
           
           <button
             onClick={() => navigate("/onboarding")}
-            className="btn-wonder text-lg px-12 py-5 bg-gradient-rainbow"
+            className="btn-wonder text-lg px-12 py-5 bg-gradient-rainbow text-white font-medium rounded-full"
           >
             Start Your Child's Journey
           </button>
