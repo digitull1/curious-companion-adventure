@@ -55,11 +55,35 @@ export default {
         "sparkle": {
           "0%, 100%": { 
             opacity: "0.5",
-            transform: "scale(1)" 
+            transform: "scale(1) rotate(0deg)" 
           },
           "50%": { 
             opacity: "1",
             transform: "scale(1.2) rotate(20deg)" 
+          },
+        },
+        "bounce-subtle": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" },
+        },
+        "fade-in-up": {
+          "0%": { 
+            opacity: "0",
+            transform: "translateY(20px)"
+          },
+          "100%": { 
+            opacity: "1",
+            transform: "translateY(0)"
+          },
+        },
+        "ripple": {
+          "0%": { 
+            transform: "scale(0.8)",
+            opacity: "1"
+          },
+          "100%": { 
+            transform: "scale(2)",
+            opacity: "0"
           },
         },
       },
@@ -69,6 +93,9 @@ export default {
         "float": "float 6s ease-in-out infinite",
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
         "sparkle": "sparkle 2s ease-in-out infinite",
+        "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
+        "fade-in-up": "fade-in-up 0.5s ease-out forwards",
+        "ripple": "ripple 1s ease-out infinite",
       },
       colors: {
         border: "hsl(var(--border))",
@@ -123,6 +150,14 @@ export default {
         "wonder-blue": "#0EA5E9",
         "wonder-blue-light": "#5eceff",
         "wonder-blue-dark": "#0982ba",
+        "pixar-blue": "#0b63f6",
+        "pixar-teal": "#00c6fb",
+        "disney-purple": "#C850C0",
+        "disney-blue": "#4158D0",
+        "sports-orange": "#FFC837",
+        "sports-red": "#FF1F78",
+        "candy-pink": "#ff61d2",
+        "candy-orange": "#fe9090",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -134,6 +169,9 @@ export default {
         'magical-hover': '0 0 15px rgba(124, 58, 237, 0.5), 0 0 30px rgba(124, 58, 237, 0.3)',
         'pixar': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         'candy': '0 10px 25px -5px rgba(124, 58, 237, 0.3)',
+        'disney': '0 15px 25px -5px rgba(192, 80, 192, 0.3)',
+        'sports': '0 8px 20px rgba(255, 31, 120, 0.25)',
+        'apple': '0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.02)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -141,6 +179,8 @@ export default {
         'gradient-pixar': 'linear-gradient(135deg, #4158D0, #C850C0, #FFCC70)',
         'gradient-disney': 'linear-gradient(135deg, #0b63f6, #003cc5)',
         'gradient-sports': 'linear-gradient(135deg, #00c6fb, #005bea)',
+        'gradient-apple': 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+        'gradient-chupa': 'linear-gradient(135deg, #FF416C, #FF4B2B)',
       },
     },
   },

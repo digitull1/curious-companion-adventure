@@ -70,9 +70,9 @@
   }
 }
 
-/* Chat bubbles */
+/* Chat bubbles with enhanced styling */
 .chat-bubble-ai {
-  @apply bg-white rounded-2xl p-4 shadow-sm border border-wonder-purple/10 relative;
+  @apply bg-white rounded-2xl p-4 shadow-pixar border border-wonder-purple/10 relative overflow-hidden;
 }
 
 .chat-bubble-ai::before {
@@ -88,8 +88,20 @@
   filter: drop-shadow(0 -1px 1px rgba(124, 58, 237, 0.1));
 }
 
+.chat-bubble-ai::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(255, 255, 255, 0) 60%);
+  border-radius: 2xl;
+  pointer-events: none;
+}
+
 .chat-bubble-user {
-  @apply bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white rounded-2xl p-4 shadow-magical relative;
+  @apply bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white rounded-2xl p-4 shadow-magical relative overflow-hidden;
 }
 
 .chat-bubble-user::before {
@@ -104,7 +116,19 @@
   right: 24px;
 }
 
-/* Learning blocks */
+.chat-bubble-user::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 60%);
+  border-radius: 2xl;
+  pointer-events: none;
+}
+
+/* Learning blocks with enhanced design */
 .learning-block {
   @apply relative rounded-xl p-5 shadow-magical border border-white bg-white overflow-hidden transition-all 
          cursor-pointer h-auto min-h-24 min-w-[240px] max-w-[320px] flex-shrink-0;
@@ -121,23 +145,23 @@
 }
 
 .learning-block-did-you-know {
-  @apply bg-gradient-to-br from-wonder-blue/10 to-white border-wonder-blue/20;
+  @apply bg-gradient-to-br from-wonder-blue/5 to-white border-wonder-blue/20;
 }
 
 .learning-block-mind-blowing {
-  @apply bg-gradient-to-br from-wonder-purple/10 to-white border-wonder-purple/20;
+  @apply bg-gradient-to-br from-wonder-purple/5 to-white border-wonder-purple/20;
 }
 
 .learning-block-amazing-stories {
-  @apply bg-gradient-to-br from-wonder-yellow/10 to-white border-wonder-yellow/20;
+  @apply bg-gradient-to-br from-wonder-yellow/5 to-white border-wonder-yellow/20;
 }
 
 .learning-block-see-it {
-  @apply bg-gradient-to-br from-wonder-green/10 to-white border-wonder-green/20;
+  @apply bg-gradient-to-br from-wonder-green/5 to-white border-wonder-green/20;
 }
 
 .learning-block-quiz {
-  @apply bg-gradient-to-br from-wonder-coral/10 to-white border-wonder-coral/20;
+  @apply bg-gradient-to-br from-wonder-coral/5 to-white border-wonder-coral/20;
 }
 
 /* Added scrolling container styles for learning blocks */
@@ -174,7 +198,7 @@
   @apply opacity-100;
 }
 
-/* Quiz styling */
+/* Quiz styling with enhanced visuals */
 .quiz-answer {
   @apply rounded-lg border border-wonder-purple/10 p-3 transition-all hover:border-wonder-purple/30 shadow-sm hover:shadow-magical;
 }
@@ -184,11 +208,11 @@
 }
 
 .quiz-answer-correct {
-  @apply border-wonder-green bg-wonder-green/10 text-wonder-green;
+  @apply border-wonder-green/50 bg-wonder-green/10 text-wonder-green;
 }
 
 .quiz-answer-incorrect {
-  @apply border-wonder-coral bg-wonder-coral/5 text-wonder-coral;
+  @apply border-wonder-coral/50 bg-wonder-coral/5 text-wonder-coral;
 }
 
 /* Utility animations */
@@ -220,13 +244,24 @@
   animation: fade-scale-in 0.4s ease-out forwards;
 }
 
-/* Shadow effects */
+/* Shine animation for progress bars and buttons */
+@keyframes shine {
+  0% { transform: translateX(-100%); }
+  50%, 100% { transform: translateX(100%); }
+}
+
+.animate-shine {
+  animation: shine 4s infinite;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.5), transparent);
+}
+
+/* Shadow effects with enhanced depth */
 .shadow-wonder {
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.1), 0 1px 2px rgba(124, 58, 237, 0.05);
 }
 
 .shadow-wonder-lg {
-  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.15);
+  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.15), 0 5px 10px -5px rgba(124, 58, 237, 0.1);
 }
 
 .shadow-magical {
@@ -237,7 +272,7 @@
   box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3), 0 4px 6px -2px rgba(124, 58, 237, 0.2);
 }
 
-/* Gradients */
+/* Gradients with new inspiring options */
 .bg-gradient-wonder {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
 }
@@ -260,6 +295,22 @@
 
 .bg-gradient-coral {
   background: linear-gradient(135deg, #FECACA 0%, #F43F5E 100%);
+}
+
+.bg-gradient-pixar {
+  background: linear-gradient(135deg, #4158D0, #C850C0, #FFCC70);
+}
+
+.bg-gradient-disney {
+  background: linear-gradient(135deg, #0b63f6, #003cc5);
+}
+
+.bg-gradient-sports {
+  background: linear-gradient(135deg, #00c6fb, #005bea);
+}
+
+.bg-gradient-candy {
+  background: linear-gradient(135deg, #ff61d2, #fe9090, #fbd4a4, #ddfc9b);
 }
 
 .bg-wonder-background {
@@ -293,21 +344,13 @@
   background-color: rgba(124, 58, 237, 0.4);
 }
 
-/* Hover effects */
+/* Hover effects with improved interactivity */
 .hover-scale {
   @apply transition-transform duration-200 hover:scale-105;
 }
 
 .hover-scale-subtle {
   @apply transition-transform duration-200 hover:scale-102;
-}
-
-.scale-102 {
-  transform: scale(1.02);
-}
-
-.scale-98 {
-  transform: scale(0.98);
 }
 
 .btn-bounce:active:not(:disabled) {
@@ -369,7 +412,7 @@ a:focus-visible {
   }
 }
 
-/* Button styles */
+/* Button styles with enhanced interaction */
 .btn-wonder {
   @apply relative rounded-full text-white font-medium shadow-magical transition-all duration-300 overflow-hidden;
 }
@@ -392,4 +435,114 @@ a:focus-visible {
 
 .animate-sparkle {
   animation: sparkle 2s ease-in-out infinite;
+}
+
+/* Ripple effect for buttons */
+@keyframes ripple {
+  to {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.6s, opacity 0.6s;
+}
+
+.ripple-effect:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
+}
+
+/* Themed elements with inspiration from requested brands */
+.apple-card {
+  @apply bg-gradient-apple rounded-2xl p-6 shadow-apple border border-gray-100;
+}
+
+.pixar-card {
+  @apply bg-gradient-pixar text-white rounded-2xl p-6 shadow-pixar;
+}
+
+.disney-card {
+  @apply bg-gradient-disney text-white rounded-2xl p-6 shadow-disney;
+}
+
+.sports-card {
+  @apply bg-gradient-sports text-white rounded-2xl p-6 shadow-sports;
+}
+
+.candy-card {
+  @apply bg-gradient-candy text-white rounded-2xl p-6 shadow-candy;
+}
+
+/* Glassmorphism effect */
+.glass {
+  @apply backdrop-blur-md bg-white/80 border border-white/20;
+}
+
+.glass-dark {
+  @apply backdrop-blur-md bg-black/50 border border-white/10 text-white;
+}
+
+/* Enhanced badge styles */
+.badge {
+  @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-medium;
+}
+
+.badge-purple {
+  @apply bg-wonder-purple/10 text-wonder-purple;
+}
+
+.badge-teal {
+  @apply bg-wonder-teal/10 text-wonder-teal;
+}
+
+.badge-yellow {
+  @apply bg-wonder-yellow/10 text-wonder-yellow;
+}
+
+.badge-coral {
+  @apply bg-wonder-coral/10 text-wonder-coral;
+}
+
+/* Magic pulse effect for highlights */
+.magic-pulse {
+  position: relative;
+}
+
+.magic-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+  padding: 8px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.6), rgba(124, 58, 237, 0));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  animation: magic-pulse 2s ease-in-out infinite;
+}
+
+@keyframes magic-pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
