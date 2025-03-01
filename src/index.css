@@ -1,3 +1,4 @@
+
 /* Chat bubbles */
 .chat-bubble-ai {
   @apply bg-white rounded-2xl p-4 shadow-sm border border-purple-100 relative;
@@ -31,9 +32,10 @@
   right: 24px;
 }
 
-/* Learning blocks */
+/* Learning blocks - Improved with better visual hierarchy */
 .learning-block {
-  @apply relative rounded-xl p-4 shadow-wonder border border-white bg-white overflow-hidden transition-all cursor-pointer;
+  @apply relative rounded-xl p-5 shadow-wonder border border-white bg-white overflow-hidden transition-all 
+         cursor-pointer h-auto min-h-24 min-w-[240px] max-w-[320px] flex-shrink-0;
 }
 
 .learning-block::after {
@@ -66,9 +68,43 @@
   @apply bg-gradient-to-br from-pink-50 to-white border-pink-100;
 }
 
+/* Added scrolling container styles for learning blocks */
+.learning-blocks-container {
+  @apply flex gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.learning-blocks-container .learning-block {
+  @apply snap-start;
+}
+
+/* Show navigation only when overflowing */
+.learning-blocks-wrapper {
+  @apply relative;
+}
+
+.scroll-button {
+  @apply absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/80 
+         shadow-wonder flex items-center justify-center border border-wonder-purple/10
+         text-wonder-purple transition-all opacity-0 hover:bg-white;
+}
+
+.scroll-button-left {
+  @apply left-0 -translate-x-1/2;
+}
+
+.scroll-button-right {
+  @apply right-0 translate-x-1/2;
+}
+
+.learning-blocks-wrapper:hover .scroll-button {
+  @apply opacity-100;
+}
+
 /* Quiz styling */
 .quiz-answer {
-  @apply rounded-lg border border-gray-200 p-3 transition-all;
+  @apply rounded-lg border border-gray-200 p-3 transition-all hover:border-wonder-purple/30;
 }
 
 .quiz-answer-selected {
@@ -102,12 +138,23 @@
   animation: pulse-soft 3s ease-in-out infinite;
 }
 
+/* Add new subtle entry animation */
+@keyframes fade-scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.fade-scale-in {
+  animation: fade-scale-in 0.3s ease-out forwards;
+}
+
+/* Enhance shadow effects */
 .shadow-wonder {
   box-shadow: 0 4px 14px rgba(124, 58, 237, 0.1);
 }
 
 .shadow-wonder-lg {
-  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.15);
+  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.15);
 }
 
 .bg-gradient-wonder {
@@ -151,6 +198,18 @@
   @apply transition-transform duration-200 hover:scale-105;
 }
 
+.hover-scale-subtle {
+  @apply transition-transform duration-200 hover:scale-102;
+}
+
+.scale-102 {
+  transform: scale(1.02);
+}
+
+.scale-98 {
+  transform: scale(0.98);
+}
+
 .btn-bounce:active:not(:disabled) {
   transform: scale(0.97);
 }
@@ -185,4 +244,25 @@
 
 .text-wonder-green {
   color: #10B981;
+}
+
+/* Added styles for better accessibility */
+.focus-ring {
+  @apply outline-none ring-2 ring-wonder-purple/50 ring-offset-2;
+}
+
+button:focus-visible,
+a:focus-visible {
+  @apply focus-ring;
+}
+
+/* Add a class for better mobile layout */
+.mobile-stack {
+  @apply flex-col;
+}
+
+@media (max-width: 640px) {
+  .mobile-stack {
+    @apply gap-4;
+  }
 }
