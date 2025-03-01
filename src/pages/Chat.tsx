@@ -1,8 +1,12 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
-import { BookOpen, Crown, LogOut, Settings, Star, UserRound } from "lucide-react";
+import { 
+  BookOpen, Crown, LogOut, Settings, Star, UserRound, 
+  Eraser, Image, Lightbulb, Search, Send, Sparkles, 
+  CheckCircle, ListTodo, MessageCircle, Mic, X, ArrowRight, ChevronRight
+} from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
 import ImageBlock from "@/components/ImageBlock";
@@ -13,7 +17,7 @@ import TableOfContents from "@/components/TableOfContents";
 import AgeRangeSelector from "@/components/AgeRangeSelector";
 import RelatedTopicsCard from "@/components/RelatedTopicsCard";
 import { useOpenAI } from "@/hooks/useOpenAI";
-import { Eraser, Image, Lightbulb, Search, Send, Sparkles, CheckCircle, ListTodo } from "lucide-react";
+import { animate } from "@motionone/dom";
 import { toast } from "sonner";
 
 interface Message {
@@ -39,8 +43,8 @@ interface Message {
 const Chat = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const ageRange = localStorage.getItem("wonderwhiz_age_range") || "8-10";
-  const avatar = localStorage.getItem("wonderwhiz_avatar") || "explorer";
+  const [ageRange, setAgeRange] = useState(localStorage.getItem("wonderwhiz_age_range") || "8-10");
+  const [avatar, setAvatar] = useState(localStorage.getItem("wonderwhiz_avatar") || "explorer");
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([
@@ -63,9 +67,10 @@ const Chat = () => {
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   const [relatedTopics, setRelatedTopics] = useState<string[]>([]);
   const { isLoading, generateResponse, generateImage, generateQuiz } = useOpenAI();
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const chatHistoryRef = React.useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const chatHistoryRef = useRef<HTMLDivElement>(null);
+  const learningBlocksRef = useRef<HTMLDivElement>(null);
   const [streakCount, setStreakCount] = useState(0);
   const [points, setPoints] = useState(0);
   const [learningProgress, setLearningProgress] = useState(0);
@@ -89,6 +94,18 @@ const Chat = () => {
     const savedPoints = Math.floor(Math.random() * 500); // Random points for demo
     setStreakCount(savedStreak);
     setPoints(savedPoints);
+
+    // Apply animations to learning blocks on first load
+    if (learningBlocksRef.current) {
+      const blocks = learningBlocksRef.current.querySelectorAll('.learning-block');
+      blocks.forEach((block, index) => {
+        animate(
+          block,
+          { opacity: [0, 1], y: [20, 0] },
+          { duration: 0.4, delay: 0.1 * index, easing: "ease-out" }
+        );
+      });
+    }
   }, [ageRange, avatar, navigate]);
   
   useEffect(() => {
@@ -106,10 +123,10 @@ const Chat = () => {
   
   const getAvatarColor = () => {
     switch (avatar) {
-      case "explorer": return "bg-gradient-yellow";
-      case "scientist": return "bg-gradient-teal";
-      case "storyteller": return "bg-gradient-coral";
-      default: return "bg-gradient-yellow";
+      case "explorer": return "bg-gradient-to-br from-wonder-yellow to-wonder-yellow-dark";
+      case "scientist": return "bg-gradient-to-br from-wonder-teal to-wonder-teal-dark";
+      case "storyteller": return "bg-gradient-to-br from-wonder-coral to-wonder-coral-dark";
+      default: return "bg-gradient-to-br from-wonder-yellow to-wonder-yellow-dark";
     }
   };
   
@@ -204,6 +221,22 @@ const Chat = () => {
         setPoints(prev => prev + 25);
         setLearningProgress(10);
         
+        // Animate confetti effect for starting a new topic
+        const confettiContainer = document.createElement('div');
+        confettiContainer.style.position = 'fixed';
+        confettiContainer.style.top = '0';
+        confettiContainer.style.left = '0';
+        confettiContainer.style.width = '100%';
+        confettiContainer.style.height = '100%';
+        confettiContainer.style.pointerEvents = 'none';
+        confettiContainer.style.zIndex = '9999';
+        document.body.appendChild(confettiContainer);
+
+        // Remove confetti after animation
+        setTimeout(() => {
+          confettiContainer.remove();
+        }, 5000);
+        
       } else {
         // Handle follow-up messages or section explorations
         const response = await generateResponse(inputValue, ageRange);
@@ -277,7 +310,7 @@ const Chat = () => {
           break;
         case "see-it":
           blockResponse = "Here's a visual representation I created for you:";
-          imagePrompt = `${messageText} in a style that appeals to ${ageRange} year old children, educational, detailed, colorful`;
+          imagePrompt = `${messageText} in a style that appeals to ${ageRange} year old children, educational, detailed, colorful, Pixar style illustration`;
           break;
         case "quiz":
           blockResponse = "Let's test your knowledge with a quick quiz! Get all answers right to earn bonus points! 🎯";
@@ -334,6 +367,7 @@ const Chat = () => {
     setTopicSectionsGenerated(false);
     setCompletedSections([]);
     setLearningProgress(0);
+    toast.success("Chat cleared! Ready for a new adventure!");
   };
 
   const handleTocSectionClick = (section: string) => {
@@ -348,34 +382,46 @@ const Chat = () => {
       handleSendMessage();
     }, 100);
   };
+
+  const scrollLearningBlocks = (direction: 'left' | 'right') => {
+    if (learningBlocksRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      learningBlocksRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
   
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white">
       {/* Header */}
-      <header className="border-b bg-white shadow-sm z-10">
+      <header className="border-b bg-white shadow-sm z-10 backdrop-blur-sm bg-white/90">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center">
-            <WonderWhizLogo size="md" />
+            <WonderWhizLogo size="md" className="animate-float" />
             
             <div className="hidden md:flex ml-8 gap-6">
-              <button className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              <button className="text-sm font-medium text-muted-foreground hover:text-wonder-purple transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-wonder-purple/5">
                 <BookOpen className="h-4 w-4" />
                 <span>Topics</span>
               </button>
-              <button className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              <button className="text-sm font-medium text-muted-foreground hover:text-wonder-purple transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-wonder-purple/5">
                 <Star className="h-4 w-4" />
                 <span>Rewards</span>
               </button>
-              <button className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              <button className="text-sm font-medium text-muted-foreground hover:text-wonder-purple transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-wonder-purple/5">
                 <Crown className="h-4 w-4" />
                 <span>Progress</span>
               </button>
             </div>
           </div>
           
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            <div className="bg-wonder-purple/10 text-wonder-purple rounded-full px-4 py-1 text-sm font-semibold flex items-center gap-2">
+              <Star className="h-3.5 w-3.5" />
+              <span>{points} points</span>
+            </div>
+            
             <div 
-              className={`h-10 w-10 rounded-full ${getAvatarColor()} text-white flex items-center justify-center mr-3 shadow-sm cursor-pointer`}
+              className={`h-10 w-10 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical cursor-pointer transition-all duration-300 hover:shadow-magical-hover text-lg`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {getAvatarEmoji()}
@@ -383,37 +429,48 @@ const Chat = () => {
             
             <div className="relative">
               <div 
-                className="flex items-center gap-2 py-1 px-3 rounded-full bg-purple-100 hover:bg-purple-200 cursor-pointer transition-colors"
+                className="flex items-center gap-2 py-1.5 px-4 rounded-full bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-light/20 hover:from-wonder-purple/30 hover:to-wonder-purple-light/30 cursor-pointer transition-all duration-300 border border-wonder-purple/20 shadow-sm"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
-                <span className="text-sm text-purple-700 font-medium">{ageRange} years</span>
-                <UserRound className="h-4 w-4 text-purple-700" />
+                <span className="text-sm text-wonder-purple font-medium">{ageRange} years</span>
+                <UserRound className="h-4 w-4 text-wonder-purple" />
               </div>
               
               {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-lg py-3 z-50 border border-gray-100">
-                  <div className="px-4 py-3 border-b">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-pixar py-3 z-50 border border-wonder-purple/10 backdrop-blur-sm bg-white/95">
+                  <div className="px-4 py-3 border-b border-wonder-purple/10">
                     <div className="flex items-center gap-3">
-                      <div className={`h-12 w-12 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-sm text-xl`}>
+                      <div className={`h-14 w-14 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical text-2xl`}>
                         {getAvatarEmoji()}
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">{avatar}</p>
+                        <p className="font-bold text-foreground capitalize">{avatar}</p>
                         <p className="text-sm text-muted-foreground">{ageRange} years</p>
+                        <div className="flex items-center mt-1 text-xs text-wonder-purple">
+                          <Crown className="h-3 w-3 mr-1" />
+                          <span>Level 3 Explorer</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                   
                   <div className="pt-2">
                     <button 
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-muted/50 flex items-center"
+                      onClick={() => setShowAgeSelector(true)}
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-wonder-purple/5 flex items-center text-foreground"
+                    >
+                      <UserRound className="h-4 w-4 mr-3 text-wonder-purple" />
+                      Change Age Range
+                    </button>
+                    <button 
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-wonder-purple/5 flex items-center text-foreground"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <Settings className="h-4 w-4 mr-3 text-muted-foreground" />
+                      <Settings className="h-4 w-4 mr-3 text-wonder-purple" />
                       Settings
                     </button>
                     <button 
-                      className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center"
+                      className="w-full text-left px-4 py-2.5 text-sm text-wonder-coral hover:bg-wonder-coral/5 flex items-center"
                       onClick={handleLogout}
                     >
                       <LogOut className="h-4 w-4 mr-3" />
@@ -428,26 +485,26 @@ const Chat = () => {
       </header>
       
       {/* Stats Bar */}
-      <div className="bg-white border-b px-4 py-2">
+      <div className="bg-white/60 backdrop-blur-sm border-b border-wonder-purple/10 px-4 py-2.5">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center text-white shadow-sm">
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-wonder-coral to-wonder-coral-dark flex items-center justify-center text-white shadow-magical">
                 <Crown className="h-4 w-4" />
               </div>
               <div className="ml-2">
                 <div className="text-xs text-muted-foreground">Learning Streak</div>
                 <div className="font-bold text-sm flex items-center">
                   {streakCount} days 
-                  <Sparkles className="h-3 w-3 ml-1 text-amber-400" />
+                  <Sparkles className="h-3 w-3 ml-1 text-wonder-yellow animate-sparkle" />
                 </div>
               </div>
             </div>
             
-            <div className="h-8 border-l border-muted mx-2"></div>
+            <div className="h-8 border-l border-wonder-purple/10 mx-2"></div>
             
             <div className="flex items-center">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-violet-400 to-purple-500 flex items-center justify-center text-white shadow-sm">
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-wonder-purple to-wonder-purple-dark flex items-center justify-center text-white shadow-magical">
                 <Star className="h-4 w-4" />
               </div>
               <div className="ml-2">
@@ -458,16 +515,16 @@ const Chat = () => {
             
             {topicSectionsGenerated && (
               <>
-                <div className="h-8 border-l border-muted mx-2"></div>
+                <div className="h-8 border-l border-wonder-purple/10 mx-2"></div>
                 <div className="flex items-center">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-teal-400 to-blue-500 flex items-center justify-center text-white shadow-sm">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-wonder-blue to-wonder-blue-dark flex items-center justify-center text-white shadow-magical">
                     <ListTodo className="h-4 w-4" />
                   </div>
                   <div className="ml-2">
                     <div className="text-xs text-muted-foreground">Progress</div>
-                    <div className="w-24 h-2 bg-gray-200 rounded-full mt-1">
+                    <div className="w-24 h-2.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-violet-500 to-purple-600 rounded-full" 
+                        className="h-full bg-gradient-to-r from-wonder-purple to-wonder-purple-light rounded-full transition-all duration-700" 
                         style={{ width: `${learningProgress}%` }}
                       ></div>
                     </div>
@@ -479,23 +536,26 @@ const Chat = () => {
           
           <div className="flex space-x-2">
             <button 
-              className="flex items-center gap-1 bg-purple-100 hover:bg-purple-200 px-3 py-1 rounded-full text-purple-700 text-sm font-medium transition-colors"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-light/20 hover:from-wonder-purple/30 hover:to-wonder-purple-light/30 px-3.5 py-1.5 rounded-full text-wonder-purple text-sm font-medium transition-all duration-300 border border-wonder-purple/20 shadow-sm"
               onClick={() => setShowAgeSelector(true)}
             >
               Age: {ageRange}
-              <CheckCircle className="h-3 w-3 ml-1" />
+              <CheckCircle className="h-3.5 w-3.5 ml-1" />
             </button>
           </div>
         </div>
       </div>
       
       {/* Main Content Area */}
-      <main className="flex-1 overflow-hidden bg-gray-50">
+      <main className="flex-1 overflow-hidden bg-gradient-to-b from-wonder-background/50 to-white/30 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto h-full flex flex-col">
           {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4" ref={chatHistoryRef}>
+          <div 
+            className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin scrollbar-thumb-wonder-purple/20 scrollbar-track-transparent" 
+            ref={chatHistoryRef}
+          >
             {messages.map((message) => (
-              <div key={message.id}>
+              <div key={message.id} className="fade-scale-in">
                 <ChatMessage message={message.text} isUser={message.isUser}>
                   {message.tableOfContents && (
                     <TableOfContents 
@@ -517,14 +577,35 @@ const Chat = () => {
                 </ChatMessage>
                 
                 {message.showBlocks && message.blocks && (
-                  <div className="mb-8 overflow-x-auto pb-4 flex gap-3 snap-x snap-mandatory">
-                    {message.blocks.map((block) => (
-                      <LearningBlock
-                        key={block}
-                        type={block}
-                        onClick={() => handleBlockClick(block, message.id, message.text)}
-                      />
-                    ))}
+                  <div className="relative mb-8 learning-blocks-wrapper">
+                    <button 
+                      className="scroll-button scroll-button-left" 
+                      onClick={() => scrollLearningBlocks('left')}
+                      aria-label="Scroll left"
+                    >
+                      <ChevronRight className="h-5 w-5 rotate-180" />
+                    </button>
+                    
+                    <div 
+                      ref={learningBlocksRef}
+                      className="learning-blocks-container"
+                    >
+                      {message.blocks.map((block) => (
+                        <LearningBlock
+                          key={block}
+                          type={block}
+                          onClick={() => handleBlockClick(block, message.id, message.text)}
+                        />
+                      ))}
+                    </div>
+                    
+                    <button 
+                      className="scroll-button scroll-button-right" 
+                      onClick={() => scrollLearningBlocks('right')}
+                      aria-label="Scroll right"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
                   </div>
                 )}
                 
@@ -547,8 +628,8 @@ const Chat = () => {
           {/* Suggested Prompts */}
           {suggestedPrompts.length > 0 && messages.length < 3 && (
             <div className="px-4 mb-4">
-              <div className="flex items-center mb-2 text-sm text-muted-foreground">
-                <Lightbulb className="h-4 w-4 mr-2" />
+              <div className="flex items-center mb-2 text-sm font-medium text-wonder-purple">
+                <Lightbulb className="h-4 w-4 mr-2 text-wonder-yellow" />
                 <span>Try asking about:</span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -556,7 +637,7 @@ const Chat = () => {
                   <button
                     key={prompt}
                     onClick={() => handleSuggestedPromptClick(prompt)}
-                    className="bg-white border border-purple-200 text-purple-700 rounded-full px-3 py-1 text-sm hover:bg-purple-50 transition-colors"
+                    className="bg-white border border-wonder-purple/30 text-wonder-purple-dark rounded-full px-3.5 py-1.5 text-sm hover:bg-wonder-purple/5 transition-all duration-300 shadow-sm hover:border-wonder-purple/50 hover:shadow-magical"
                   >
                     {prompt}
                   </button>
@@ -566,74 +647,79 @@ const Chat = () => {
           )}
           
           {/* Chat Input */}
-          <div className="p-4 border-t bg-white">
-            <div className="flex items-center justify-between mb-2">
+          <div className="p-4 border-t border-wonder-purple/10 bg-white/80 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-3">
               <button
                 onClick={clearChat}
-                className="flex items-center text-sm text-muted-foreground hover:text-purple-700 transition-colors"
+                className="flex items-center text-sm font-medium text-muted-foreground hover:text-wonder-purple transition-colors px-2 py-1 rounded-md hover:bg-wonder-purple/5"
               >
-                <Eraser className="h-3.5 w-3.5 mr-1" />
+                <Eraser className="h-3.5 w-3.5 mr-1.5" />
                 Clear chat
               </button>
               <button
-                className="flex items-center text-sm text-muted-foreground hover:text-purple-700 transition-colors"
+                className="flex items-center text-sm font-medium text-muted-foreground hover:text-wonder-purple transition-colors px-2 py-1 rounded-md hover:bg-wonder-purple/5"
               >
-                <BookOpen className="h-3.5 w-3.5 mr-1" />
+                <BookOpen className="h-3.5 w-3.5 mr-1.5" />
                 Learning resources
               </button>
             </div>
             
-            <div className="relative flex">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder={selectedTopic ? `Ask me about ${selectedTopic} or explore a section...` : "Ask me anything..."}
-                disabled={isProcessing}
-                className="w-full pl-12 pr-16 py-4 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-300 shadow-sm"
-              />
-              
-              <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                <Search className="h-5 w-5 text-purple-400" />
-              </div>
-              
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                <VoiceInput 
-                  onTranscript={handleVoiceInput}
-                  isListening={isListening}
-                  toggleListening={toggleListening}
+            <div className="relative">
+              <div className="relative flex">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder={selectedTopic ? `Ask me about ${selectedTopic} or explore a section...` : "Ask me anything..."}
+                  disabled={isProcessing}
+                  className="w-full pl-12 pr-16 py-4 rounded-full border border-wonder-purple/20 focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 shadow-magical bg-white/90 backdrop-blur-sm placeholder:text-slate-400 text-foreground"
                 />
                 
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isProcessing}
-                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
-                    inputValue.trim() && !isProcessing
-                      ? "bg-gradient-to-r from-purple-500 to-violet-600 text-white shadow-md hover:shadow-lg"
-                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  {isProcessing ? (
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </button>
+                <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                  <MessageCircle className="h-5 w-5 text-wonder-purple" />
+                </div>
+                
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  <VoiceInput 
+                    onTranscript={handleVoiceInput}
+                    isListening={isListening}
+                    toggleListening={toggleListening}
+                  />
+                  
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!inputValue.trim() || isProcessing}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 ${
+                      inputValue.trim() && !isProcessing
+                        ? "bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white shadow-magical hover:shadow-magical-hover transform hover:-translate-y-0.5"
+                        : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
             
             {/* Quick Access */}
-            <div className="flex justify-center mt-3 space-x-2">
-              <button className="p-1 text-purple-600 hover:text-purple-800 transition-colors">
+            <div className="flex justify-center mt-3 space-x-4">
+              <button className="p-1.5 text-wonder-purple-light hover:text-wonder-purple transition-colors rounded-full hover:bg-wonder-purple/5">
                 <Image className="h-5 w-5" />
               </button>
-              <button className="p-1 text-teal-600 hover:text-teal-800 transition-colors">
+              <button className="p-1.5 text-wonder-teal-light hover:text-wonder-teal-dark transition-colors rounded-full hover:bg-wonder-teal/5">
                 <Star className="h-5 w-5" />
               </button>
-              <button className="p-1 text-rose-500 hover:text-rose-700 transition-colors">
+              <button className="p-1.5 text-wonder-coral-light hover:text-wonder-coral-dark transition-colors rounded-full hover:bg-wonder-coral/5">
                 <Sparkles className="h-5 w-5" />
+              </button>
+              <button className="p-1.5 text-wonder-yellow-light hover:text-wonder-yellow-dark transition-colors rounded-full hover:bg-wonder-yellow/5">
+                <Mic className="h-5 w-5" />
               </button>
             </div>
           </div>
@@ -650,8 +736,8 @@ const Chat = () => {
       )}
       
       {/* Footer */}
-      <div className="bg-white border-t py-1.5 px-4 text-center text-xs text-muted-foreground">
-        WonderWhiz by leading IB educationalists & Cambridge University child psychologists
+      <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 text-center text-xs text-muted-foreground">
+        <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
       </div>
     </div>
   );

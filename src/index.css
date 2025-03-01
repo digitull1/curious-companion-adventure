@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Varela+Round&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -70,7 +72,7 @@
 
 /* Chat bubbles */
 .chat-bubble-ai {
-  @apply bg-white rounded-2xl p-4 shadow-sm border border-purple-100 relative;
+  @apply bg-white rounded-2xl p-4 shadow-sm border border-wonder-purple/10 relative;
 }
 
 .chat-bubble-ai::before {
@@ -83,10 +85,11 @@
   border-color: transparent transparent white transparent;
   top: -12px;
   left: 24px;
+  filter: drop-shadow(0 -1px 1px rgba(124, 58, 237, 0.1));
 }
 
 .chat-bubble-user {
-  @apply bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-2xl p-4 shadow-sm relative;
+  @apply bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white rounded-2xl p-4 shadow-magical relative;
 }
 
 .chat-bubble-user::before {
@@ -96,14 +99,14 @@
   height: 0;
   border-style: solid;
   border-width: 0 8px 12px 8px;
-  border-color: transparent transparent #8b5cf6 transparent;
+  border-color: transparent transparent #7c3aed transparent;
   top: -12px;
   right: 24px;
 }
 
 /* Learning blocks */
 .learning-block {
-  @apply relative rounded-xl p-5 shadow-sm border border-white bg-white overflow-hidden transition-all 
+  @apply relative rounded-xl p-5 shadow-magical border border-white bg-white overflow-hidden transition-all 
          cursor-pointer h-auto min-h-24 min-w-[240px] max-w-[320px] flex-shrink-0;
 }
 
@@ -118,50 +121,84 @@
 }
 
 .learning-block-did-you-know {
-  @apply bg-gradient-to-br from-blue-50 to-white border-blue-100;
+  @apply bg-gradient-to-br from-wonder-blue/10 to-white border-wonder-blue/20;
 }
 
 .learning-block-mind-blowing {
-  @apply bg-gradient-to-br from-purple-50 to-white border-purple-100;
+  @apply bg-gradient-to-br from-wonder-purple/10 to-white border-wonder-purple/20;
 }
 
 .learning-block-amazing-stories {
-  @apply bg-gradient-to-br from-amber-50 to-white border-amber-100;
+  @apply bg-gradient-to-br from-wonder-yellow/10 to-white border-wonder-yellow/20;
 }
 
 .learning-block-see-it {
-  @apply bg-gradient-to-br from-emerald-50 to-white border-emerald-100;
+  @apply bg-gradient-to-br from-wonder-green/10 to-white border-wonder-green/20;
 }
 
 .learning-block-quiz {
-  @apply bg-gradient-to-br from-pink-50 to-white border-pink-100;
+  @apply bg-gradient-to-br from-wonder-coral/10 to-white border-wonder-coral/20;
+}
+
+/* Added scrolling container styles for learning blocks */
+.learning-blocks-container {
+  @apply flex gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.learning-blocks-container .learning-block {
+  @apply snap-start;
+}
+
+/* Show navigation only when overflowing */
+.learning-blocks-wrapper {
+  @apply relative;
+}
+
+.scroll-button {
+  @apply absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 
+         shadow-sm flex items-center justify-center border border-wonder-purple/10
+         text-wonder-purple transition-all opacity-0 hover:bg-white;
+}
+
+.scroll-button-left {
+  @apply left-0 -translate-x-1/2;
+}
+
+.scroll-button-right {
+  @apply right-0 translate-x-1/2;
+}
+
+.learning-blocks-wrapper:hover .scroll-button {
+  @apply opacity-100;
 }
 
 /* Quiz styling */
 .quiz-answer {
-  @apply rounded-lg border border-gray-200 p-3 transition-all hover:border-purple-300;
+  @apply rounded-lg border border-wonder-purple/10 p-3 transition-all hover:border-wonder-purple/30 shadow-sm hover:shadow-magical;
 }
 
 .quiz-answer-selected {
-  @apply border-purple-500 bg-purple-50;
+  @apply border-wonder-purple bg-wonder-purple/5;
 }
 
 .quiz-answer-correct {
-  @apply border-green-500 bg-green-50 text-green-600;
+  @apply border-wonder-green bg-wonder-green/10 text-wonder-green;
 }
 
 .quiz-answer-incorrect {
-  @apply border-red-500 bg-red-50 text-red-500;
+  @apply border-wonder-coral bg-wonder-coral/5 text-wonder-coral;
 }
 
 /* Utility animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
+  50% { transform: translateY(-10px); }
 }
 
 .animate-float {
-  animation: float 8s ease-in-out infinite;
+  animation: float 6s ease-in-out infinite;
 }
 
 @keyframes pulse-soft {
@@ -180,7 +217,7 @@
 }
 
 .fade-scale-in {
-  animation: fade-scale-in 0.3s ease-out forwards;
+  animation: fade-scale-in 0.4s ease-out forwards;
 }
 
 /* Shadow effects */
@@ -190,6 +227,14 @@
 
 .shadow-wonder-lg {
   box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.15);
+}
+
+.shadow-magical {
+  box-shadow: 0 4px 10px -1px rgba(124, 58, 237, 0.2), 0 2px 5px -1px rgba(124, 58, 237, 0.1);
+}
+
+.shadow-magical-hover {
+  box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3), 0 4px 6px -2px rgba(124, 58, 237, 0.2);
 }
 
 /* Gradients */
@@ -231,21 +276,30 @@
   scrollbar-width: none;
 }
 
-/* Hover effects that work with Tailwind */
-.hover-scale {
-  transition-property: transform;
-  transition-duration: 200ms;
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
 }
-.hover-scale:hover {
-  transform: scale(1.05);
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(124, 58, 237, 0.2);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(124, 58, 237, 0.4);
+}
+
+/* Hover effects */
+.hover-scale {
+  @apply transition-transform duration-200 hover:scale-105;
 }
 
 .hover-scale-subtle {
-  transition-property: transform;
-  transition-duration: 200ms;
-}
-.hover-scale-subtle:hover {
-  transform: scale(1.02);
+  @apply transition-transform duration-200 hover:scale-102;
 }
 
 .scale-102 {
@@ -295,7 +349,7 @@
 
 /* Accessibility */
 .focus-ring {
-  outline: none;
+  @apply outline-none;
   box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(255, 255, 255, 1);
 }
 
@@ -315,9 +369,9 @@ a:focus-visible {
   }
 }
 
-/* Additional styles */
+/* Button styles */
 .btn-wonder {
-  @apply relative rounded-full text-white font-medium shadow-sm transition-all duration-300 overflow-hidden;
+  @apply relative rounded-full text-white font-medium shadow-magical transition-all duration-300 overflow-hidden;
 }
 
 .btn-wonder::before {
@@ -330,18 +384,12 @@ a:focus-visible {
   transform: scale(0.98);
 }
 
-/* Animation for entry */
-.animate-scale-in {
-  animation: scaleIn 0.2s ease-out forwards;
+/* Animation for sparkles */
+@keyframes sparkle {
+  0%, 100% { opacity: 0.5; transform: scale(1) rotate(0); }
+  50% { opacity: 1; transform: scale(1.5) rotate(20deg); }
 }
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.animate-sparkle {
+  animation: sparkle 2s ease-in-out infinite;
 }
