@@ -198,10 +198,12 @@
   @apply transition-transform duration-200 hover:scale-105;
 }
 
+/* Using our newly defined tailwind scale values */
 .hover-scale-subtle {
   @apply transition-transform duration-200 hover:scale-102;
 }
 
+/* These can be defined here for fallback, but we've also added them to tailwind config */
 .scale-102 {
   transform: scale(1.02);
 }
