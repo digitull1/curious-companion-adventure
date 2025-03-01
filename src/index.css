@@ -86,7 +86,7 @@
 }
 
 .chat-bubble-user {
-  @apply bg-gradient-wonder text-white rounded-2xl p-4 shadow-wonder relative;
+  @apply bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-2xl p-4 shadow-sm relative;
 }
 
 .chat-bubble-user::before {
@@ -96,14 +96,14 @@
   height: 0;
   border-style: solid;
   border-width: 0 8px 12px 8px;
-  border-color: transparent transparent #7c3aed transparent;
+  border-color: transparent transparent #8b5cf6 transparent;
   top: -12px;
   right: 24px;
 }
 
-/* Learning blocks - Improved with better visual hierarchy */
+/* Learning blocks */
 .learning-block {
-  @apply relative rounded-xl p-5 shadow-wonder border border-white bg-white overflow-hidden transition-all 
+  @apply relative rounded-xl p-5 shadow-sm border border-white bg-white overflow-hidden transition-all 
          cursor-pointer h-auto min-h-24 min-w-[240px] max-w-[320px] flex-shrink-0;
 }
 
@@ -137,55 +137,21 @@
   @apply bg-gradient-to-br from-pink-50 to-white border-pink-100;
 }
 
-/* Added scrolling container styles for learning blocks */
-.learning-blocks-container {
-  @apply flex gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-.learning-blocks-container .learning-block {
-  @apply snap-start;
-}
-
-/* Show navigation only when overflowing */
-.learning-blocks-wrapper {
-  @apply relative;
-}
-
-.scroll-button {
-  @apply absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/80 
-         shadow-wonder flex items-center justify-center border border-wonder-purple/10
-         text-wonder-purple transition-all opacity-0 hover:bg-white;
-}
-
-.scroll-button-left {
-  @apply left-0 -translate-x-1/2;
-}
-
-.scroll-button-right {
-  @apply right-0 translate-x-1/2;
-}
-
-.learning-blocks-wrapper:hover .scroll-button {
-  @apply opacity-100;
-}
-
 /* Quiz styling */
 .quiz-answer {
-  @apply rounded-lg border border-gray-200 p-3 transition-all hover:border-wonder-purple/30;
+  @apply rounded-lg border border-gray-200 p-3 transition-all hover:border-purple-300;
 }
 
 .quiz-answer-selected {
-  @apply border-wonder-purple bg-wonder-purple/5;
+  @apply border-purple-500 bg-purple-50;
 }
 
 .quiz-answer-correct {
-  @apply border-wonder-green bg-wonder-green/10 text-wonder-green;
+  @apply border-green-500 bg-green-50 text-green-600;
 }
 
 .quiz-answer-incorrect {
-  @apply border-destructive bg-destructive/5 text-destructive;
+  @apply border-red-500 bg-red-50 text-red-500;
 }
 
 /* Utility animations */
@@ -207,7 +173,7 @@
   animation: pulse-soft 3s ease-in-out infinite;
 }
 
-/* Add new subtle entry animation */
+/* Entry animation */
 @keyframes fade-scale-in {
   from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
@@ -217,7 +183,7 @@
   animation: fade-scale-in 0.3s ease-out forwards;
 }
 
-/* Enhance shadow effects */
+/* Shadow effects */
 .shadow-wonder {
   box-shadow: 0 4px 14px rgba(124, 58, 237, 0.1);
 }
@@ -226,6 +192,7 @@
   box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.15);
 }
 
+/* Gradients */
 .bg-gradient-wonder {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
 }
@@ -254,6 +221,7 @@
   background-color: #F9F7FF;
 }
 
+/* Hide scrollbar */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -263,16 +231,23 @@
   scrollbar-width: none;
 }
 
+/* Hover effects that work with Tailwind */
 .hover-scale {
-  @apply transition-transform duration-200 hover:scale-105;
+  transition-property: transform;
+  transition-duration: 200ms;
+}
+.hover-scale:hover {
+  transform: scale(1.05);
 }
 
-/* Using our newly defined tailwind scale values */
 .hover-scale-subtle {
-  @apply transition-transform duration-200 hover:scale-102;
+  transition-property: transform;
+  transition-duration: 200ms;
+}
+.hover-scale-subtle:hover {
+  transform: scale(1.02);
 }
 
-/* These can be defined here for fallback, but we've also added them to tailwind config */
 .scale-102 {
   transform: scale(1.02);
 }
@@ -285,6 +260,7 @@
   transform: scale(0.97);
 }
 
+/* Text colors */
 .text-wonder-purple {
   color: #7c3aed;
 }
@@ -317,9 +293,10 @@
   color: #10B981;
 }
 
-/* Added styles for better accessibility */
+/* Accessibility */
 .focus-ring {
-  @apply outline-none ring-2 ring-wonder-purple/50 ring-offset-2;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(255, 255, 255, 1);
 }
 
 button:focus-visible,
@@ -327,7 +304,7 @@ a:focus-visible {
   @apply focus-ring;
 }
 
-/* Add a class for better mobile layout */
+/* Mobile layout */
 .mobile-stack {
   @apply flex-col;
 }
@@ -338,9 +315,9 @@ a:focus-visible {
   }
 }
 
-/* Additional styles to fix layout issues */
+/* Additional styles */
 .btn-wonder {
-  @apply relative rounded-full text-white font-medium shadow-wonder transition-all duration-300 overflow-hidden;
+  @apply relative rounded-full text-white font-medium shadow-sm transition-all duration-300 overflow-hidden;
 }
 
 .btn-wonder::before {
@@ -350,155 +327,21 @@ a:focus-visible {
 }
 
 .btn-wonder:active {
-  @apply scale-98;
+  transform: scale(0.98);
 }
 
-.magical-orb {
-  @apply absolute rounded-full blur-3xl opacity-40 pointer-events-none animate-float;
+/* Animation for entry */
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
 }
 
-.magical-orb::before {
-  content: '';
-  @apply absolute inset-0 rounded-full blur-xl opacity-60;
-  background: inherit;
-}
-
-.sparkle {
-  @apply absolute w-2 h-2 rounded-full bg-white animate-sparkle;
-}
-
-.text-gradient-purple {
-  @apply bg-gradient-purple bg-clip-text text-transparent;
-}
-
-.text-gradient-teal {
-  @apply bg-gradient-teal bg-clip-text text-transparent;
-}
-
-.text-gradient-wonder {
-  @apply bg-gradient-wonder bg-clip-text text-transparent;
-}
-
-.award-badge {
-  @apply rounded-full bg-white shadow-sm flex items-center justify-center;
-}
-
-.award-badge-content {
-  @apply flex items-center justify-center;
-}
-
-.achievement-unlock {
-  @apply rounded-full bg-gradient-rainbow animate-pulse-soft shadow-wonder;
-}
-
-.achievement-content {
-  @apply bg-white rounded-full px-3 py-1;
-}
-
-.learning-path-connector {
-  @apply absolute h-1 bg-gradient-rainbow rounded-full top-5 left-5 opacity-50;
-}
-
-.learning-path-node {
-  @apply w-10 h-10 rounded-full bg-gradient-rainbow flex items-center justify-center text-white font-bold shadow-wonder z-10 relative;
-}
-
-.progress-track {
-  @apply h-2 rounded-full bg-wonder-purple/10 overflow-hidden;
-}
-
-.progress-bar {
-  @apply h-full bg-gradient-wonder rounded-full;
-}
-
-.certificate {
-  @apply border-4 border-wonder-purple/10 rounded-xl p-8 bg-white shadow-wonder relative overflow-hidden;
-}
-
-.certificate::before {
-  content: '';
-  @apply absolute -right-20 -top-20 w-40 h-40 bg-gradient-rainbow opacity-10 rounded-full blur-2xl;
-}
-
-.certificate::after {
-  content: '';
-  @apply absolute -left-20 -bottom-20 w-40 h-40 bg-gradient-purple opacity-10 rounded-full blur-2xl;
-}
-
-.trophy {
-  @apply w-10 h-10 rounded-full bg-wonder-yellow/10 flex items-center justify-center;
-}
-
-.point-counter {
-  @apply bg-gradient-wonder/10 px-3 py-1 rounded-full text-xs font-medium text-wonder-purple;
-}
-
-.illustration-container {
-  @apply relative;
-}
-
-.illustration-shadow {
-  @apply w-16 h-2 bg-black/5 rounded-full absolute bottom-0 left-1/2 -translate-x-1/2 blur-sm;
-}
-
-.feature-card {
-  @apply bg-white rounded-xl p-6 shadow-sm border border-muted transition-all duration-300 hover:shadow-wonder hover:border-wonder-purple/10;
-}
-
-@keyframes levitate {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(3px); }
-}
-
-.animate-levitate {
-  animation: levitate 1.5s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
-}
-
-.animate-glow {
-  animation: glow 3s ease-in-out infinite;
-}
-
-/* Fix for header elements */
-.header-nav {
-  @apply flex items-center space-x-1 lg:space-x-2;
-}
-
-/* Fixes for chat interface elements */
-.chatbox-container {
-  @apply w-full max-w-4xl mx-auto flex flex-col h-full;
-}
-
-.chat-header {
-  @apply sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b;
-}
-
-.chat-messages {
-  @apply flex-grow overflow-y-auto p-4;
-}
-
-.chat-input {
-  @apply sticky bottom-0 z-10 bg-white/80 backdrop-blur-sm border-t p-4;
-}
-
-/* Additional table of contents styles */
-.toc-section {
-  @apply flex items-center gap-2 p-3 rounded-lg transition-colors;
-}
-
-.toc-section-number {
-  @apply w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium shrink-0;
-}
-
-.toc-section-completed .toc-section-number {
-  @apply bg-wonder-purple text-white;
-}
-
-/* Fix for missing elements in Index page */
-.index-container {
-  @apply min-h-screen overflow-x-hidden;
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
