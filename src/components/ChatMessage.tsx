@@ -1,6 +1,7 @@
 
 import React, { useRef, useEffect } from "react";
 import { animate } from "@motionone/dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ChatMessageProps {
   message: string;
@@ -54,7 +55,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
         ? 'chat-bubble-user transform transition-transform active:scale-98' 
         : 'chat-bubble-ai transform transition-transform hover:scale-102'
       }>
-        <p className="whitespace-pre-line leading-relaxed text-base">{message}</p>
+        <p className="whitespace-pre-line leading-relaxed text-base font-rounded">{message}</p>
         {children}
       </div>
     </div>

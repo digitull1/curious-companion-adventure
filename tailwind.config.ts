@@ -1,4 +1,3 @@
-
 import { type Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
@@ -28,6 +27,8 @@ export default {
         sans: ["var(--font-sans)", ...fontFamily.sans],
         display: ["'Montserrat'", ...fontFamily.sans],
         rounded: ["'Varela Round'", ...fontFamily.sans],
+        comic: ["'Comic Neue'", "Comic Sans MS", ...fontFamily.sans],
+        bubbly: ["'Baloo 2'", ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {

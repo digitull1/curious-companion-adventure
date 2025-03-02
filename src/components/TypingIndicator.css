@@ -12,9 +12,9 @@
 }
 
 .typing-indicator span {
-  height: 10px;
-  width: 10px;
-  margin: 0 3px;
+  height: 12px;
+  width: 12px;
+  margin: 0 4px;
   background-color: #7c3aed;
   border-radius: 50%;
   display: inline-block;
@@ -34,17 +34,17 @@
 
 .typing-indicator span:nth-child(1) {
   animation: bounce 1.2s infinite 0.2s;
-  background-image: linear-gradient(135deg, #7c3aed, #9d74f8);
+  background-image: linear-gradient(135deg, #F59E0B, #FBBF24);
 }
 
 .typing-indicator span:nth-child(2) {
   animation: bounce 1.2s infinite 0.4s;
-  background-image: linear-gradient(135deg, #9d74f8, #7c3aed);
+  background-image: linear-gradient(135deg, #7c3aed, #9d74f8);
 }
 
 .typing-indicator span:nth-child(3) {
   animation: bounce 1.2s infinite 0.6s;
-  background-image: linear-gradient(135deg, #7c3aed, #9d74f8);
+  background-image: linear-gradient(135deg, #14B8A6, #5EEAD4);
 }
 
 .typing-indicator::before {
@@ -65,7 +65,7 @@
     opacity: 0.7;
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-10px);
     opacity: 1;
   }
 }

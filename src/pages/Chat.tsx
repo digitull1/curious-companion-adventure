@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
 import { 
   BookOpen, Crown, LogOut, Settings, Star, UserRound, 
   Eraser, MessageCircle, Send, Sparkles, 
-  CheckCircle, ListTodo, Mic, ChevronRight, HelpCircle, Rocket, BookMarked, Brain
+  CheckCircle, ListTodo, ChevronRight, HelpCircle, Info, Rocket, BookMarked, Brain
 } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
@@ -20,6 +19,7 @@ import { useOpenAI } from "@/hooks/useOpenAI";
 import { animate } from "@motionone/dom";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Message {
   id: string;
@@ -83,6 +83,8 @@ const Chat = () => {
     "Why is the sky blue?",
     "How do animals communicate?"
   ];
+  
+  const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(false);
   
   useEffect(() => {
     // If user hasn't completed onboarding, redirect them
@@ -393,30 +395,30 @@ const Chat = () => {
   
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white">
-      {/* Header */}
+      {/* Header - Simplified */}
       <header className="border-b bg-white/90 backdrop-blur-sm z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="w-full mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center">
             <WonderWhizLogo size="md" className="animate-float" />
             
             <div className="hidden md:flex ml-8 gap-6">
               <button className="text-sm font-medium text-muted-foreground hover:text-wonder-purple transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-wonder-purple/5">
                 <BookOpen className="h-4 w-4" />
-                <span>Topics</span>
+                <span className="font-rounded">Topics</span>
               </button>
               <button className="text-sm font-medium text-muted-foreground hover:text-wonder-purple transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-wonder-purple/5">
                 <Star className="h-4 w-4" />
-                <span>Rewards</span>
+                <span className="font-rounded">Rewards</span>
               </button>
               <button className="text-sm font-medium text-muted-foreground hover:text-wonder-purple transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-wonder-purple/5">
                 <Crown className="h-4 w-4" />
-                <span>Progress</span>
+                <span className="font-rounded">Progress</span>
               </button>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="bg-wonder-purple/10 text-wonder-purple rounded-full px-4 py-1 text-sm font-semibold flex items-center gap-2">
+            <div className="bg-wonder-purple/10 text-wonder-purple rounded-full px-4 py-1 text-sm font-semibold flex items-center gap-2 font-rounded">
               <Star className="h-3.5 w-3.5" />
               <span>{points} points</span>
             </div>
@@ -437,9 +439,9 @@ const Chat = () => {
                         {getAvatarEmoji()}
                       </div>
                       <div>
-                        <p className="font-bold text-foreground capitalize">{avatar}</p>
-                        <p className="text-sm text-muted-foreground">{ageRange} years</p>
-                        <div className="flex items-center mt-1 text-xs text-wonder-purple">
+                        <p className="font-bold text-foreground capitalize font-rounded">{avatar}</p>
+                        <p className="text-sm text-muted-foreground font-rounded">{ageRange} years</p>
+                        <div className="flex items-center mt-1 text-xs text-wonder-purple font-rounded">
                           <Crown className="h-3 w-3 mr-1" />
                           <span>Level 3 Explorer</span>
                         </div>
@@ -453,20 +455,20 @@ const Chat = () => {
                         setShowAgeSelector(true);
                         setIsMenuOpen(false);
                       }}
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-wonder-purple/5 flex items-center text-foreground"
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-wonder-purple/5 flex items-center text-foreground font-rounded"
                     >
                       <UserRound className="h-4 w-4 mr-3 text-wonder-purple" />
                       Change Age Range
                     </button>
                     <button 
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-wonder-purple/5 flex items-center text-foreground"
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-wonder-purple/5 flex items-center text-foreground font-rounded"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <Settings className="h-4 w-4 mr-3 text-wonder-purple" />
                       Settings
                     </button>
                     <button 
-                      className="w-full text-left px-4 py-2.5 text-sm text-wonder-coral hover:bg-wonder-coral/5 flex items-center"
+                      className="w-full text-left px-4 py-2.5 text-sm text-wonder-coral hover:bg-wonder-coral/5 flex items-center font-rounded"
                       onClick={handleLogout}
                     >
                       <LogOut className="h-4 w-4 mr-3" />
@@ -482,15 +484,15 @@ const Chat = () => {
       
       {/* Stats Bar */}
       <div className="bg-white/60 backdrop-blur-sm border-b border-wonder-purple/10 px-4 py-2.5">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="w-full mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
               <div className="h-9 w-9 rounded-full bg-gradient-to-br from-wonder-coral to-wonder-coral-dark flex items-center justify-center text-white shadow-magical">
                 <Crown className="h-4 w-4" />
               </div>
               <div className="ml-2">
-                <div className="text-xs text-muted-foreground">Learning Streak</div>
-                <div className="font-bold text-sm flex items-center">
+                <div className="text-xs text-muted-foreground font-rounded">Learning Streak</div>
+                <div className="font-bold text-sm flex items-center font-rounded">
                   {streakCount} days 
                   <Sparkles className="h-3 w-3 ml-1 text-wonder-yellow animate-sparkle" />
                 </div>
@@ -504,8 +506,8 @@ const Chat = () => {
                 <Star className="h-4 w-4" />
               </div>
               <div className="ml-2">
-                <div className="text-xs text-muted-foreground">Points</div>
-                <div className="font-bold text-sm">{points}</div>
+                <div className="text-xs text-muted-foreground font-rounded">Points</div>
+                <div className="font-bold text-sm font-rounded">{points}</div>
               </div>
             </div>
             
@@ -517,7 +519,7 @@ const Chat = () => {
                     <ListTodo className="h-4 w-4" />
                   </div>
                   <div className="ml-2">
-                    <div className="text-xs text-muted-foreground">Progress</div>
+                    <div className="text-xs text-muted-foreground font-rounded">Progress</div>
                     <div className="w-24 h-2.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
                       <div 
                         className="h-full bg-gradient-to-r from-wonder-purple to-wonder-purple-light rounded-full transition-all duration-700 relative overflow-hidden"
@@ -532,24 +534,31 @@ const Chat = () => {
             )}
           </div>
           
-          <div className="flex space-x-2">
-            <button 
-              className="flex items-center gap-1.5 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-light/20 hover:from-wonder-purple/30 hover:to-wonder-purple-light/30 px-3.5 py-1.5 rounded-full text-wonder-purple text-sm font-medium transition-all duration-300 border border-wonder-purple/20 shadow-sm"
-              onClick={() => setShowAgeSelector(true)}
-            >
-              <UserRound className="h-3.5 w-3.5 mr-1" />
-              Age: {ageRange}
-            </button>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-light/20 hover:from-wonder-purple/30 hover:to-wonder-purple-light/30 px-3.5 py-1.5 rounded-full text-wonder-purple text-sm font-medium transition-all duration-300 border border-wonder-purple/20 shadow-sm font-rounded"
+                  onClick={() => setShowAgeSelector(true)}
+                >
+                  <UserRound className="h-3.5 w-3.5 mr-1" />
+                  Age: {ageRange}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-white/95 backdrop-blur-sm border border-wonder-purple/20 shadow-magical">
+                <p className="font-rounded text-sm">Change your age range for personalized content</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
       
-      {/* Main Content Area */}
+      {/* Main Content Area - Made Fullscreen */}
       <main className="flex-1 overflow-hidden bg-gradient-to-b from-wonder-background/50 to-white/30 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto h-full flex flex-col">
+        <div className="w-full h-full mx-auto flex flex-col px-4 md:px-8">
           {/* Chat Messages */}
           <div 
-            className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin" 
+            className="flex-1 overflow-y-auto py-6 scrollbar-thin" 
             ref={chatHistoryRef}
           >
             {messages.map((message) => (
@@ -608,11 +617,27 @@ const Chat = () => {
                 )}
                 
                 {message.isIntroduction && relatedTopics.length > 0 && (
-                  <div className="mb-8">
-                    <RelatedTopicsCard 
-                      topics={relatedTopics} 
-                      onTopicClick={handleRelatedTopicClick}
-                    />
+                  <div className="mb-8 overflow-x-auto hide-scrollbar">
+                    <div className="flex gap-3 pb-2">
+                      {relatedTopics.map((topic, index) => (
+                        <div 
+                          key={index}
+                          onClick={() => handleRelatedTopicClick(topic)}
+                          className="flex-shrink-0 min-w-[180px] max-w-[220px] p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
+                                    hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
+                                    hover:-translate-y-1 transform"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
+                              <Sparkles className="h-4 w-4" />
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-wonder-purple/60" />
+                          </div>
+                          <h3 className="font-medium text-sm text-foreground font-rounded leading-tight">{topic}</h3>
+                          <p className="text-xs text-muted-foreground mt-1 font-rounded">Click to explore</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -623,52 +648,47 @@ const Chat = () => {
             <div ref={messagesEndRef} />
           </div>
           
-          {/* Suggested Prompts */}
-          {suggestedPrompts.length > 0 && messages.length < 3 && (
-            <div className="px-4 mb-4">
-              <div className="flex items-center mb-2">
-                <div className="flex items-center justify-center h-7 w-7 rounded-full bg-gradient-to-r from-wonder-yellow to-wonder-yellow-dark text-white mr-2 shadow-magical">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-medium text-wonder-purple">Try asking about:</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {suggestedPrompts.map((prompt) => (
-                  <button
-                    key={prompt}
-                    onClick={() => handleSuggestedPromptClick(prompt)}
-                    className="bg-white/80 backdrop-blur-sm border border-wonder-purple/30 text-wonder-purple-dark rounded-full px-3.5 py-1.5 text-sm hover:bg-wonder-purple/5 transition-all duration-300 shadow-sm hover:border-wonder-purple/50 hover:shadow-magical"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Suggested Prompts - Made into a tooltip */}
+          <div className="px-4 md:px-0 mb-4">
+            {messages.length < 3 && (
+              <TooltipProvider>
+                <Tooltip open={showSuggestedPrompts} onOpenChange={setShowSuggestedPrompts}>
+                  <TooltipTrigger asChild>
+                    <button
+                      className="inline-flex items-center gap-1.5 bg-white/80 backdrop-blur-sm border border-wonder-purple/20 
+                               text-wonder-purple rounded-full px-3 py-1.5 text-sm shadow-sm hover:bg-wonder-purple/5 
+                               transition-all duration-300 font-rounded"
+                    >
+                      <Info className="h-4 w-4" />
+                      <span>Need ideas?</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="start" className="p-3 w-[280px] bg-white/95 backdrop-blur-md border border-wonder-purple/20 shadow-magical">
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-wonder-purple font-rounded text-sm">Try asking about:</h3>
+                      <div className="space-y-1.5">
+                        {suggestedPrompts.map((prompt) => (
+                          <button
+                            key={prompt}
+                            onClick={() => {
+                              handleSuggestedPromptClick(prompt);
+                              setShowSuggestedPrompts(false);
+                            }}
+                            className="w-full text-left p-2 hover:bg-wonder-purple/5 rounded-lg text-sm transition-colors font-rounded"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
           
-          {/* Chat Input */}
-          <div className="p-4 border-t border-wonder-purple/10 bg-white/80 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-3">
-              <button
-                onClick={clearChat}
-                className="flex items-center text-sm font-medium text-muted-foreground hover:text-wonder-purple transition-colors px-2 py-1 rounded-md hover:bg-wonder-purple/5"
-              >
-                <Eraser className="h-3.5 w-3.5 mr-1.5" />
-                Clear chat
-              </button>
-              
-              <div className="flex space-x-1">
-                <button className="flex items-center text-sm font-medium text-wonder-teal hover:text-wonder-teal-dark transition-colors px-2 py-1 rounded-md hover:bg-wonder-teal/5">
-                  <HelpCircle className="h-3.5 w-3.5 mr-1.5" />
-                  Help
-                </button>
-                <button className="flex items-center text-sm font-medium text-wonder-yellow hover:text-wonder-yellow-dark transition-colors px-2 py-1 rounded-md hover:bg-wonder-yellow/5">
-                  <BookMarked className="h-3.5 w-3.5 mr-1.5" />
-                  Resources
-                </button>
-              </div>
-            </div>
-            
+          {/* Chat Input - Simplified */}
+          <div className="py-4 border-t border-wonder-purple/10 bg-white/80 backdrop-blur-sm mb-4">
             <div className="relative">
               <div className="relative flex">
                 <input
@@ -679,7 +699,7 @@ const Chat = () => {
                   onKeyDown={handleKeyDown}
                   placeholder={selectedTopic ? `Ask me about ${selectedTopic} or explore a section...` : "Ask me anything..."}
                   disabled={isProcessing}
-                  className="w-full pl-12 pr-16 py-4 rounded-full border border-wonder-purple/20 focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 shadow-magical bg-white/90 backdrop-blur-sm placeholder:text-slate-400 text-foreground"
+                  className="w-full pl-12 pr-16 py-4 rounded-full border border-wonder-purple/20 focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 shadow-magical bg-white/90 backdrop-blur-sm placeholder:text-slate-400 text-foreground font-rounded"
                 />
                 
                 <div className="absolute left-4 top-1/2 -translate-y-1/2">
@@ -711,26 +731,6 @@ const Chat = () => {
                 </div>
               </div>
             </div>
-            
-            {/* Learning Tools Menu */}
-            <div className="flex justify-center mt-3">
-              <div className="bg-white/90 backdrop-blur-sm border border-wonder-purple/10 rounded-full px-2 py-1 shadow-sm">
-                <div className="flex space-x-2">
-                  <button className="p-1.5 text-wonder-purple/80 hover:text-wonder-purple transition-colors rounded-full hover:bg-wonder-purple/5 flex items-center justify-center">
-                    <BookOpen className="h-4 w-4" />
-                  </button>
-                  <button className="p-1.5 text-wonder-yellow/80 hover:text-wonder-yellow transition-colors rounded-full hover:bg-wonder-yellow/5 flex items-center justify-center">
-                    <Rocket className="h-4 w-4" />
-                  </button>
-                  <button className="p-1.5 text-wonder-teal/80 hover:text-wonder-teal transition-colors rounded-full hover:bg-wonder-teal/5 flex items-center justify-center">
-                    <Brain className="h-4 w-4" />
-                  </button>
-                  <button className="p-1.5 text-wonder-coral/80 hover:text-wonder-coral transition-colors rounded-full hover:bg-wonder-coral/5 flex items-center justify-center">
-                    <HelpCircle className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </main>
@@ -746,7 +746,7 @@ const Chat = () => {
       
       {/* Footer - Simplified */}
       <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 text-center text-xs text-muted-foreground">
-        <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
+        <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium font-rounded">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
       </div>
       
       {/* Toast */}
