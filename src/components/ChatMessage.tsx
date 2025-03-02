@@ -19,7 +19,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
         animate(
           messageRef.current,
           { opacity: [0, 1], y: [20, 0] },
-          { duration: 0.4, easing: [0.25, 1, 0.5, 1] }
+          { duration: 0.5, easing: [0.25, 1, 0.5, 1] }
         );
       }
       
@@ -54,7 +54,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
         ? 'chat-bubble-user transform transition-transform active:scale-98' 
         : 'chat-bubble-ai transform transition-transform hover:scale-102'
       }>
-        <p className="whitespace-pre-line leading-relaxed">{message}</p>
+        <p className="whitespace-pre-line leading-relaxed text-base">{message}</p>
         {children}
       </div>
     </div>

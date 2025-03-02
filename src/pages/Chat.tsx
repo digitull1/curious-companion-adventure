@@ -1,11 +1,11 @@
-
+<lov-code>
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
 import { 
   BookOpen, Crown, LogOut, Settings, Star, UserRound, 
-  Eraser, Image, Lightbulb, Search, Send, Sparkles, 
-  CheckCircle, ListTodo, MessageCircle, Mic, X, ArrowRight, ChevronRight
+  Eraser, MessageCircle, Send, Sparkles, 
+  CheckCircle, ListTodo, Mic, ChevronRight, HelpCircle, Rocket, BookMarked, Brain
 } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
@@ -19,6 +19,7 @@ import RelatedTopicsCard from "@/components/RelatedTopicsCard";
 import { useOpenAI } from "@/hooks/useOpenAI";
 import { animate } from "@motionone/dom";
 import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 interface Message {
   id: string;
@@ -393,7 +394,7 @@ const Chat = () => {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white">
       {/* Header */}
-      <header className="border-b bg-white shadow-sm z-10 backdrop-blur-sm bg-white/90">
+      <header className="border-b bg-white/90 backdrop-blur-sm z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center">
             <WonderWhizLogo size="md" className="animate-float" />
@@ -428,16 +429,8 @@ const Chat = () => {
             </div>
             
             <div className="relative">
-              <div 
-                className="flex items-center gap-2 py-1.5 px-4 rounded-full bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-light/20 hover:from-wonder-purple/30 hover:to-wonder-purple-light/30 cursor-pointer transition-all duration-300 border border-wonder-purple/20 shadow-sm"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-              >
-                <span className="text-sm text-wonder-purple font-medium">{ageRange} years</span>
-                <UserRound className="h-4 w-4 text-wonder-purple" />
-              </div>
-              
               {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-pixar py-3 z-50 border border-wonder-purple/10 backdrop-blur-sm bg-white/95">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-pixar py-3 z-50 border border-wonder-purple/10 backdrop-blur-sm bg-white/95 animate-fade-in-up">
                   <div className="px-4 py-3 border-b border-wonder-purple/10">
                     <div className="flex items-center gap-3">
                       <div className={`h-14 w-14 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical text-2xl`}>
@@ -456,7 +449,10 @@ const Chat = () => {
                   
                   <div className="pt-2">
                     <button 
-                      onClick={() => setShowAgeSelector(true)}
+                      onClick={() => {
+                        setShowAgeSelector(true);
+                        setIsMenuOpen(false);
+                      }}
                       className="w-full text-left px-4 py-2.5 text-sm hover:bg-wonder-purple/5 flex items-center text-foreground"
                     >
                       <UserRound className="h-4 w-4 mr-3 text-wonder-purple" />
@@ -524,9 +520,11 @@ const Chat = () => {
                     <div className="text-xs text-muted-foreground">Progress</div>
                     <div className="w-24 h-2.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-wonder-purple to-wonder-purple-light rounded-full transition-all duration-700" 
+                        className="h-full bg-gradient-to-r from-wonder-purple to-wonder-purple-light rounded-full transition-all duration-700 relative overflow-hidden"
                         style={{ width: `${learningProgress}%` }}
-                      ></div>
+                      >
+                        <div className="absolute inset-0 animate-shine"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -539,8 +537,8 @@ const Chat = () => {
               className="flex items-center gap-1.5 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-light/20 hover:from-wonder-purple/30 hover:to-wonder-purple-light/30 px-3.5 py-1.5 rounded-full text-wonder-purple text-sm font-medium transition-all duration-300 border border-wonder-purple/20 shadow-sm"
               onClick={() => setShowAgeSelector(true)}
             >
+              <UserRound className="h-3.5 w-3.5 mr-1" />
               Age: {ageRange}
-              <CheckCircle className="h-3.5 w-3.5 ml-1" />
             </button>
           </div>
         </div>
@@ -551,7 +549,7 @@ const Chat = () => {
         <div className="max-w-4xl mx-auto h-full flex flex-col">
           {/* Chat Messages */}
           <div 
-            className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin scrollbar-thumb-wonder-purple/20 scrollbar-track-transparent" 
+            className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin" 
             ref={chatHistoryRef}
           >
             {messages.map((message) => (
@@ -628,16 +626,18 @@ const Chat = () => {
           {/* Suggested Prompts */}
           {suggestedPrompts.length > 0 && messages.length < 3 && (
             <div className="px-4 mb-4">
-              <div className="flex items-center mb-2 text-sm font-medium text-wonder-purple">
-                <Lightbulb className="h-4 w-4 mr-2 text-wonder-yellow" />
-                <span>Try asking about:</span>
+              <div className="flex items-center mb-2">
+                <div className="flex items-center justify-center h-7 w-7 rounded-full bg-gradient-to-r from-wonder-yellow to-wonder-yellow-dark text-white mr-2 shadow-magical">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <span className="text-sm font-medium text-wonder-purple">Try asking about:</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {suggestedPrompts.map((prompt) => (
                   <button
                     key={prompt}
                     onClick={() => handleSuggestedPromptClick(prompt)}
-                    className="bg-white border border-wonder-purple/30 text-wonder-purple-dark rounded-full px-3.5 py-1.5 text-sm hover:bg-wonder-purple/5 transition-all duration-300 shadow-sm hover:border-wonder-purple/50 hover:shadow-magical"
+                    className="bg-white/80 backdrop-blur-sm border border-wonder-purple/30 text-wonder-purple-dark rounded-full px-3.5 py-1.5 text-sm hover:bg-wonder-purple/5 transition-all duration-300 shadow-sm hover:border-wonder-purple/50 hover:shadow-magical"
                   >
                     {prompt}
                   </button>
@@ -656,12 +656,17 @@ const Chat = () => {
                 <Eraser className="h-3.5 w-3.5 mr-1.5" />
                 Clear chat
               </button>
-              <button
-                className="flex items-center text-sm font-medium text-muted-foreground hover:text-wonder-purple transition-colors px-2 py-1 rounded-md hover:bg-wonder-purple/5"
-              >
-                <BookOpen className="h-3.5 w-3.5 mr-1.5" />
-                Learning resources
-              </button>
+              
+              <div className="flex space-x-1">
+                <button className="flex items-center text-sm font-medium text-wonder-teal hover:text-wonder-teal-dark transition-colors px-2 py-1 rounded-md hover:bg-wonder-teal/5">
+                  <HelpCircle className="h-3.5 w-3.5 mr-1.5" />
+                  Help
+                </button>
+                <button className="flex items-center text-sm font-medium text-wonder-yellow hover:text-wonder-yellow-dark transition-colors px-2 py-1 rounded-md hover:bg-wonder-yellow/5">
+                  <BookMarked className="h-3.5 w-3.5 mr-1.5" />
+                  Resources
+                </button>
+              </div>
             </div>
             
             <div className="relative">
@@ -707,20 +712,24 @@ const Chat = () => {
               </div>
             </div>
             
-            {/* Quick Access */}
-            <div className="flex justify-center mt-3 space-x-4">
-              <button className="p-1.5 text-wonder-purple-light hover:text-wonder-purple transition-colors rounded-full hover:bg-wonder-purple/5">
-                <Image className="h-5 w-5" />
-              </button>
-              <button className="p-1.5 text-wonder-teal-light hover:text-wonder-teal-dark transition-colors rounded-full hover:bg-wonder-teal/5">
-                <Star className="h-5 w-5" />
-              </button>
-              <button className="p-1.5 text-wonder-coral-light hover:text-wonder-coral-dark transition-colors rounded-full hover:bg-wonder-coral/5">
-                <Sparkles className="h-5 w-5" />
-              </button>
-              <button className="p-1.5 text-wonder-yellow-light hover:text-wonder-yellow-dark transition-colors rounded-full hover:bg-wonder-yellow/5">
-                <Mic className="h-5 w-5" />
-              </button>
+            {/* Learning Tools Menu */}
+            <div className="flex justify-center mt-3">
+              <div className="bg-white/90 backdrop-blur-sm border border-wonder-purple/10 rounded-full px-2 py-1 shadow-sm">
+                <div className="flex space-x-2">
+                  <button className="p-1.5 text-wonder-purple/80 hover:text-wonder-purple transition-colors rounded-full hover:bg-wonder-purple/5 flex items-center justify-center">
+                    <BookOpen className="h-4 w-4" />
+                  </button>
+                  <button className="p-1.5 text-wonder-yellow/80 hover:text-wonder-yellow transition-colors rounded-full hover:bg-wonder-yellow/5 flex items-center justify-center">
+                    <Rocket className="h-4 w-4" />
+                  </button>
+                  <button className="p-1.5 text-wonder-teal/80 hover:text-wonder-teal transition-colors rounded-full hover:bg-wonder-teal/5 flex items-center justify-center">
+                    <Brain className="h-4 w-4" />
+                  </button>
+                  <button className="p-1.5 text-wonder-coral/80 hover:text-wonder-coral transition-colors rounded-full hover:bg-wonder-coral/5 flex items-center justify-center">
+                    <HelpCircle className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -735,12 +744,12 @@ const Chat = () => {
         />
       )}
       
-      {/* Footer */}
+      {/* Footer - Simplified */}
       <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 text-center text-xs text-muted-foreground">
         <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
       </div>
+      
+      {/* Toast */}
+      <Toaster position="top-right" />
     </div>
-  );
-};
-
-export default Chat;
+  
