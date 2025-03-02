@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
@@ -752,4 +752,7 @@ const Chat = () => {
       {/* Toast */}
       <Toaster position="top-right" />
     </div>
-  
+  );
+};
+
+export default Chat;
