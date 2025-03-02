@@ -33,7 +33,9 @@ interface ChatAreaProps {
   messages: Message[];
   showTypingIndicator: boolean;
   completedSections: string[];
+  currentSection: string | null;
   relatedTopics: string[];
+  learningComplete: boolean;
   onBlockClick: (type: BlockType, messageId: string, messageText: string) => void;
   onTocSectionClick: (section: string) => void;
   onRelatedTopicClick: (topic: string) => void;
@@ -43,7 +45,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   messages,
   showTypingIndicator,
   completedSections,
+  currentSection,
   relatedTopics,
+  learningComplete,
   onBlockClick,
   onTocSectionClick,
   onRelatedTopicClick
@@ -51,6 +55,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
   const learningBlocksRef = useRef<HTMLDivElement>(null);
+  const relatedTopicsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollToBottom();
@@ -68,7 +73,19 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         );
       });
     }
-  }, []);
+
+    // Apply animations to related topics when they appear
+    if (relatedTopicsRef.current && learningComplete) {
+      const topics = relatedTopicsRef.current.querySelectorAll('.related-topic');
+      topics.forEach((topic, index) => {
+        animate(
+          topic,
+          { opacity: [0, 1], scale: [0.9, 1], y: [10, 0] },
+          { duration: 0.4, delay: 0.15 * index, easing: "ease-out" }
+        );
+      });
+    }
+  }, [learningComplete]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -93,6 +110,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               <TableOfContents 
                 sections={message.tableOfContents} 
                 completedSections={completedSections}
+                currentSection={currentSection}
                 onSectionClick={onTocSectionClick}
               />
             )}
@@ -141,16 +159,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             </div>
           )}
           
-          {message.isIntroduction && relatedTopics.length > 0 && (
-            <div className="mb-8 overflow-x-auto hide-scrollbar">
-              <div className="flex gap-3 pb-2">
+          {message.isIntroduction && relatedTopics.length > 0 && learningComplete && (
+            <div className="mb-8" ref={relatedTopicsRef}>
+              <h3 className="text-lg font-medium mb-3 text-wonder-purple">Explore more topics:</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 {relatedTopics.map((topic, index) => (
                   <div 
                     key={index}
                     onClick={() => onRelatedTopicClick(topic)}
-                    className="flex-shrink-0 min-w-[180px] max-w-[220px] p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
+                    className="related-topic p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
                               hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
                               hover:-translate-y-1 transform"
+                    style={{ opacity: 0 }} // Initially invisible for animation
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">

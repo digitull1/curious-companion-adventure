@@ -1,17 +1,19 @@
 
 import React, { useRef, useEffect } from "react";
-import { CheckCircle, BookOpen, ArrowRight } from "lucide-react";
+import { CheckCircle, BookOpen, ArrowRight, ChevronRight } from "lucide-react";
 import { animate } from "@motionone/dom";
 
 interface TableOfContentsProps {
   sections: string[];
   completedSections: string[];
+  currentSection: string | null;
   onSectionClick: (section: string) => void;
 }
 
 const TableOfContents: React.FC<TableOfContentsProps> = ({ 
   sections, 
   completedSections,
+  currentSection,
   onSectionClick
 }) => {
   const tocRef = useRef<HTMLDivElement>(null);
@@ -44,6 +46,22 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
     ? Math.round((completedSections.length / sections.length) * 100)
     : 0;
     
+  // Determine the next section to study
+  const getNextSection = () => {
+    if (currentSection) {
+      const currentIndex = sections.indexOf(currentSection);
+      if (currentIndex < sections.length - 1) {
+        return sections[currentIndex + 1];
+      }
+    } else if (sections.length > 0 && completedSections.length < sections.length) {
+      // Find the first incomplete section
+      return sections.find(section => !completedSections.includes(section)) || null;
+    }
+    return null;
+  };
+
+  const nextSection = getNextSection();
+    
   return (
     <div 
       className="mt-4 bg-white/90 backdrop-blur-sm rounded-xl p-5 shadow-pixar transition-all duration-300 hover:shadow-magical relative overflow-hidden"
@@ -67,12 +85,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
           style={{ width: `${progressPercentage}%` }}
         >
           {/* Animated shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine" 
-               style={{ 
-                 transform: 'translateX(-100%)', 
-                 animation: 'shine 2s infinite' 
-               }}>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine"></div>
         </div>
       </div>
       
@@ -87,6 +100,9 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       <div className="space-y-2">
         {sections.map((section, index) => {
           const isCompleted = completedSections.includes(section);
+          const isCurrent = section === currentSection;
+          const isNext = section === nextSection;
+          
           return (
             <button
               key={index}
@@ -96,7 +112,11 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                 transform hover:-translate-y-1 active:translate-y-0 group
                 ${isCompleted
                   ? "bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 border border-wonder-purple/20 shadow-sm"
-                  : "bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-wonder-purple/20 hover:bg-wonder-purple/5 hover:shadow-magical"
+                  : isCurrent
+                    ? "bg-gradient-to-r from-wonder-blue/10 to-wonder-blue/5 border border-wonder-blue/20 shadow-magical"
+                    : isNext
+                      ? "bg-gradient-to-r from-wonder-yellow/10 to-wonder-yellow/5 border border-wonder-yellow/20 shadow-magical animate-pulse-soft"
+                      : "bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-wonder-purple/20 hover:bg-wonder-purple/5 hover:shadow-magical"
                 }`}
               style={{ opacity: 0 }} // Start invisible for animation
             >
@@ -104,35 +124,71 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 transition-all 
                                ${isCompleted 
                                 ? "bg-wonder-purple text-white shadow-magical" 
-                                : "bg-wonder-purple/10 text-wonder-purple"}`}>
+                                : isCurrent
+                                  ? "bg-wonder-blue text-white shadow-magical"
+                                  : isNext
+                                    ? "bg-wonder-yellow text-white shadow-magical"
+                                    : "bg-wonder-purple/10 text-wonder-purple"}`}>
                   {isCompleted 
                     ? <CheckCircle className="h-5 w-5" /> 
                     : <span className="text-sm font-medium">{index + 1}</span>
                   }
                 </div>
-                <span className={`transition-colors ${isCompleted ? "text-wonder-purple font-medium" : "group-hover:text-wonder-purple"}`}>
+                <span className={`transition-colors ${
+                  isCompleted 
+                    ? "text-wonder-purple font-medium" 
+                    : isCurrent
+                      ? "text-wonder-blue font-medium"
+                      : isNext
+                        ? "text-wonder-yellow-dark font-medium"
+                        : "group-hover:text-wonder-purple"
+                }`}>
                   {section}
                 </span>
               </div>
               
               <div className={`w-6 h-6 rounded-full flex items-center justify-center transform transition-all duration-300 
-                             ${isCompleted ? "bg-wonder-purple/10" : "bg-gray-100 group-hover:bg-wonder-purple/10"}`}>
+                             ${isCompleted 
+                                ? "bg-wonder-purple/10" 
+                                : isCurrent
+                                  ? "bg-wonder-blue/10"
+                                  : isNext
+                                    ? "bg-wonder-yellow/10 animate-pulse-soft"
+                                    : "bg-gray-100 group-hover:bg-wonder-purple/10"}`}>
                 <ArrowRight className={`h-3.5 w-3.5 transition-all transform 
                                      ${isCompleted 
                                       ? "text-wonder-purple" 
-                                      : "text-gray-400 group-hover:text-wonder-purple group-hover:translate-x-0.5"}`} />
+                                      : isCurrent
+                                        ? "text-wonder-blue"
+                                        : isNext
+                                          ? "text-wonder-yellow-dark"
+                                          : "text-gray-400 group-hover:text-wonder-purple group-hover:translate-x-0.5"}`} />
               </div>
             </button>
           );
         })}
       </div>
       
-      <div className="mt-4 text-sm text-muted-foreground flex items-center justify-center">
-        <div className="px-4 py-2 bg-wonder-background/50 rounded-full inline-flex items-center space-x-1">
-          <span>Click on any section to explore it in depth</span>
-          <ArrowRight className="h-3 w-3 ml-1 text-wonder-purple" />
+      {nextSection && (
+        <div className="mt-4">
+          <button 
+            onClick={() => onSectionClick(nextSection)}
+            className="w-full py-3 px-4 bg-gradient-to-r from-wonder-yellow to-wonder-yellow-dark text-white rounded-lg font-medium flex items-center justify-center gap-2 shadow-magical 
+                       transform transition-all duration-300 hover:-translate-y-1 active:translate-y-0 group"
+          >
+            <span>Continue Learning</span>
+            <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </button>
         </div>
-      </div>
+      )}
+      
+      {!nextSection && completedSections.length === sections.length && sections.length > 0 && (
+        <div className="mt-4 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-dark/20 p-4 rounded-lg border border-wonder-purple/20">
+          <p className="text-center text-wonder-purple font-medium">
+            Congratulations! You've completed all sections! 🎉
+          </p>
+        </div>
+      )}
     </div>
   );
 };

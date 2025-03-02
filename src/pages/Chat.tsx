@@ -55,7 +55,9 @@ const Chat = () => {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [topicSectionsGenerated, setTopicSectionsGenerated] = useState(false);
   const [completedSections, setCompletedSections] = useState<string[]>([]);
+  const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [relatedTopics, setRelatedTopics] = useState<string[]>([]);
+  const [learningComplete, setLearningComplete] = useState(false);
   const { isLoading, generateResponse, generateImage, generateQuiz } = useOpenAI();
   const [streakCount, setStreakCount] = useState(0);
   const [points, setPoints] = useState(0);
@@ -82,6 +84,16 @@ const Chat = () => {
     setStreakCount(savedStreak);
     setPoints(savedPoints);
   }, [ageRange, avatar, navigate]);
+
+  // Check if all sections are completed
+  useEffect(() => {
+    if (topicSectionsGenerated && messages.some(m => m.tableOfContents)) {
+      const sections = messages.find(m => m.tableOfContents)?.tableOfContents || [];
+      if (sections.length > 0 && completedSections.length === sections.length) {
+        setLearningComplete(true);
+      }
+    }
+  }, [completedSections, topicSectionsGenerated, messages]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
@@ -107,6 +119,8 @@ const Chat = () => {
     if (topicSectionsGenerated && !selectedTopic) {
       setTopicSectionsGenerated(false);
       setCompletedSections([]);
+      setCurrentSection(null);
+      setLearningComplete(false);
     }
 
     const userMessage: Message = {
@@ -202,17 +216,35 @@ const Chat = () => {
           section => inputValue.toLowerCase().includes(section.toLowerCase())
         );
         
-        if (matchedSection && !completedSections.includes(matchedSection)) {
-          // Mark this section as completed
-          setCompletedSections(prev => [...prev, matchedSection]);
+        if (matchedSection) {
+          // Set as current section
+          setCurrentSection(matchedSection);
           
-          // Add more points for completing a section
-          setPoints(prev => prev + 15);
-          
-          // Update learning progress
-          const totalSections = messages.find(m => m.tableOfContents)?.tableOfContents?.length || 5;
-          const newProgress = Math.min(100, 10 + (completedSections.length + 1) * (90 / totalSections));
-          setLearningProgress(newProgress);
+          // If not already completed, mark as completed
+          if (!completedSections.includes(matchedSection)) {
+            // Mark this section as completed
+            setCompletedSections(prev => [...prev, matchedSection]);
+            
+            // Add more points for completing a section
+            setPoints(prev => prev + 15);
+            
+            // Update learning progress
+            const totalSections = messages.find(m => m.tableOfContents)?.tableOfContents?.length || 5;
+            const newProgress = Math.min(100, 10 + (completedSections.length + 1) * (90 / totalSections));
+            setLearningProgress(newProgress);
+          }
+
+          // Add a "next section" suggestion after the current message
+          const sectionsAvailable = messages.find(m => m.tableOfContents)?.tableOfContents || [];
+          const currentSectionIndex = sectionsAvailable.indexOf(matchedSection);
+          if (currentSectionIndex >= 0 && currentSectionIndex < sectionsAvailable.length - 1) {
+            const nextSection = sectionsAvailable[currentSectionIndex + 1];
+            // The message includes a suggestion for the next section
+            aiMessage.text += `\n\nWould you like to continue learning about "${nextSection}" next?`;
+          } else if (currentSectionIndex === sectionsAvailable.length - 1) {
+            // This is the last section
+            aiMessage.text += "\n\nCongratulations! You've completed all sections of this topic. Check out related topics below!";
+          }
         }
         
         setMessages(prev => [...prev, aiMessage]);
@@ -306,12 +338,18 @@ const Chat = () => {
     setSelectedTopic(null);
     setTopicSectionsGenerated(false);
     setCompletedSections([]);
+    setCurrentSection(null);
     setLearningProgress(0);
+    setLearningComplete(false);
     toast.success("Chat cleared! Ready for a new adventure!");
   };
 
   const handleTocSectionClick = (section: string) => {
+    // If clicking on the same section that's already current, don't do anything
+    if (section === currentSection) return;
+    
     setInputValue(`Tell me about "${section}" in detail`);
+    handleSendMessage();
   };
 
   const handleRelatedTopicClick = (topic: string) => {
@@ -323,7 +361,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white">
+    <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white overflow-hidden">
       {/* Header */}
       <Header 
         points={points}
@@ -344,13 +382,15 @@ const Chat = () => {
       
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden bg-gradient-to-b from-wonder-background/50 to-white/30 backdrop-blur-sm">
-        <div className="w-full h-full mx-auto flex flex-col px-4 md:px-8">
+        <div className="w-full h-full mx-auto flex flex-col">
           {/* Chat Messages */}
           <ChatArea 
             messages={messages}
             showTypingIndicator={showTypingIndicator}
             completedSections={completedSections}
+            currentSection={currentSection}
             relatedTopics={relatedTopics}
+            learningComplete={learningComplete}
             onBlockClick={handleBlockClick}
             onTocSectionClick={handleTocSectionClick}
             onRelatedTopicClick={handleRelatedTopicClick}
@@ -386,7 +426,7 @@ const Chat = () => {
       
       {/* Footer */}
       <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 text-center text-xs text-muted-foreground">
-        <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium font-rounded">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
+        <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium font-bubbly">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
       </div>
       
       {/* Toast */}
