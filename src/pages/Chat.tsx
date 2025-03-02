@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -360,8 +359,46 @@ const Chat = () => {
     }, 100);
   };
 
+  // Ref for the main container to adjust for mobile browsers' viewport
+  const appContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Effect to handle mobile viewport height issues
+  useEffect(() => {
+    const setAppHeight = () => {
+      if (appContainerRef.current) {
+        appContainerRef.current.style.height = `${window.innerHeight}px`;
+      }
+    };
+    
+    // Set initial height
+    setAppHeight();
+    
+    // Update on resize and orientation change
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', setAppHeight);
+    
+    // iOS safari specific fix for address bar showing/hiding
+    let timeoutId: NodeJS.Timeout;
+    const onScroll = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(setAppHeight, 500);
+    };
+    
+    window.addEventListener('scroll', onScroll);
+    
+    return () => {
+      window.removeEventListener('resize', setAppHeight);
+      window.removeEventListener('orientationchange', setAppHeight);
+      window.removeEventListener('scroll', onScroll);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white overflow-hidden">
+    <div 
+      ref={appContainerRef}
+      className="enhanced-chat-layout bg-gradient-to-b from-wonder-background to-white overflow-hidden"
+    >
       {/* Header */}
       <Header 
         points={points}
@@ -381,8 +418,8 @@ const Chat = () => {
       />
       
       {/* Main Content Area */}
-      <main className="flex-1 overflow-hidden bg-gradient-to-b from-wonder-background/50 to-white/30 backdrop-blur-sm">
-        <div className="w-full h-full mx-auto flex flex-col">
+      <main className="overflow-hidden bg-gradient-to-b from-wonder-background/50 to-white/30 backdrop-blur-sm">
+        <div className="w-full h-full flex flex-col">
           {/* Chat Messages */}
           <ChatArea 
             messages={messages}
@@ -425,12 +462,12 @@ const Chat = () => {
       )}
       
       {/* Footer */}
-      <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 text-center text-xs text-muted-foreground">
+      <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 text-center text-xs text-muted-foreground safe-area-bottom">
         <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium font-bubbly">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
       </div>
       
       {/* Toast */}
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
     </div>
   );
 };

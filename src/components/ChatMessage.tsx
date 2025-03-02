@@ -48,14 +48,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
   return (
     <div 
       ref={messageRef}
-      className={`mb-6 ${isUser ? 'ml-auto max-w-[85%]' : 'mr-auto max-w-[85%]'}`}
+      className={`mb-6 ${isUser ? 'ml-auto max-w-[85%] md:max-w-[75%]' : 'mr-auto max-w-[90%] md:max-w-[80%]'} px-3 sm:px-0`}
       style={{ opacity: 0 }} // Start with opacity 0 before animation
     >
       <div className={isUser 
-        ? 'chat-bubble-user transform transition-transform active:scale-98' 
-        : 'chat-bubble-ai transform transition-transform hover:scale-102'
+        ? 'chat-bubble-user transform transition-transform active:scale-98 touch-manipulation' 
+        : 'chat-bubble-ai transform transition-transform touch-manipulation'
       }>
-        <p className="whitespace-pre-line leading-relaxed text-base font-rounded">{message}</p>
+        <p className="whitespace-pre-line leading-relaxed text-base font-rounded break-words">{message}</p>
         {children}
       </div>
     </div>
