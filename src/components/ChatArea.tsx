@@ -1,6 +1,5 @@
-
 import React, { useRef, useEffect } from "react";
-import { ChevronRight, ArrowRight, BookOpen } from "lucide-react";
+import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
 import TypingIndicator from "@/components/TypingIndicator";
@@ -39,6 +38,7 @@ interface ChatAreaProps {
   onBlockClick: (type: BlockType, messageId: string, messageText: string) => void;
   onTocSectionClick: (section: string) => void;
   onRelatedTopicClick: (topic: string) => void;
+  learningProgress: number;
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({
@@ -50,7 +50,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   learningComplete,
   onBlockClick,
   onTocSectionClick,
-  onRelatedTopicClick
+  onRelatedTopicClick,
+  learningProgress
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
@@ -93,7 +94,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   const scrollLearningBlocks = (direction: 'left' | 'right') => {
     if (learningBlocksRef.current) {
-      const scrollAmount = direction === 'left' ? -300 : 300;
+      const scrollAmount = direction === 'left' ? -200 : 200;
       learningBlocksRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
@@ -110,14 +111,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     if (!currentSection) return null;
     
     return (
-      <div className="sticky top-14 z-20 bg-white/90 backdrop-blur-md px-4 py-3 border-b border-wonder-purple/10 mb-4 shadow-sm">
-        <div className="w-full max-w-4xl mx-auto">
-          <div className="flex items-center gap-2 text-sm overflow-hidden">
-            <BookOpen className="h-4 w-4 text-wonder-purple flex-shrink-0" />
-            <span className="text-muted-foreground whitespace-nowrap">Currently exploring:</span>
-            <div className="px-3 py-1 bg-wonder-purple/10 rounded-full text-wonder-purple font-medium truncate max-w-[70%]">
-              {currentSection}
+      <div className="sticky top-14 z-20 bg-white/95 backdrop-blur-md px-4 py-2 border-b border-wonder-purple/10 shadow-sm flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm overflow-hidden">
+          <BookOpen className="h-4 w-4 text-wonder-purple flex-shrink-0" />
+          <span className="text-muted-foreground whitespace-nowrap hidden sm:inline">Currently exploring:</span>
+          <div className="px-3 py-1 bg-wonder-purple/10 rounded-full text-wonder-purple font-medium truncate max-w-[70%]">
+            {currentSection}
+          </div>
+        </div>
+        
+        {/* Mini stats display for mobile */}
+        <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="h-5 w-5 rounded-full bg-wonder-purple text-white flex items-center justify-center">
+              <ChevronRight className="h-3 w-3" />
             </div>
+            <span>{Math.round(learningProgress)}%</span>
           </div>
         </div>
       </div>
@@ -162,42 +171,55 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             
             {/* Next topic navigation button - Improved design */}
             {nextTopic && (
-              <div className="mx-auto max-w-3xl px-4 mt-3 mb-6">
+              <div className="mx-auto max-w-3xl px-4 mt-2 mb-4">
                 <button 
-                  className="w-full p-4 bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 hover:from-wonder-purple/15 hover:to-wonder-purple/10 
+                  className="w-full p-3 bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 hover:from-wonder-purple/15 hover:to-wonder-purple/10 
                     border border-wonder-purple/20 rounded-xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 
                     shadow-sm hover:shadow-magical text-left"
                   onClick={() => onTocSectionClick(nextTopic)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full bg-wonder-purple/20 flex items-center justify-center mr-3 flex-shrink-0">
-                        <ArrowRight className="h-5 w-5 text-wonder-purple" />
+                      <div className="w-8 h-8 rounded-full bg-wonder-purple/20 flex items-center justify-center mr-2 flex-shrink-0">
+                        <ArrowRight className="h-4 w-4 text-wonder-purple" />
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground">Continue learning</div>
                         <div className="font-medium text-wonder-purple truncate max-w-[200px] sm:max-w-md">{nextTopic}</div>
                       </div>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-wonder-purple/60 flex-shrink-0" />
+                    <ChevronRight className="h-4 w-4 text-wonder-purple/60 flex-shrink-0" />
                   </div>
                 </button>
               </div>
             )}
             
+            {/* Redesigned Learning Blocks */}
             {message.showBlocks && message.blocks && (
-              <div className="relative mb-8 learning-blocks-wrapper">
-                <button 
-                  className="scroll-button scroll-button-left" 
-                  onClick={() => scrollLearningBlocks('left')}
-                  aria-label="Scroll left"
-                >
-                  <ChevronRight className="h-5 w-5 rotate-180" />
-                </button>
+              <div className="relative mb-6 overflow-hidden px-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-wonder-purple">Explore More</h3>
+                  <div className="flex gap-1">
+                    <button 
+                      className="scroll-button p-1" 
+                      onClick={() => scrollLearningBlocks('left')}
+                      aria-label="Scroll left"
+                    >
+                      <ChevronRight className="h-4 w-4 rotate-180" />
+                    </button>
+                    <button 
+                      className="scroll-button p-1" 
+                      onClick={() => scrollLearningBlocks('right')}
+                      aria-label="Scroll right"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
                 
                 <div 
                   ref={learningBlocksRef}
-                  className="learning-blocks-container"
+                  className="flex overflow-x-auto gap-3 py-1 snap-x snap-mandatory scrollbar-none"
                 >
                   {message.blocks.map((block) => (
                     <LearningBlock
@@ -207,38 +229,31 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                     />
                   ))}
                 </div>
-                
-                <button 
-                  className="scroll-button scroll-button-right" 
-                  onClick={() => scrollLearningBlocks('right')}
-                  aria-label="Scroll right"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
               </div>
             )}
             
+            {/* Related topics */}
             {message.isIntroduction && relatedTopics.length > 0 && learningComplete && (
-              <div className="mb-8 px-4" ref={relatedTopicsRef}>
-                <h3 className="text-lg font-medium mb-3 text-wonder-purple">Explore more topics:</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              <div className="mb-6 px-4" ref={relatedTopicsRef}>
+                <h3 className="text-sm font-medium mb-2 text-wonder-purple">Explore more topics:</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {relatedTopics.map((topic, index) => (
                     <div 
                       key={index}
                       onClick={() => onRelatedTopicClick(topic)}
-                      className="related-topic p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
+                      className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
                                 hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
                                 hover:-translate-y-1 transform touch-manipulation"
                       style={{ opacity: 0 }} // Initially invisible for animation
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
-                          <ChevronRight className="h-4 w-4" />
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
+                          <ChevronRight className="h-3 w-3" />
                         </div>
-                        <ChevronRight className="h-4 w-4 text-wonder-purple/60" />
+                        <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
                       </div>
-                      <h3 className="font-medium text-sm text-foreground font-rounded leading-tight">{topic}</h3>
-                      <p className="text-xs text-muted-foreground mt-1 font-rounded">Click to explore</p>
+                      <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
                     </div>
                   ))}
                 </div>
