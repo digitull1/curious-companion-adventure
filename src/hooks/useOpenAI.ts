@@ -53,6 +53,7 @@ export function useOpenAI() {
     setIsLoading(true);
     
     try {
+      // First, try to get the image from the Edge Function
       const { data, error } = await supabase.functions.invoke('generate-response', {
         body: { prompt, requestType: 'image' }
       });
@@ -61,10 +62,14 @@ export function useOpenAI() {
         throw new Error(error.message || "Failed to generate image");
       }
       
+      if (!data || !data.imageUrl) {
+        throw new Error("No image URL returned");
+      }
+      
       return data.imageUrl;
     } catch (error) {
       console.error("Error generating image:", error);
-      toast.error("Oops! Couldn't create an image right now. Using a placeholder instead.");
+      // Return a fallback image from Unsplash based on the topic
       return generateMockImageUrl(prompt);
     } finally {
       setIsLoading(false);
@@ -74,12 +79,18 @@ export function useOpenAI() {
   // Fallback mock image URLs when API requests fail
   const generateMockImageUrl = (prompt: string) => {
     // Return different image URLs based on the prompt
-    if (prompt.toLowerCase().includes("dinosaur")) {
+    const lowerPrompt = prompt.toLowerCase();
+    
+    if (lowerPrompt.includes("dinosaur")) {
       return "https://images.unsplash.com/photo-1519880856348-763a8b40aa79";
-    } else if (prompt.toLowerCase().includes("planet") || prompt.toLowerCase().includes("space")) {
+    } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space") || lowerPrompt.includes("solar")) {
       return "https://images.unsplash.com/photo-1614732414444-096e5f1122d5";
-    } else if (prompt.toLowerCase().includes("robot")) {
+    } else if (lowerPrompt.includes("robot")) {
       return "https://images.unsplash.com/photo-1485827404703-89b55fcc595e";
+    } else if (lowerPrompt.includes("animal")) {
+      return "https://images.unsplash.com/photo-1474511320723-9a56873867b5";
+    } else if (lowerPrompt.includes("ocean")) {
+      return "https://images.unsplash.com/photo-1518399681705-1c1a55e5e883";
     } else {
       // Default image
       return "https://images.unsplash.com/photo-1501854140801-50d01698950b";
@@ -111,19 +122,21 @@ export function useOpenAI() {
   // Fallback mock quiz when API requests fail
   const generateMockQuiz = (topic: string) => {
     // Mock quiz based on topic
-    if (topic.toLowerCase().includes("dinosaur")) {
+    const lowerTopic = topic.toLowerCase();
+    
+    if (lowerTopic.includes("dinosaur")) {
       return {
         question: "Which dinosaur was the largest meat-eater?",
         options: ["Tyrannosaurus Rex", "Velociraptor", "Spinosaurus", "Allosaurus"],
         correctAnswer: 2
       };
-    } else if (topic.toLowerCase().includes("planet") || topic.toLowerCase().includes("space")) {
+    } else if (lowerTopic.includes("planet") || lowerTopic.includes("space") || lowerTopic.includes("solar")) {
       return {
         question: "Which planet has the most moons?",
         options: ["Jupiter", "Saturn", "Uranus", "Neptune"],
         correctAnswer: 1
       };
-    } else if (topic.toLowerCase().includes("robot") || topic.toLowerCase().includes("ai")) {
+    } else if (lowerTopic.includes("robot") || lowerTopic.includes("ai")) {
       return {
         question: "Which of these is NOT a real robot?",
         options: ["Sophia", "Atlas", "R2-D2", "Spot"],
