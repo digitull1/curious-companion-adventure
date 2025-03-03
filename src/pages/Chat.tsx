@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -111,6 +112,89 @@ const Chat = () => {
     toast.success(`Learning content will now be tailored for age ${newRange}!`);
   };
 
+  const processMessage = async (prompt: string, isUserMessage: boolean = true) => {
+    if (isProcessing) return;
+
+    setIsProcessing(true);
+    setShowTypingIndicator(true);
+
+    // If it's a user message, add it to the chat
+    if (isUserMessage) {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        text: prompt,
+        isUser: true
+      };
+      setMessages(prev => [...prev, userMessage]);
+    }
+
+    try {
+      // Is this a request to explore a specific TOC section?
+      const matchedSection = selectedTopic && messages.find(m => m.tableOfContents)?.tableOfContents?.find(
+        section => prompt.toLowerCase().includes(section.toLowerCase())
+      );
+
+      // Generate response based on the prompt
+      const response = await generateResponse(prompt, ageRange);
+      
+      // Simulate a delay for typing effect
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setShowTypingIndicator(false);
+      
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: response,
+        isUser: false,
+        blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
+        showBlocks: true
+      };
+      
+      if (matchedSection) {
+        // Set as current section
+        setCurrentSection(matchedSection);
+        
+        // If not already completed, mark as completed
+        if (!completedSections.includes(matchedSection)) {
+          // Mark this section as completed
+          setCompletedSections(prev => [...prev, matchedSection]);
+          
+          // Add more points for completing a section
+          setPoints(prev => prev + 15);
+          
+          // Update learning progress
+          const totalSections = messages.find(m => m.tableOfContents)?.tableOfContents?.length || 5;
+          const newProgress = Math.min(100, 10 + (completedSections.length + 1) * (90 / totalSections));
+          setLearningProgress(newProgress);
+        }
+
+        // Add a "next section" suggestion after the current message
+        const sectionsAvailable = messages.find(m => m.tableOfContents)?.tableOfContents || [];
+        const currentSectionIndex = sectionsAvailable.indexOf(matchedSection);
+        if (currentSectionIndex >= 0 && currentSectionIndex < sectionsAvailable.length - 1) {
+          const nextSection = sectionsAvailable[currentSectionIndex + 1];
+          // The message includes a suggestion for the next section
+          aiMessage.text += `\n\nWould you like to continue learning about "${nextSection}" next?`;
+        } else if (currentSectionIndex === sectionsAvailable.length - 1) {
+          // This is the last section
+          aiMessage.text += "\n\nCongratulations! You've completed all sections of this topic. Check out related topics below!";
+        }
+      }
+      
+      setMessages(prev => [...prev, aiMessage]);
+      
+      // Increment points for each interaction
+      setPoints(prev => prev + 10);
+    } catch (error) {
+      console.error("Error processing message:", error);
+      setShowTypingIndicator(false);
+      toast.error("Sorry, there was an error processing your request. Please try again.");
+    } finally {
+      setIsProcessing(false);
+      setInputValue("");
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isProcessing) return;
 
@@ -122,30 +206,24 @@ const Chat = () => {
       setLearningComplete(false);
     }
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputValue,
-      isUser: true
-    };
+    // Check if this is a new topic request (not a follow-up on sections)
+    const isNewTopicRequest = !selectedTopic && !topicSectionsGenerated;
+    
+    // If it's a new topic, generate table of contents
+    if (isNewTopicRequest) {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        text: inputValue,
+        isUser: true
+      };
+      setMessages(prev => [...prev, userMessage]);
+      setInputValue("");
+      setIsProcessing(true);
+      setShowTypingIndicator(true);
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue("");
-    setIsProcessing(true);
-    setShowTypingIndicator(true);
-
-    try {
-      // Check if this is a new topic request (not a follow-up on sections)
-      const isNewTopicRequest = !selectedTopic && !topicSectionsGenerated;
-      
-      // If it's a new topic, generate table of contents
-      if (isNewTopicRequest) {
+      try {
         await new Promise(resolve => setTimeout(resolve, 1000));
         setShowTypingIndicator(false);
-
-        // Ask about age range customization if not recently shown
-        if (!showAgeSelector) {
-          setShowAgeSelector(true);
-        }
         
         // Generate table of contents for encyclopedia-style approach
         const tocResponse = await generateResponse(`Generate a concise table of contents with 4-5 sections for learning about: ${inputValue}. Format as a numbered list.`, ageRange);
@@ -176,86 +254,22 @@ const Chat = () => {
         // Add points for starting a new learning journey
         setPoints(prev => prev + 25);
         setLearningProgress(10);
-        
-        // Animate confetti effect for starting a new topic
-        const confettiContainer = document.createElement('div');
-        confettiContainer.style.position = 'fixed';
-        confettiContainer.style.top = '0';
-        confettiContainer.style.left = '0';
-        confettiContainer.style.width = '100%';
-        confettiContainer.style.height = '100%';
-        confettiContainer.style.pointerEvents = 'none';
-        confettiContainer.style.zIndex = '9999';
-        document.body.appendChild(confettiContainer);
 
-        // Remove confetti after animation
+        // Auto-select the first section after a short delay
         setTimeout(() => {
-          confettiContainer.remove();
-        }, 5000);
-        
-      } else {
-        // Handle follow-up messages or section explorations
-        const response = await generateResponse(inputValue, ageRange);
-        
-        // Simulate a delay for typing effect
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setShowTypingIndicator(false);
-        
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: response,
-          isUser: false,
-          blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
-          showBlocks: true
-        };
-        
-        // Check if this is a request to explore a specific TOC section
-        const matchedSection = selectedTopic && messages.find(m => m.tableOfContents)?.tableOfContents?.find(
-          section => inputValue.toLowerCase().includes(section.toLowerCase())
-        );
-        
-        if (matchedSection) {
-          // Set as current section
-          setCurrentSection(matchedSection);
-          
-          // If not already completed, mark as completed
-          if (!completedSections.includes(matchedSection)) {
-            // Mark this section as completed
-            setCompletedSections(prev => [...prev, matchedSection]);
-            
-            // Add more points for completing a section
-            setPoints(prev => prev + 15);
-            
-            // Update learning progress
-            const totalSections = messages.find(m => m.tableOfContents)?.tableOfContents?.length || 5;
-            const newProgress = Math.min(100, 10 + (completedSections.length + 1) * (90 / totalSections));
-            setLearningProgress(newProgress);
+          if (sections.length > 0) {
+            handleTocSectionClick(sections[0]);
           }
-
-          // Add a "next section" suggestion after the current message
-          const sectionsAvailable = messages.find(m => m.tableOfContents)?.tableOfContents || [];
-          const currentSectionIndex = sectionsAvailable.indexOf(matchedSection);
-          if (currentSectionIndex >= 0 && currentSectionIndex < sectionsAvailable.length - 1) {
-            const nextSection = sectionsAvailable[currentSectionIndex + 1];
-            // The message includes a suggestion for the next section
-            aiMessage.text += `\n\nWould you like to continue learning about "${nextSection}" next?`;
-          } else if (currentSectionIndex === sectionsAvailable.length - 1) {
-            // This is the last section
-            aiMessage.text += "\n\nCongratulations! You've completed all sections of this topic. Check out related topics below!";
-          }
-        }
-        
-        setMessages(prev => [...prev, aiMessage]);
+        }, 1000);
+      } catch (error) {
+        console.error("Error generating TOC:", error);
+        toast.error("Sorry, there was an error processing your request. Please try again.");
+      } finally {
+        setIsProcessing(false);
       }
-      
-      // Increment points for each interaction
-      setPoints(prev => prev + 10);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setShowTypingIndicator(false);
-    } finally {
-      setIsProcessing(false);
+    } else {
+      // Handle regular messages
+      await processMessage(inputValue);
     }
   };
 
@@ -313,6 +327,10 @@ const Chat = () => {
 
   const handleSuggestedPromptClick = (prompt: string) => {
     setInputValue(prompt);
+    // Auto-send the suggestion
+    setTimeout(() => {
+      handleSendMessage();
+    }, 100);
   };
 
   const handleVoiceInput = (transcript: string) => {
@@ -347,15 +365,15 @@ const Chat = () => {
     // If clicking on the same section that's already current, don't do anything
     if (section === currentSection) return;
     
-    setInputValue(`Tell me about "${section}" in detail`);
-    handleSendMessage();
+    // Directly process the message without requiring the user to press send
+    processMessage(`Tell me about "${section}" in detail`);
   };
 
   const handleRelatedTopicClick = (topic: string) => {
     clearChat();
-    setInputValue(`Tell me about ${topic}`);
+    // Auto-send the related topic
     setTimeout(() => {
-      handleSendMessage();
+      processMessage(`Tell me about ${topic}`, true);
     }, 100);
   };
 

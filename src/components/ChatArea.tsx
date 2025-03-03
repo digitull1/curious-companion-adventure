@@ -98,11 +98,27 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     }
   };
 
+  // Show breadcrumb navigation if there's a current section
+  const renderBreadcrumb = () => {
+    if (!currentSection) return null;
+    
+    return (
+      <div className="sticky top-14 z-20 bg-white/90 backdrop-blur-md px-4 py-2 border-b border-wonder-purple/10 mb-4 flex items-center text-sm">
+        <span className="text-muted-foreground">Currently exploring:</span>
+        <span className="ml-2 px-3 py-1 bg-wonder-purple/10 rounded-full text-wonder-purple font-medium">
+          {currentSection}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <div 
-      className="flex-1 overflow-y-auto py-6 scrollbar-thin" 
+      className="flex-1 overflow-y-auto py-6 scrollbar-thin relative" 
       ref={chatHistoryRef}
     >
+      {renderBreadcrumb()}
+      
       {messages.map((message) => (
         <div key={message.id} className="fade-scale-in">
           <ChatMessage message={message.text} isUser={message.isUser}>
@@ -169,7 +185,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                     onClick={() => onRelatedTopicClick(topic)}
                     className="related-topic p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
                               hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
-                              hover:-translate-y-1 transform"
+                              hover:-translate-y-1 transform touch-manipulation"
                     style={{ opacity: 0 }} // Initially invisible for animation
                   >
                     <div className="flex justify-between items-start mb-2">
