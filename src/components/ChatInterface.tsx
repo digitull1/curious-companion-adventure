@@ -362,12 +362,7 @@ const Chat = () => {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white overflow-hidden">
       {/* Header */}
-      <Header 
-        points={points}
-        ageRange={ageRange}
-        avatar={avatar}
-        onAgeRangeChange={() => setShowAgeSelector(true)}
-      />
+      <Header avatar={avatar} />
       
       {/* Stats Bar */}
       <StatsBar 
@@ -375,8 +370,6 @@ const Chat = () => {
         points={points}
         learningProgress={learningProgress}
         topicSectionsGenerated={topicSectionsGenerated}
-        ageRange={ageRange}
-        onAgeRangeChange={() => setShowAgeSelector(true)}
       />
       
       {/* Main Content Area */}
