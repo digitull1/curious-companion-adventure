@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from "react";
-import { ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronRight, ArrowRight, BookOpen } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
 import TypingIndicator from "@/components/TypingIndicator";
@@ -110,11 +110,16 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     if (!currentSection) return null;
     
     return (
-      <div className="sticky top-14 z-20 bg-white/90 backdrop-blur-md px-4 py-2 border-b border-wonder-purple/10 mb-4 flex items-center text-sm">
-        <span className="text-muted-foreground">Currently exploring:</span>
-        <span className="ml-2 px-3 py-1 bg-wonder-purple/10 rounded-full text-wonder-purple font-medium">
-          {currentSection}
-        </span>
+      <div className="sticky top-14 z-20 bg-white/90 backdrop-blur-md px-4 py-3 border-b border-wonder-purple/10 mb-4 shadow-sm">
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 text-sm overflow-hidden">
+            <BookOpen className="h-4 w-4 text-wonder-purple flex-shrink-0" />
+            <span className="text-muted-foreground whitespace-nowrap">Currently exploring:</span>
+            <div className="px-3 py-1 bg-wonder-purple/10 rounded-full text-wonder-purple font-medium truncate max-w-[70%]">
+              {currentSection}
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -155,25 +160,28 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               )}
             </ChatMessage>
             
-            {/* Next topic navigation button */}
+            {/* Next topic navigation button - Improved design */}
             {nextTopic && (
-              <div 
-                className="mx-6 mt-3 mb-6 p-4 bg-wonder-purple/5 hover:bg-wonder-purple/10 border border-wonder-purple/20 
-                  rounded-xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 shadow-sm hover:shadow-magical"
-                onClick={() => onTocSectionClick(nextTopic)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-wonder-purple/10 flex items-center justify-center mr-3">
-                      <ArrowRight className="h-5 w-5 text-wonder-purple" />
+              <div className="mx-auto max-w-3xl px-4 mt-3 mb-6">
+                <button 
+                  className="w-full p-4 bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 hover:from-wonder-purple/15 hover:to-wonder-purple/10 
+                    border border-wonder-purple/20 rounded-xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 
+                    shadow-sm hover:shadow-magical text-left"
+                  onClick={() => onTocSectionClick(nextTopic)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 rounded-full bg-wonder-purple/20 flex items-center justify-center mr-3 flex-shrink-0">
+                        <ArrowRight className="h-5 w-5 text-wonder-purple" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Continue learning</div>
+                        <div className="font-medium text-wonder-purple truncate max-w-[200px] sm:max-w-md">{nextTopic}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-xs text-muted-foreground">Continue learning</div>
-                      <div className="font-medium text-wonder-purple">{nextTopic}</div>
-                    </div>
+                    <ChevronRight className="h-5 w-5 text-wonder-purple/60 flex-shrink-0" />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-wonder-purple/60" />
-                </div>
+                </button>
               </div>
             )}
             
@@ -211,7 +219,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             )}
             
             {message.isIntroduction && relatedTopics.length > 0 && learningComplete && (
-              <div className="mb-8" ref={relatedTopicsRef}>
+              <div className="mb-8 px-4" ref={relatedTopicsRef}>
                 <h3 className="text-lg font-medium mb-3 text-wonder-purple">Explore more topics:</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                   {relatedTopics.map((topic, index) => (

@@ -112,14 +112,14 @@ const Chat = () => {
     toast.success(`Learning content will now be tailored for age ${newRange}!`);
   };
 
-  const processMessage = async (prompt: string, isUserMessage: boolean = true) => {
+  const processMessage = async (prompt: string, isUserMessage: boolean = true, skipUserMessage: boolean = false) => {
     if (isProcessing) return;
 
     setIsProcessing(true);
     setShowTypingIndicator(true);
 
-    // If it's a user message, add it to the chat
-    if (isUserMessage) {
+    // If it's a user message and we're not skipping user message display
+    if (isUserMessage && !skipUserMessage) {
       const userMessage: Message = {
         id: Date.now().toString(),
         text: prompt,
@@ -365,8 +365,11 @@ const Chat = () => {
     // If clicking on the same section that's already current, don't do anything
     if (section === currentSection) return;
     
-    // Directly process the message without requiring the user to press send
-    processMessage(`Tell me about "${section}" in detail`);
+    // Set the current section immediately for a more responsive feel
+    setCurrentSection(section);
+    
+    // Process the section request directly, skipping the user message display
+    processMessage(`Tell me about "${section}" in detail`, false, true);
   };
 
   const handleRelatedTopicClick = (topic: string) => {

@@ -1,751 +1,170 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Varela+Round&family=Comic+Neue:wght@400;700&family=Baloo+2:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
-    --sidebar-background: 270 20% 98%;
-    --sidebar-foreground: 240 10% 3.9%;
-    --sidebar-primary: 250 85% 65%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4.8% 92.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 240 5.9% 90%;
-    --sidebar-ring: 250 85% 65%;
-  }
-
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-  }
+:root {
+  --foreground-hex: 20, 20, 20;
+  --background-hex: 250, 248, 254;
+  
+  --primary-hex: 139, 92, 246;
+  --primary-foreground-hex: 255, 255, 255;
+  
+  --secondary-hex: 248, 113, 158;
+  --secondary-foreground-hex: 255, 255, 255;
+  
+  --accent-hex: 106, 192, 253;
+  --accent-foreground-hex: 255, 255, 255;
+  
+  --card-hex: 255, 255, 255;
+  --card-foreground-hex: 20, 20, 20;
+  
+  --popover-hex: 255, 255, 255;
+  --popover-foreground-hex: 20, 20, 20;
+  
+  --muted-hex: 240, 240, 245;
+  --muted-foreground-hex: 112, 112, 112;
+  
+  --destructive-hex: 234, 56, 76;
+  --destructive-foreground-hex: 255, 255, 255;
+  
+  --border-hex: 230, 230, 230;
+  
+  --input-hex: 255, 255, 255;
+  
+  --ring-hex: 139, 92, 246;
+  
+  --radius: 0.5rem;
+  
+  /* Wonder Whiz specific colors */
+  --wonder-purple: 139, 92, 246;
+  --wonder-purple-dark: 109, 40, 217;
+  --wonder-purple-light: 167, 139, 250;
+  
+  --wonder-coral: 248, 113, 158;
+  --wonder-coral-dark: 230, 73, 128;
+  --wonder-coral-light: 251, 182, 206;
+  
+  --wonder-yellow: 250, 204, 21;
+  --wonder-yellow-dark: 235, 171, 15;
+  --wonder-yellow-light: 251, 229, 142;
+  
+  --wonder-blue: 14, 165, 233;
+  --wonder-blue-dark: 3, 105, 161;
+  --wonder-blue-light: 186, 230, 253;
+  
+  --wonder-green: 16, 185, 129;
+  --wonder-green-dark: 4, 120, 87;
+  --wonder-green-light: 167, 243, 208;
+  
+  --wonder-background: 250, 248, 254;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+  
   body {
-    @apply bg-background text-foreground font-rounded;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground;
+    font-family: 'Quicksand', system-ui, sans-serif;
   }
   
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-rounded font-semibold;
+  .font-bubbly {
+    font-family: 'Quicksand', system-ui, sans-serif;
+    font-weight: 700;
+  }
+  
+  .font-rounded {
+    font-family: 'Quicksand', system-ui, sans-serif;
+  }
+  
+  .font-comic {
+    font-family: 'Quicksand', system-ui, sans-serif;
   }
 }
 
-/* Chat bubbles with enhanced styling inspired by Apple, Pixar, and Disney */
-.chat-bubble-ai {
-  @apply bg-white rounded-2xl p-4 shadow-sm border border-wonder-purple/10 relative overflow-hidden;
-  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.08), 0 2px 4px rgba(124, 58, 237, 0.04);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.chat-bubble-ai:hover {
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.12), 0 2px 6px rgba(124, 58, 237, 0.08);
-  transform: translateY(-2px);
-}
-
-.chat-bubble-ai::before {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 8px 12px 8px;
-  border-color: transparent transparent white transparent;
-  top: -12px;
-  left: 24px;
-  filter: drop-shadow(0 -1px 1px rgba(124, 58, 237, 0.1));
-}
-
-.chat-bubble-ai::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(255, 255, 255, 0) 60%);
-  border-radius: 2xl;
-  pointer-events: none;
-}
-
-.chat-bubble-user {
-  @apply bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white rounded-2xl p-4 shadow-magical relative overflow-hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.chat-bubble-user:active {
-  transform: scale(0.98);
-}
-
-.chat-bubble-user::before {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 8px 12px 8px;
-  border-color: transparent transparent #7c3aed transparent;
-  top: -12px;
-  right: 24px;
-}
-
-.chat-bubble-user::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 60%);
-  border-radius: 2xl;
-  pointer-events: none;
-}
-
-/* Learning blocks with enhanced design - Pixar and Disney inspired */
-.learning-block {
-  @apply relative rounded-xl p-5 shadow-sm border border-white bg-white overflow-hidden transition-all 
-         cursor-pointer h-auto min-h-24 min-w-[240px] max-w-[320px] flex-shrink-0;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.learning-block:hover {
-  @apply shadow-magical;
-  transform: translateY(-5px) scale(1.02);
-}
-
-.learning-block::after {
-  content: '';
-  @apply absolute inset-0 opacity-0 transition-opacity duration-300;
-  background: radial-gradient(circle at center, rgba(124, 58, 237, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
-}
-
-.learning-block:hover::after {
-  @apply opacity-100;
-}
-
-.learning-block-did-you-know {
-  @apply bg-gradient-to-br from-wonder-blue/10 to-white border-wonder-blue/20;
-}
-
-.learning-block-mind-blowing {
-  @apply bg-gradient-to-br from-wonder-purple/10 to-white border-wonder-purple/20;
-}
-
-.learning-block-amazing-stories {
-  @apply bg-gradient-to-br from-wonder-yellow/10 to-white border-wonder-yellow/20;
-}
-
-.learning-block-see-it {
-  @apply bg-gradient-to-br from-wonder-green/10 to-white border-wonder-green/20;
-}
-
-.learning-block-quiz {
-  @apply bg-gradient-to-br from-wonder-coral/10 to-white border-wonder-coral/20;
-}
-
-/* Added scrolling container styles for learning blocks */
-.learning-blocks-container {
-  @apply flex gap-3 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-.learning-blocks-container .learning-block {
-  @apply snap-start;
-}
-
-/* Show navigation only when overflowing */
-.learning-blocks-wrapper {
-  @apply relative;
-}
-
-.scroll-button {
-  @apply absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 
-         shadow-sm flex items-center justify-center border border-wonder-purple/10
-         text-wonder-purple transition-all opacity-0 hover:bg-white;
-}
-
-.scroll-button-left {
-  @apply left-0 -translate-x-1/2;
-}
-
-.scroll-button-right {
-  @apply right-0 translate-x-1/2;
-}
-
-.learning-blocks-wrapper:hover .scroll-button {
-  @apply opacity-100;
-}
-
-/* Quiz styling with enhanced visuals - inspired by EA Sports and Disney */
-.quiz-answer {
-  @apply rounded-lg border border-wonder-purple/10 p-3 transition-all hover:border-wonder-purple/30 shadow-sm hover:shadow-magical;
-}
-
-.quiz-answer-selected {
-  @apply border-wonder-purple bg-wonder-purple/5;
-}
-
-.quiz-answer-correct {
-  @apply border-wonder-green/50 bg-wonder-green/10 text-wonder-green;
-}
-
-.quiz-answer-incorrect {
-  @apply border-wonder-coral/50 bg-wonder-coral/5 text-wonder-coral;
-}
-
-/* Utility animations - inspired by Disney and Pixar */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes pulse-soft {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
-
-.animate-pulse-soft {
-  animation: pulse-soft 3s ease-in-out infinite;
-}
-
-/* Entry animation - Apple inspired */
-@keyframes fade-scale-in {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.fade-scale-in {
-  animation: fade-scale-in 0.4s ease-out forwards;
-}
-
-/* Shine animation for progress bars and buttons - EA Sports inspired */
-@keyframes shine {
-  0% { transform: translateX(-100%); }
-  50%, 100% { transform: translateX(100%); }
-}
-
-.animate-shine {
-  animation: shine 4s infinite;
-  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.5), transparent);
-}
-
-/* Shadow effects with enhanced depth - Apple inspired */
-.shadow-wonder {
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.1), 0 1px 2px rgba(124, 58, 237, 0.05);
-}
-
-.shadow-wonder-lg {
-  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.15), 0 5px 10px -5px rgba(124, 58, 237, 0.1);
-}
-
-.shadow-magical {
-  box-shadow: 0 4px 10px -1px rgba(124, 58, 237, 0.2), 0 2px 5px -1px rgba(124, 58, 237, 0.1);
-}
-
-.shadow-magical-hover {
-  box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3), 0 4px 6px -2px rgba(124, 58, 237, 0.2);
-}
-
-/* Gradients with new inspiring options - Chupa Chups inspired */
-.bg-gradient-wonder {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-}
-
-.bg-gradient-rainbow {
-  background: linear-gradient(135deg, #F472B6 0%, #9333EA 50%, #3B82F6 100%);
-}
-
-.bg-gradient-yellow {
-  background: linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%);
-}
-
-.bg-gradient-teal {
-  background: linear-gradient(135deg, #A7F3D0 0%, #0EA5E9 100%);
-}
-
-.bg-gradient-purple {
-  background: linear-gradient(135deg, #C4B5FD 0%, #8B5CF6 100%);
-}
-
-.bg-gradient-coral {
-  background: linear-gradient(135deg, #FECACA 0%, #F43F5E 100%);
-}
-
-.bg-gradient-pixar {
-  background: linear-gradient(135deg, #4158D0, #C850C0, #FFCC70);
-}
-
-.bg-gradient-disney {
-  background: linear-gradient(135deg, #0b63f6, #003cc5);
-}
-
-.bg-gradient-sports {
-  background: linear-gradient(135deg, #00c6fb, #005bea);
-}
-
-.bg-gradient-candy {
-  background: linear-gradient(135deg, #ff61d2, #fe9090, #fbd4a4, #ddfc9b);
-}
-
-.bg-wonder-background {
-  background-color: #F9F7FF;
-}
-
-/* Hide scrollbar */
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(124, 58, 237, 0.2);
-  border-radius: 3px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(124, 58, 237, 0.4);
-}
-
-/* Hover effects with improved interactivity - Apple and EA Sports inspired */
-.hover-scale {
-  @apply transition-transform duration-200 hover:scale-105;
-}
-
-.hover-scale-subtle {
-  @apply transition-transform duration-200 hover:scale-102;
-}
-
-.btn-bounce:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-/* Text colors */
-.text-wonder-purple {
-  color: #7c3aed;
-}
-
-.text-wonder-purple-dark {
-  color: #6D28D9;
-}
-
-.text-wonder-teal {
-  color: #14B8A6;
-}
-
-.text-wonder-teal-dark {
-  color: #0D9488;
-}
-
-.text-wonder-coral {
-  color: #F43F5E;
-}
-
-.text-wonder-coral-dark {
-  color: #E11D48;
-}
-
-.text-wonder-yellow {
-  color: #F59E0B;
-}
-
-.text-wonder-green {
-  color: #10B981;
-}
-
-/* Accessibility */
-.focus-ring {
-  @apply outline-none;
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(255, 255, 255, 1);
-}
-
-button:focus-visible,
-a:focus-visible {
-  @apply focus-ring;
-}
-
-/* Mobile layout */
-.mobile-stack {
-  @apply flex-col;
-}
-
-@media (max-width: 640px) {
-  .mobile-stack {
-    @apply gap-4;
+@layer components {
+  .shadow-magical {
+    box-shadow: 0 4px 12px rgba(var(--wonder-purple), 0.15), 0 2px 4px rgba(var(--wonder-purple), 0.1);
+  }
+  
+  .shadow-magical-hover {
+    box-shadow: 0 6px 16px rgba(var(--wonder-purple), 0.2), 0 3px 6px rgba(var(--wonder-purple), 0.15);
+  }
+  
+  .shadow-wonder {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  .chat-bubble-user {
+    @apply bg-wonder-purple text-white p-4 rounded-xl rounded-tr-sm shadow-wonder max-w-fit ml-auto;
+  }
+  
+  .chat-bubble-ai {
+    @apply bg-white p-4 rounded-xl rounded-tl-sm shadow-wonder max-w-fit;
+  }
+  
+  .learning-blocks-container {
+    @apply flex overflow-x-auto gap-4 py-2 px-4 snap-x snap-mandatory scrollbar-none;
+  }
+  
+  .learning-block {
+    @apply min-w-[240px] sm:min-w-[280px] p-4 rounded-xl bg-white border border-wonder-purple/10 shadow-wonder relative overflow-hidden flex-shrink-0 snap-center;
+  }
+  
+  .scroll-button {
+    @apply absolute top-1/2 transform -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white/80 backdrop-blur-sm border border-wonder-purple/10 rounded-full shadow-sm hover:shadow-wonder transition-all duration-300;
+  }
+  
+  .scroll-button-left {
+    @apply left-2;
+  }
+  
+  .scroll-button-right {
+    @apply right-2;
+  }
+  
+  .animate-pulse-soft {
+    animation: pulse-soft 3s ease-in-out infinite;
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  
+  .animate-sparkle {
+    animation: sparkle 2s ease-in-out infinite;
+  }
+  
+  .animate-shine {
+    animation: shine 2s linear infinite;
+  }
+  
+  .fade-scale-in {
+    animation: fade-scale-in 0.5s ease-out;
+  }
+  
+  /* Smooth transitions for section navigation */
+  .section-transition {
+    @apply transition-all duration-500 ease-in-out;
+  }
+  
+  /* Progress bar animation */
+  .progress-animate {
+    @apply relative overflow-hidden;
+  }
+  
+  .progress-animate::after {
+    content: "";
+    @apply absolute top-0 right-0 bottom-0 left-0 bg-gradient-to-r from-transparent via-white/30 to-transparent;
+    animation: progress-shine 2s ease-in-out infinite;
   }
 }
 
-/* Button styles with enhanced interaction - Disney and Apple inspired */
-.btn-wonder {
-  @apply relative rounded-full text-white font-medium shadow-magical transition-all duration-300 overflow-hidden;
-}
-
-.btn-wonder::before {
-  content: '';
-  @apply absolute inset-0 opacity-0 hover:opacity-10 transition-opacity duration-300;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
-}
-
-.btn-wonder:active {
-  transform: scale(0.98);
-}
-
-/* Animation for sparkles - Pixar inspired */
-@keyframes sparkle {
-  0%, 100% { opacity: 0.5; transform: scale(1) rotate(0); }
-  50% { opacity: 1; transform: scale(1.5) rotate(20deg); }
-}
-
-.animate-sparkle {
-  animation: sparkle 2s ease-in-out infinite;
-}
-
-/* Ripple effect for buttons - Material Design inspired */
-@keyframes ripple {
-  to {
-    transform: scale(3);
-    opacity: 0;
-  }
-}
-
-.ripple-effect {
-  position: relative;
-  overflow: hidden;
-}
-
-.ripple-effect::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
-  background-repeat: no-repeat;
-  background-position: 50%;
-  transform: scale(10, 10);
-  opacity: 0;
-  transition: transform 0.6s, opacity 0.6s;
-}
-
-.ripple-effect:active::after {
-  transform: scale(0, 0);
-  opacity: 0.3;
-  transition: 0s;
-}
-
-/* Animation for fade-in-up - Apple inspired */
-@keyframes fade-in-up {
-  0% { 
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% { 
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.3s ease-out forwards;
-}
-
-/* Glassmorphism effect - Apple inspired */
-.glass {
-  @apply backdrop-blur-md bg-white/80 border border-white/20;
-}
-
-.glass-dark {
-  @apply backdrop-blur-md bg-black/50 border border-white/10 text-white;
-}
-
-/* Enhanced badge styles - EA Sports inspired */
-.badge {
-  @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-medium;
-}
-
-.badge-purple {
-  @apply bg-wonder-purple/10 text-wonder-purple;
-}
-
-.badge-teal {
-  @apply bg-wonder-teal/10 text-wonder-teal;
-}
-
-.badge-yellow {
-  @apply bg-wonder-yellow/10 text-wonder-yellow;
-}
-
-.badge-coral {
-  @apply bg-wonder-coral/10 text-wonder-coral;
-}
-
-/* Magic pulse effect for highlights - Pixar inspired */
-.magic-pulse {
-  position: relative;
-}
-
-.magic-pulse::after {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: inherit;
-  padding: 8px;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.6), rgba(124, 58, 237, 0));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  animation: magic-pulse 2s ease-in-out infinite;
-}
-
-@keyframes magic-pulse {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 1; }
-}
-
-/* New design elements inspired by requested brands */
-
-/* Apple-inspired clean elements */
-.apple-clean {
-  @apply bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-300;
-}
-
-.apple-clean:hover {
-  @apply shadow-md;
-  transform: translateY(-2px);
-}
-
-/* Pixar-inspired vibrant elements */
-.pixar-vibrant {
-  @apply bg-gradient-to-br from-wonder-blue via-wonder-purple to-wonder-coral rounded-xl overflow-hidden;
-  position: relative;
-}
-
-.pixar-vibrant::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 60%);
-  pointer-events: none;
-}
-
-/* Disney-inspired magical elements */
-.disney-magical {
-  @apply bg-gradient-to-br from-wonder-purple/10 via-wonder-blue/5 to-wonder-purple/10 rounded-xl border border-wonder-purple/20;
-  position: relative;
-  overflow: hidden;
-}
-
-.disney-magical::before {
-  content: '';
-  position: absolute;
-  width: 150%;
-  height: 150%;
-  top: -25%;
-  left: -25%;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  pointer-events: none;
-}
-
-.disney-magical:hover::before {
-  opacity: 1;
-}
-
-/* EA Sports-inspired elements */
-.sports-energy {
-  @apply bg-gradient-to-r from-wonder-blue to-wonder-green rounded-xl text-white font-bold;
-  position: relative;
-  overflow: hidden;
-}
-
-.sports-energy::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 60%);
-  pointer-events: none;
-}
-
-/* Chupa Chups-inspired playful elements */
-.candy-playful {
-  @apply bg-gradient-candy rounded-full;
-  position: relative;
-  overflow: hidden;
-}
-
-.candy-playful::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at top right, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
-  pointer-events: none;
-}
-
-/* New Child-friendly font styles */
-.font-comic {
-  font-family: 'Comic Neue', 'Comic Sans MS', sans-serif;
-}
-
-.font-bubbly {
-  font-family: 'Baloo 2', cursive;
-}
-
-/* Pixar-inspired card elements for children */
-.pixar-card {
-  @apply rounded-2xl bg-white p-4 border border-wonder-purple/10 shadow-sm;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.pixar-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 50%);
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.pixar-card:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.2);
-}
-
-/* Disney-inspired magical elements for children */
-.disney-card {
-  @apply rounded-2xl border border-wonder-blue/20 overflow-hidden;
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.disney-card::before {
-  content: '';
-  position: absolute;
-  width: 200%;
-  height: 200%;
-  top: -50%;
-  left: -50%;
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
-  transform: rotate(45deg);
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  pointer-events: none;
-}
-
-.disney-card:hover::before {
-  opacity: 1;
-}
-
-/* Chupa Chups inspired candy elements */
-.candy-card {
-  @apply rounded-2xl overflow-hidden;
-  background: linear-gradient(135deg, #FECDD3 0%, #FDE68A 50%, #A7F3D0 100%);
-  position: relative;
-  box-shadow: 0 8px 20px rgba(252, 165, 165, 0.3);
-  transition: all 0.3s ease;
-}
-
-.candy-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 60%);
-  pointer-events: none;
-}
-
-.candy-card:hover {
-  transform: translateY(-5px) rotate(1deg);
-}
-
-/* EA Sports inspired elements */
-.sports-card {
-  @apply rounded-2xl overflow-hidden;
-  background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%);
-  position: relative;
-  box-shadow: 0 8px 16px rgba(8, 145, 178, 0.3);
-  transition: all 0.3s ease;
-}
-
-.sports-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 60%);
-  pointer-events: none;
-}
-
-.sports-card:hover {
-  transform: translateY(-5px) scale(1.02);
-}
-
-/* Mobile Optimization Improvements - Following Apple & Google Guidelines */
 @layer utilities {
-  /* Safe Area insets for modern iOS/Android devices */
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 0px);
   }
@@ -754,80 +173,88 @@ a:focus-visible {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   
-  .safe-area-left {
-    padding-left: env(safe-area-inset-left, 0px);
+  .transform {
+    transform: translateZ(0);
   }
   
-  .safe-area-right {
-    padding-right: env(safe-area-inset-right, 0px);
-  }
-  
-  .safe-area-x {
-    padding-left: env(safe-area-inset-left, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
-  }
-  
-  /* Touch target improvements for mobile */
-  .touch-manipulation {
-    touch-action: manipulation;
-  }
-  
-  /* Mobile-specific tap state */
-  .active\:scale-95:active {
-    transform: scale(0.95);
+  .hover\:scale-102:hover {
+    transform: scale(1.02);
   }
   
   .active\:scale-98:active {
     transform: scale(0.98);
   }
-}
-
-/* Mobile-specific breakpoint */
-@media (max-width: 480px) {
-  /* Extra small screen / phone specific styles */
-}
-
-/* Smoother touch animations on mobile */
-@media (hover: none) {
-  .hover\:scale-102:hover {
-    transform: none;
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
   }
   
-  .hover\:scale-105:hover {
-    transform: none;
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   
-  .hover\:-translate-y-1:hover {
-    transform: none;
-  }
-  
-  .hover\:shadow-magical-hover:hover {
-    box-shadow: 0 4px 10px -1px rgba(124, 58, 237, 0.2), 0 2px 5px -1px rgba(124, 58, 237, 0.1);
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }
 
-/* Optimized chat bubbles for mobile */
-@media (max-width: 640px) {
-  .chat-bubble-ai {
-    padding: 0.875rem;
-    margin-right: 0.5rem;
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.2;
   }
-  
-  .chat-bubble-user {
-    padding: 0.875rem;
-    margin-left: 0.5rem;
-  }
-  
-  .learning-block {
-    min-width: 200px;
-    min-height: 100px;
-    padding: 1rem;
+  50% {
+    opacity: 0.5;
   }
 }
 
-/* Improved scrolling for touch devices */
-@media (pointer: coarse) {
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes shine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fade-scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes progress-shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
   }
 }

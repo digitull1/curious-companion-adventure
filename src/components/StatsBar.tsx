@@ -18,11 +18,11 @@ const StatsBar: React.FC<StatsBarProps> = ({
   return (
     <div className="bg-white/70 backdrop-blur-sm border-b border-wonder-purple/10 px-4 py-2 sticky top-0 z-30 safe-area-top shadow-sm">
       <div className="w-full mx-auto">
-        <div className="flex justify-end items-center gap-4">
+        <div className="flex justify-end items-center gap-6">
           {topicSectionsGenerated && (
             <div className="flex items-center">
               <div className="text-xs text-muted-foreground font-rounded">Progress</div>
-              <div className="w-24 h-2.5 bg-gray-200 rounded-full ml-2 overflow-hidden">
+              <div className="w-28 h-2.5 bg-gray-200 rounded-full ml-2 overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-wonder-purple to-wonder-purple-light rounded-full transition-all duration-700 relative overflow-hidden"
                   style={{ width: `${learningProgress}%` }}
