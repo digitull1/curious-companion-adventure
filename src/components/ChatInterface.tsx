@@ -386,6 +386,7 @@ const Chat = () => {
             onBlockClick={handleBlockClick}
             onTocSectionClick={handleTocSectionClick}
             onRelatedTopicClick={handleRelatedTopicClick}
+            learningProgress={learningProgress}
           />
           
           {/* Chat Input */}
