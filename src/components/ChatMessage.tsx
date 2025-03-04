@@ -42,32 +42,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
           ripple.remove();
         }, 1000);
       }
-      
-      // Add enhanced text formatting for AI messages
-      if (!isUser && textElement) {
-        // Create highlights for important parts of the text
-        enhanceTextFormatting(textElement);
-      }
     }
-  }, [isUser, message]);
-  
-  // Function to enhance text formatting with highlights for important information
-  const enhanceTextFormatting = (textElement: Element) => {
-    // Identify questions and enhance them
-    const text = textElement.innerHTML;
-    
-    // Highlight questions with question marks
-    const enhancedText = text
-      // Make question sentences stand out
-      .replace(/([^.!?]+\?)/g, '<span class="text-wonder-purple font-medium">$1</span>')
-      // Enhance "Did you know" facts
-      .replace(/(Did you know[^.!?]+[.!?])/gi, '<span class="bg-wonder-yellow/10 px-1 py-0.5 rounded">$1</span>')
-      // Highlight mind-blowing facts
-      .replace(/(Fun fact|Mind-blowing fact|Amazingly|Interestingly|Surprisingly|Incredibly)[^.!?]+[.!?]/gi, 
-               '<span class="bg-wonder-blue/10 px-1 py-0.5 rounded">$1</span>');
-    
-    textElement.innerHTML = enhancedText;
-  };
+  }, [isUser]);
 
   return (
     <div 

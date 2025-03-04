@@ -1,6 +1,5 @@
-
 import React, { useRef, useEffect } from "react";
-import { ChevronRight, ArrowRight, BookOpen, ChevronDown, ChevronLeft, Image, Sparkles } from "lucide-react";
+import { ChevronRight, ArrowRight, BookOpen, ChevronDown, ChevronLeft } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
 import TypingIndicator from "@/components/TypingIndicator";
@@ -8,18 +7,6 @@ import TableOfContents from "@/components/TableOfContents";
 import ImageBlock from "@/components/ImageBlock";
 import QuizBlock from "@/components/QuizBlock";
 import { animate } from "@motionone/dom";
-
-interface Section {
-  sectionTitle: string;
-  description: string;
-  emoji: string;
-}
-
-interface Topic {
-  title: string;
-  description: string;
-  emoji: string;
-}
 
 interface Message {
   id: string;
@@ -32,18 +19,13 @@ interface Message {
     question: string;
     options: string[];
     correctAnswer: number;
-    explanation?: string;
-    funFact?: string;
   };
   code?: {
     snippet: string;
     language: string;
   };
-  tableOfContents?: string[] | Section[];
-  tableOfContentsTitle?: string;
+  tableOfContents?: string[];
   isIntroduction?: boolean;
-  relatedTopics?: Topic[];
-  certificate?: string;
 }
 
 interface ChatAreaProps {
@@ -51,24 +33,13 @@ interface ChatAreaProps {
   showTypingIndicator: boolean;
   completedSections: string[];
   currentSection: string | null;
-  relatedTopics: Topic[];
+  relatedTopics: string[];
   learningComplete: boolean;
   onBlockClick: (type: BlockType, messageId: string, messageText: string) => void;
   onTocSectionClick: (section: string) => void;
   onRelatedTopicClick: (topic: string) => void;
   learningProgress: number;
-  onImagePromptClick?: (messageId: string) => void;
 }
-
-// Function to check if sections are in the new format (with descriptions)
-const isEnhancedSection = (section: any): section is Section => {
-  return typeof section === 'object' && 'sectionTitle' in section;
-};
-
-// Function to get section title, regardless of format
-const getSectionTitle = (section: string | Section): string => {
-  return isEnhancedSection(section) ? section.sectionTitle : section;
-};
 
 const ChatArea: React.FC<ChatAreaProps> = ({
   messages,
@@ -80,8 +51,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   onBlockClick,
   onTocSectionClick,
   onRelatedTopicClick,
-  learningProgress,
-  onImagePromptClick
+  learningProgress
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
@@ -140,19 +110,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const getAdjacentSections = () => {
     if (!currentSection) return { prev: null, next: null };
     
-    const toc = messages.find(m => m.tableOfContents);
-    if (!toc || !toc.tableOfContents || toc.tableOfContents.length === 0) 
-      return { prev: null, next: null };
+    const toc = messages.find(m => m.tableOfContents)?.tableOfContents || [];
+    if (toc.length === 0) return { prev: null, next: null };
     
-    const sectionTitles = toc.tableOfContents.map(section => 
-      typeof section === 'string' ? section : section.sectionTitle
-    );
-    
-    const currentIndex = sectionTitles.findIndex(section => section === currentSection);
+    const currentIndex = toc.findIndex(section => section === currentSection);
     if (currentIndex === -1) return { prev: null, next: null };
     
-    const prev = currentIndex > 0 ? sectionTitles[currentIndex - 1] : null;
-    const next = currentIndex < sectionTitles.length - 1 ? sectionTitles[currentIndex + 1] : null;
+    const prev = currentIndex > 0 ? toc[currentIndex - 1] : null;
+    const next = currentIndex < toc.length - 1 ? toc[currentIndex + 1] : null;
     
     return { prev, next };
   };
@@ -178,7 +143,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     );
   };
 
-  // Render previous/next navigation with improved styling
+  // Render previous/next navigation
   const renderTopicNavigation = () => {
     if (!currentSection) return null;
     
@@ -229,21 +194,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     );
   };
 
-  // Render inline image prompt button
-  const renderInlineImagePrompt = (messageId: string, text: string) => {
-    if (!onImagePromptClick) return null;
-    
-    return (
-      <button
-        onClick={() => onImagePromptClick(messageId)}
-        className="inline-flex items-center mt-3 py-2 px-3 bg-gradient-to-r from-wonder-blue/20 to-wonder-blue/5 rounded-lg border border-wonder-blue/20 text-wonder-blue hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-sm"
-      >
-        <Image className="h-4 w-4 mr-2" />
-        <span>Show me a picture of this!</span>
-      </button>
-    );
-  };
-
   return (
     <div 
       className="flex-1 overflow-y-auto py-6 scrollbar-thin relative" 
@@ -260,7 +210,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         return (
           <div key={message.id} className="fade-scale-in mb-6">
             <ChatMessage message={messageTextWithoutNextPrompt} isUser={message.isUser}>
-              {/* Table of Contents Display - now supports enhanced format */}
               {message.tableOfContents && (
                 <TableOfContents 
                   sections={message.tableOfContents} 
@@ -269,47 +218,20 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   onSectionClick={onTocSectionClick}
                 />
               )}
-              
-              {/* Inline image prompt button */}
-              {!message.isUser && !message.imagePrompt && onImagePromptClick && renderInlineImagePrompt(message.id, message.text)}
-              
-              {/* Image display */}
               {message.imagePrompt && (
                 <ImageBlock prompt={message.imagePrompt} />
               )}
-              
-              {/* Quiz display with enhanced properties */}
               {message.quiz && (
                 <QuizBlock 
                   question={message.quiz.question} 
                   options={message.quiz.options}
                   correctAnswer={message.quiz.correctAnswer}
-                  explanation={message.quiz.explanation}
-                  funFact={message.quiz.funFact}
                 />
               )}
-              
-              {/* Certificate display */}
-              {message.certificate && (
-                <div className="mt-4 p-5 bg-gradient-to-r from-wonder-purple/10 to-wonder-purple-light/5 rounded-xl border border-wonder-purple/20 shadow-magical relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-wonder-yellow to-wonder-yellow-light"></div>
-                  <div className="absolute -right-10 -bottom-10 opacity-10 text-[120px]">🏆</div>
-                  
-                  <div className="flex justify-center mb-3">
-                    <Sparkles className="h-6 w-6 text-wonder-yellow animate-pulse-soft" />
-                  </div>
-                  
-                  <h3 className="text-lg font-bold text-center text-wonder-purple mb-2">Certificate of Achievement</h3>
-                  <p className="text-center text-wonder-purple/80 whitespace-pre-line">{message.certificate}</p>
-                  
-                  <div className="flex justify-center mt-4">
-                    <div className="bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full text-wonder-purple text-sm font-medium border border-wonder-purple/20">
-                      Points earned: +50
-                    </div>
-                  </div>
-                </div>
-              )}
             </ChatMessage>
+            
+            {/* Next topic navigation button - Only show if this message contains a next topic suggestion */}
+            
             
             {/* Show the previous/next navigation ONLY after a non-user message with content about the current section */}
             {!message.isUser && !message.tableOfContents && currentSection && renderTopicNavigation()}
@@ -352,31 +274,28 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               </div>
             )}
             
-            {/* Enhanced Related topics */}
+            {/* Related topics */}
             {message.isIntroduction && relatedTopics.length > 0 && learningComplete && (
               <div className="mb-6 px-4" ref={relatedTopicsRef}>
-                <h3 className="text-base font-medium mb-3 text-wonder-purple flex items-center">
-                  <Sparkles className="h-4 w-4 mr-2 text-wonder-yellow" />
-                  Continue your learning adventure:
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <h3 className="text-sm font-medium mb-2 text-wonder-purple">Explore more topics:</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {relatedTopics.map((topic, index) => (
                     <div 
                       key={index}
-                      onClick={() => onRelatedTopicClick(topic.title)}
-                      className="related-topic p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
+                      onClick={() => onRelatedTopicClick(topic)}
+                      className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
                                 hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
                                 hover:-translate-y-1 transform touch-manipulation"
                       style={{ opacity: 0 }} // Initially invisible for animation
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
-                          <span className="text-lg">{topic.emoji || "🔍"}</span>
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
+                          <ChevronRight className="h-3 w-3" />
                         </div>
                         <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
                       </div>
-                      <h3 className="font-medium text-sm text-foreground font-rounded leading-tight">{topic.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-1 font-rounded">{topic.description || "Click to explore"}</p>
+                      <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
                     </div>
                   ))}
                 </div>
