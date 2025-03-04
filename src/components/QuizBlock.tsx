@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { launchConfetti } from "@/utils/confetti";
-import { Check, X, Trophy, LightbulbIcon } from "lucide-react";
+import { Check, X, Trophy, LightbulbIcon, BookOpen } from "lucide-react";
 import { animate } from "@motionone/dom";
 
 interface QuizBlockProps {
@@ -9,9 +9,16 @@ interface QuizBlockProps {
   options: string[];
   correctAnswer: number;
   funFact?: string;
+  explanation?: string;
 }
 
-const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer, funFact }) => {
+const QuizBlock: React.FC<QuizBlockProps> = ({ 
+  question, 
+  options, 
+  correctAnswer, 
+  funFact, 
+  explanation 
+}) => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
@@ -19,6 +26,7 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
   const quizRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<(HTMLDivElement | null)[]>([]);
   const funFactRef = useRef<HTMLDivElement>(null);
+  const explanationRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (quizRef.current) {
@@ -30,7 +38,7 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
     }
   }, []);
 
-  // Animate fun fact when it appears
+  // Animate fun fact and explanation when they appear
   useEffect(() => {
     if (showFunFact && funFactRef.current) {
       animate(
@@ -39,7 +47,15 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
         { duration: 0.4, easing: "ease-out", delay: 0.5 }
       );
     }
-  }, [showFunFact]);
+    
+    if (isSubmitted && explanationRef.current) {
+      animate(
+        explanationRef.current,
+        { opacity: [0, 1], scale: [0.95, 1] },
+        { duration: 0.4, easing: "ease-out", delay: 0.2 }
+      );
+    }
+  }, [showFunFact, isSubmitted]);
 
   const handleOptionClick = (index: number) => {
     if (!isSubmitted) {
@@ -116,15 +132,23 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
 
   return (
     <div className="mt-4 bg-white rounded-xl p-5 shadow-pixar relative overflow-hidden" ref={quizRef}>
+      {/* Quiz title bar */}
+      <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-light/10 p-2 rounded-t-xl flex items-center">
+        <div className="bg-wonder-purple/20 p-1 rounded-full mr-2">
+          <BookOpen className="h-4 w-4 text-wonder-purple" />
+        </div>
+        <span className="text-xs font-medium text-wonder-purple">Knowledge Challenge</span>
+      </div>
+      
       {/* Background pattern for visual interest */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none" 
+      <div className="absolute inset-0 opacity-5 pointer-events-none mt-10" 
         style={{
           backgroundImage: "radial-gradient(circle at 20px 20px, #7c3aed 2px, transparent 0)",
           backgroundSize: "40px 40px"
         }}>
       </div>
       
-      <h3 className="font-bold text-lg mb-4 relative">
+      <h3 className="font-bold text-lg mb-4 relative mt-8">
         {question}
         {/* Decorative element */}
         <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-wonder-purple to-wonder-purple-light rounded-full opacity-70"></div>
@@ -173,11 +197,15 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
           Check Answer
         </button>
       ) : (
-        <div className={`p-4 rounded-lg ${
-          isCorrect 
-            ? 'bg-gradient-to-r from-wonder-green/20 to-wonder-green-light/10 text-wonder-green border border-wonder-green/20' 
-            : 'bg-gradient-to-r from-destructive/20 to-destructive/10 text-destructive border border-destructive/20'
-        }`}>
+        <div 
+          ref={explanationRef}
+          className={`p-4 rounded-lg ${
+            isCorrect 
+              ? 'bg-gradient-to-r from-wonder-green/20 to-wonder-green-light/10 text-wonder-green border border-wonder-green/20' 
+              : 'bg-gradient-to-r from-destructive/20 to-destructive/10 text-destructive border border-destructive/20'
+          }`}
+          style={{ opacity: 0 }} // Start invisible for animation
+        >
           <div className="flex items-center">
             {isCorrect ? (
               <>
@@ -194,6 +222,12 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
           {!isCorrect && (
             <div className="mt-2 font-medium text-wonder-green pl-7">
               {options[correctAnswer]}
+            </div>
+          )}
+          {/* Add explanation section */}
+          {explanation && (
+            <div className="mt-3 text-sm pl-7 border-t border-current pt-2 opacity-90">
+              {explanation}
             </div>
           )}
         </div>
