@@ -46,22 +46,6 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
     ? Math.round((completedSections.length / sections.length) * 100)
     : 0;
     
-  // Determine the next section to study
-  const getNextSection = () => {
-    if (currentSection) {
-      const currentIndex = sections.indexOf(currentSection);
-      if (currentIndex < sections.length - 1) {
-        return sections[currentIndex + 1];
-      }
-    } else if (sections.length > 0 && completedSections.length < sections.length) {
-      // Find the first incomplete section
-      return sections.find(section => !completedSections.includes(section)) || null;
-    }
-    return null;
-  };
-
-  const nextSection = getNextSection();
-    
   return (
     <div className="mt-4 relative">
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm p-3 border-b border-wonder-purple/10 rounded-t-xl flex items-center justify-between mb-2">
@@ -88,7 +72,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
           {sections.map((section, index) => {
             const isCompleted = completedSections.includes(section);
             const isCurrent = section === currentSection;
-            const isNext = section === nextSection;
+            const isNext = section === getNextSection();
             
             return (
               <button
@@ -156,20 +140,9 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
           })}
         </div>
         
-        {nextSection && (
-          <div className="mt-4">
-            <button 
-              onClick={() => onSectionClick(nextSection)}
-              className="w-full py-3 px-4 bg-gradient-to-r from-wonder-yellow to-wonder-yellow-dark text-white rounded-lg font-medium flex items-center justify-center gap-2 shadow-magical 
-                         transform transition-all duration-300 hover:-translate-y-1 active:translate-y-0 group touch-manipulation"
-            >
-              <span>Continue Learning</span>
-              <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-        )}
+        {/* Removed the "Continue Learning" button */}
         
-        {!nextSection && completedSections.length === sections.length && sections.length > 0 && (
+        {completedSections.length === sections.length && sections.length > 0 && (
           <div className="mt-4 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-dark/20 p-4 rounded-lg border border-wonder-purple/20">
             <p className="text-center text-wonder-purple font-medium">
               Congratulations! You've completed all sections! 🎉
@@ -179,6 +152,20 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       </div>
     </div>
   );
+  
+  // Determine the next section to study
+  function getNextSection() {
+    if (currentSection) {
+      const currentIndex = sections.indexOf(currentSection);
+      if (currentIndex < sections.length - 1) {
+        return sections[currentIndex + 1];
+      }
+    } else if (sections.length > 0 && completedSections.length < sections.length) {
+      // Find the first incomplete section
+      return sections.find(section => !completedSections.includes(section)) || null;
+    }
+    return null;
+  }
 };
 
 export default TableOfContents;

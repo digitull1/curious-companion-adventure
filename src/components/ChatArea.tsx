@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown, ChevronLeft } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -232,29 +231,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             </ChatMessage>
             
             {/* Next topic navigation button - Only show if this message contains a next topic suggestion */}
-            {nextTopic && (
-              <div className="mx-auto max-w-3xl px-4 mt-2 mb-4">
-                <button 
-                  className="w-full p-3 bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 hover:from-wonder-purple/15 hover:to-wonder-purple/10 
-                    border border-wonder-purple/20 rounded-xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 
-                    shadow-sm hover:shadow-magical text-left"
-                  onClick={() => onTocSectionClick(nextTopic)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 rounded-full bg-wonder-purple/20 flex items-center justify-center mr-2 flex-shrink-0">
-                        <ArrowRight className="h-4 w-4 text-wonder-purple" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">Continue learning</div>
-                        <div className="font-medium text-wonder-purple truncate max-w-[200px] sm:max-w-md">{nextTopic}</div>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-wonder-purple/60 flex-shrink-0" />
-                  </div>
-                </button>
-              </div>
-            )}
+            
             
             {/* Show the previous/next navigation ONLY after a non-user message with content about the current section */}
             {!message.isUser && !message.tableOfContents && currentSection && renderTopicNavigation()}
