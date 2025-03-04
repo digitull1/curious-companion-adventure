@@ -35,7 +35,10 @@ serve(async (req) => {
       - Focused on explaining complex topics in simple terms
       - Free of any inappropriate content
       - Written with short sentences and simple vocabulary
-      - Structured with paragraph breaks for readability`;
+      - Include selective use of emojis to enhance engagement
+      - Structured with paragraph breaks for readability
+      - Include mind-blowing facts that will fascinate children
+      - Occasionally use storytelling to explain complex concepts`;
       
       response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -50,7 +53,7 @@ serve(async (req) => {
             { role: 'user', content: prompt }
           ],
           temperature: 0.7,
-          max_tokens: 500
+          max_tokens: 600
         }),
       });
       
@@ -68,7 +71,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: `Create a child-friendly, educational illustration of: ${prompt}. The image should be colorful, engaging, and suitable for children.`,
+          prompt: `Create a child-friendly, educational illustration of: ${prompt}. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a Pixar-inspired art style. Include cute details and visual elements that would appeal to children.`,
           n: 1,
           size: "1024x1024",
           response_format: "url"
@@ -82,14 +85,19 @@ serve(async (req) => {
     } 
     
     else if (requestType === 'quiz') {
-      const systemMessage = `You are an educational quiz generator for children. Create a single multiple-choice question about the topic provided. The response must be in the following JSON format exactly, with no additional text:
+      const systemMessage = `You are an educational quiz generator for children aged ${ageRange}. Create a single multiple-choice question about the topic provided that is educational, engaging, and appropriate for children of this age group. 
+
+      The response must be in the following JSON format exactly, with no additional text:
       {
         "question": "The question text here",
         "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-        "correctAnswer": 0
+        "correctAnswer": 0,
+        "funFact": "A brief, fascinating fact related to the correct answer that would amaze a child."
       }
+      
       Where "correctAnswer" is the index (0-3) of the correct option in the "options" array.
-      Make sure the question is appropriate for children, factually accurate, and educational.`;
+      Make sure the question is age-appropriate, factually accurate, and educational.
+      The fun fact should be mind-blowing and memorable.`;
       
       response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -104,7 +112,7 @@ serve(async (req) => {
             { role: 'user', content: `Create a quiz question about: ${prompt}` }
           ],
           temperature: 0.7,
-          max_tokens: 300
+          max_tokens: 400
         }),
       });
       
@@ -113,12 +121,18 @@ serve(async (req) => {
       
       try {
         quizData = JSON.parse(data.choices[0].message.content);
+        
+        // Ensure all required fields are present
+        if (!quizData.funFact) {
+          quizData.funFact = "Did you know? Learning is like exercise for your brain - it makes your brain stronger!";
+        }
       } catch (error) {
         console.error("Error parsing quiz JSON:", error);
         quizData = {
           question: "Which animal has the best sense of smell?",
           options: ["Elephant", "Dog", "Bear", "Shark"],
-          correctAnswer: 1
+          correctAnswer: 1,
+          funFact: "Did you know? A dog's sense of smell is up to 100,000 times stronger than humans! They can even smell some diseases."
         };
       }
       

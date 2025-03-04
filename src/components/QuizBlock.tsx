@@ -1,21 +1,24 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { launchConfetti } from "@/utils/confetti";
-import { Check, X, Trophy } from "lucide-react";
+import { Check, X, Trophy, LightbulbIcon } from "lucide-react";
 import { animate } from "@motionone/dom";
 
 interface QuizBlockProps {
   question: string;
   options: string[];
   correctAnswer: number;
+  funFact?: string;
 }
 
-const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer }) => {
+const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer, funFact }) => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [showFunFact, setShowFunFact] = useState<boolean>(false);
   const quizRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const funFactRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (quizRef.current) {
@@ -26,6 +29,17 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer 
       );
     }
   }, []);
+
+  // Animate fun fact when it appears
+  useEffect(() => {
+    if (showFunFact && funFactRef.current) {
+      animate(
+        funFactRef.current,
+        { opacity: [0, 1], scale: [0.95, 1] },
+        { duration: 0.4, easing: "ease-out", delay: 0.5 }
+      );
+    }
+  }, [showFunFact]);
 
   const handleOptionClick = (index: number) => {
     if (!isSubmitted) {
@@ -51,6 +65,11 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer 
       if (correct) {
         // Launch confetti animation on correct answer
         launchConfetti();
+        
+        // Show fun fact after a short delay
+        setTimeout(() => {
+          setShowFunFact(true);
+        }, 1000);
         
         // Add celebration animation
         if (quizRef.current) {
@@ -177,6 +196,25 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer 
               {options[correctAnswer]}
             </div>
           )}
+        </div>
+      )}
+      
+      {/* Fun Fact Section - Only shown after a correct answer */}
+      {showFunFact && funFact && (
+        <div 
+          ref={funFactRef}
+          className="mt-4 p-4 bg-gradient-to-r from-wonder-yellow/10 to-wonder-yellow-light/5 rounded-lg border border-wonder-yellow/20"
+          style={{ opacity: 0 }} // Start invisible for animation
+        >
+          <div className="flex items-start">
+            <div className="bg-wonder-yellow/20 p-1.5 rounded-full mr-2 flex-shrink-0 mt-0.5">
+              <LightbulbIcon className="h-4 w-4 text-wonder-yellow-dark" />
+            </div>
+            <div>
+              <h4 className="font-medium text-wonder-yellow-dark text-sm">Mind-Blowing Fact!</h4>
+              <p className="text-sm text-wonder-yellow-dark/90 mt-1">{funFact}</p>
+            </div>
+          </div>
         </div>
       )}
       

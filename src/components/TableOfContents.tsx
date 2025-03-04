@@ -10,6 +10,31 @@ interface TableOfContentsProps {
   onSectionClick: (section: string) => void;
 }
 
+// Emoji mapping for different topics
+const getTopicEmoji = (section: string): string => {
+  const lowerSection = section.toLowerCase();
+  
+  if (lowerSection.includes("planet") || lowerSection.includes("space") || lowerSection.includes("star") || lowerSection.includes("galaxy")) return "🌌";
+  if (lowerSection.includes("rocket") || lowerSection.includes("astronaut")) return "🚀";
+  if (lowerSection.includes("animal") || lowerSection.includes("wildlife")) return "🦁";
+  if (lowerSection.includes("ocean") || lowerSection.includes("sea") || lowerSection.includes("marine")) return "🌊";
+  if (lowerSection.includes("plant") || lowerSection.includes("tree") || lowerSection.includes("flower")) return "🌱";
+  if (lowerSection.includes("dino")) return "🦕";
+  if (lowerSection.includes("history")) return "📜";
+  if (lowerSection.includes("robot") || lowerSection.includes("computer") || lowerSection.includes("tech")) return "🤖";
+  if (lowerSection.includes("math") || lowerSection.includes("number")) return "🔢";
+  if (lowerSection.includes("science") || lowerSection.includes("experiment")) return "🔬";
+  if (lowerSection.includes("body") || lowerSection.includes("health") || lowerSection.includes("human")) return "🧠";
+  if (lowerSection.includes("food") || lowerSection.includes("eat")) return "🍎";
+  if (lowerSection.includes("art") || lowerSection.includes("draw") || lowerSection.includes("paint")) return "🎨";
+  if (lowerSection.includes("music") || lowerSection.includes("song")) return "🎵";
+  
+  // Default emojis based on position in the list (for topics that don't match above)
+  const defaultEmojis = ["📚", "✨", "💡", "🔍", "🧩"];
+  
+  return defaultEmojis[Math.floor(Math.random() * defaultEmojis.length)];
+};
+
 const TableOfContents: React.FC<TableOfContentsProps> = ({ 
   sections, 
   completedSections,
@@ -18,6 +43,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
 }) => {
   const tocRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const celebrationRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (tocRef.current) {
@@ -40,6 +66,30 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       });
     }
   }, [sections]);
+  
+  // Add celebration animation when all sections are completed
+  useEffect(() => {
+    if (completedSections.length === sections.length && sections.length > 0 && celebrationRef.current) {
+      // Animate confetti or celebration effects
+      const particles = Array.from({ length: 20 }).map(() => {
+        const particle = document.createElement('div');
+        particle.className = 'absolute rounded-full bg-wonder-purple animate-float-up';
+        particle.style.width = `${Math.random() * 10 + 5}px`;
+        particle.style.height = `${Math.random() * 10 + 5}px`;
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.bottom = '0';
+        particle.style.opacity = '0.8';
+        return particle;
+      });
+      
+      particles.forEach(particle => celebrationRef.current?.appendChild(particle));
+      
+      // Remove particles after animation
+      setTimeout(() => {
+        particles.forEach(particle => particle.remove());
+      }, 3000);
+    }
+  }, [completedSections, sections]);
   
   // Calculate progress percentage
   const progressPercentage = sections.length 
@@ -68,11 +118,12 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         <div className="absolute inset-0 bg-gradient-to-br from-wonder-purple/5 to-transparent pointer-events-none"></div>
         <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-gradient-radial from-wonder-purple/10 to-transparent rounded-full"></div>
         
-        <div className="space-y-2">
+        <div className="space-y-2 relative">
           {sections.map((section, index) => {
             const isCompleted = completedSections.includes(section);
             const isCurrent = section === currentSection;
             const isNext = section === getNextSection();
+            const topicEmoji = getTopicEmoji(section);
             
             return (
               <button
@@ -114,7 +165,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                           ? "text-wonder-yellow-dark font-medium"
                           : "group-hover:text-wonder-purple"
                   }`}>
-                    {section}
+                    {section} <span className="ml-1">{topicEmoji}</span>
                   </span>
                 </div>
                 
@@ -140,12 +191,13 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
           })}
         </div>
         
-        {/* Removed the "Continue Learning" button */}
-        
         {completedSections.length === sections.length && sections.length > 0 && (
-          <div className="mt-4 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-dark/20 p-4 rounded-lg border border-wonder-purple/20">
+          <div ref={celebrationRef} className="mt-4 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-dark/20 p-4 rounded-lg border border-wonder-purple/20 relative overflow-hidden">
             <p className="text-center text-wonder-purple font-medium">
-              Congratulations! You've completed all sections! 🎉
+              🎉 Congratulations! You've completed all sections! 🏆
+            </p>
+            <p className="text-center text-sm text-wonder-purple/80 mt-1">
+              You've earned a learning badge for this topic!
             </p>
           </div>
         )}
