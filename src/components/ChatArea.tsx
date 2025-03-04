@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from "react";
-import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
+import { ChevronRight, ArrowRight, BookOpen, ChevronDown, ChevronLeft } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
 import TypingIndicator from "@/components/TypingIndicator";
@@ -107,7 +107,23 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return match ? match[1] : null;
   };
 
-  // Show topic pill instead of a sticky header 
+  // Function to get previous and next section based on current section
+  const getAdjacentSections = () => {
+    if (!currentSection) return { prev: null, next: null };
+    
+    const toc = messages.find(m => m.tableOfContents)?.tableOfContents || [];
+    if (toc.length === 0) return { prev: null, next: null };
+    
+    const currentIndex = toc.findIndex(section => section === currentSection);
+    if (currentIndex === -1) return { prev: null, next: null };
+    
+    const prev = currentIndex > 0 ? toc[currentIndex - 1] : null;
+    const next = currentIndex < toc.length - 1 ? toc[currentIndex + 1] : null;
+    
+    return { prev, next };
+  };
+
+  // Topic pill instead of a sticky header
   const renderTopicPill = () => {
     if (!currentSection) return null;
     
@@ -123,15 +139,57 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               {currentSection}
             </span>
           </div>
-          
-          <div className="flex items-center mr-1">
-            <div className="px-2 py-1 bg-wonder-purple/10 rounded-full flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-wonder-purple/20 flex items-center justify-center">
-                <ChevronRight className="h-2 w-2 text-wonder-purple" />
+        </div>
+      </div>
+    );
+  };
+
+  // Render previous/next navigation
+  const renderTopicNavigation = () => {
+    if (!currentSection) return null;
+    
+    const { prev, next } = getAdjacentSections();
+    
+    return (
+      <div className="mx-auto max-w-3xl px-4 my-6">
+        <div className="flex items-center justify-between gap-3">
+          {prev ? (
+            <button 
+              onClick={() => onTocSectionClick(prev)}
+              className="flex-1 p-3 bg-white hover:bg-wonder-purple/5 border border-wonder-purple/20 rounded-xl shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-left"
+            >
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-wonder-purple/10 flex items-center justify-center mr-2 flex-shrink-0">
+                  <ChevronLeft className="h-4 w-4 text-wonder-purple" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Previous</div>
+                  <div className="font-medium text-wonder-purple truncate max-w-[120px] sm:max-w-[200px]">{prev}</div>
+                </div>
               </div>
-              <span className="text-xs font-medium">{Math.round(learningProgress)}%</span>
-            </div>
-          </div>
+            </button>
+          ) : (
+            <div className="flex-1"></div>
+          )}
+          
+          {next ? (
+            <button 
+              onClick={() => onTocSectionClick(next)}
+              className="flex-1 p-3 bg-white hover:bg-wonder-purple/5 border border-wonder-purple/20 rounded-xl shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-right"
+            >
+              <div className="flex items-center justify-end">
+                <div>
+                  <div className="text-xs text-muted-foreground">Next</div>
+                  <div className="font-medium text-wonder-purple truncate max-w-[120px] sm:max-w-[200px]">{next}</div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-wonder-purple/10 flex items-center justify-center ml-2 flex-shrink-0">
+                  <ChevronRight className="h-4 w-4 text-wonder-purple" />
+                </div>
+              </div>
+            </button>
+          ) : (
+            <div className="flex-1"></div>
+          )}
         </div>
       </div>
     );
@@ -173,7 +231,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               )}
             </ChatMessage>
             
-            {/* Next topic navigation button - Improved design */}
+            {/* Next topic navigation button - Only show if this message contains a next topic suggestion */}
             {nextTopic && (
               <div className="mx-auto max-w-3xl px-4 mt-2 mb-4">
                 <button 
@@ -197,6 +255,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 </button>
               </div>
             )}
+            
+            {/* Show the previous/next navigation ONLY after a non-user message with content about the current section */}
+            {!message.isUser && !message.tableOfContents && currentSection && renderTopicNavigation()}
             
             {/* Redesigned Learning Blocks */}
             {message.showBlocks && message.blocks && (
@@ -223,7 +284,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 
                 <div 
                   ref={learningBlocksRef}
-                  className="flex overflow-x-auto gap-3 py-1 snap-x snap-mandatory scrollbar-none"
+                  className="learning-blocks-container"
                 >
                   {message.blocks.map((block) => (
                     <LearningBlock

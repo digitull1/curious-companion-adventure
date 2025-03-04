@@ -1,11 +1,9 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { HelpCircle, X } from "lucide-react";
 import Header from "@/components/Header";
-import StatsBar from "@/components/StatsBar";
 import ChatArea from "@/components/ChatArea";
 import ChatInput from "@/components/ChatInput";
 import AgeRangeSelector from "@/components/AgeRangeSelector";
@@ -383,11 +381,9 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white overflow-hidden">
-      {/* Header */}
-      <Header avatar={avatar} />
-      
-      {/* Stats Bar */}
-      <StatsBar 
+      {/* Header with Stats integrated */}
+      <Header 
+        avatar={avatar} 
         streakCount={streakCount}
         points={points}
         learningProgress={learningProgress}
@@ -439,9 +435,17 @@ const Chat = () => {
         />
       )}
       
-      {/* Footer */}
-      <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 text-center text-xs text-muted-foreground">
-        <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium font-bubbly">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
+      {/* Footer - Now with a link for suggested prompts */}
+      <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 flex justify-between items-center">
+        <span className="text-xs text-muted-foreground">
+          <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium font-bubbly">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
+        </span>
+        <button 
+          onClick={() => setShowSuggestedPrompts(true)}
+          className="text-xs text-wonder-purple hover:text-wonder-purple-dark transition-colors"
+        >
+          Need ideas?
+        </button>
       </div>
       
       {/* Toast */}
