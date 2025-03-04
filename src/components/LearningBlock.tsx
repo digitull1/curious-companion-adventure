@@ -106,15 +106,28 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
       ref={blockRef}
       className={`relative rounded-xl border border-wonder-purple/10 bg-white/90 backdrop-blur-sm 
       transition-all duration-300 overflow-hidden flex-shrink-0 snap-center 
-      ${shadowColor} ${expanded ? "h-auto" : "h-12"} min-w-[180px] sm:min-w-[220px]`}
+      ${shadowColor} ${expanded ? "h-auto" : "h-12"} min-w-[180px] sm:min-w-[220px] cursor-pointer`}
+      onClick={() => {
+        if (!expanded) {
+          setExpanded(true);
+          if (blockRef.current) {
+            animate(
+              blockRef.current,
+              { height: ["3rem", "auto"] },
+              { duration: 0.3, easing: "ease-out" }
+            );
+          }
+        } else {
+          onClick();
+        }
+      }}
     >
       {/* Subtle background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5 rounded-xl z-0`}></div>
       
       {/* Header - Always visible */}
       <div 
-        className="flex items-center justify-between p-3 cursor-pointer z-10"
-        onClick={toggleExpand}
+        className="flex items-center justify-between p-3 z-10"
       >
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded-full bg-white/70 backdrop-blur-sm ${shadowColor}`}>
@@ -122,7 +135,10 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
           </div>
           <h3 className="font-medium text-sm truncate">{title}</h3>
         </div>
-        <button className="text-wonder-purple/70 hover:text-wonder-purple transition-colors">
+        <button 
+          className="text-wonder-purple/70 hover:text-wonder-purple transition-colors"
+          onClick={toggleExpand}
+        >
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
       </div>
@@ -131,7 +147,10 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
       <div className={`px-3 pb-3 pt-0 ${expanded ? "block" : "hidden"}`}>
         <p className="text-xs text-muted-foreground mb-3">{description}</p>
         <button
-          onClick={onClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
           className="w-full py-2 px-3 text-xs font-medium text-white rounded-lg bg-gradient-to-r from-wonder-purple to-wonder-purple-dark hover:shadow-magical-hover transition-all duration-300 transform hover:scale-102 active:scale-98"
         >
           Explore

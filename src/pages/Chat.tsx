@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { HelpCircle, X } from "lucide-react";
 import Header from "@/components/Header";
 import StatsBar from "@/components/StatsBar";
 import ChatArea from "@/components/ChatArea";
