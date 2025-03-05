@@ -13,6 +13,11 @@ interface ChatMessageProps {
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) => {
   const messageRef = useRef<HTMLDivElement>(null);
   
+  // Function to clean text content by removing asterisks
+  const cleanMessageText = (text: string) => {
+    return text.replace(/\*\*(.*?)\*\*/g, "$1");
+  };
+  
   useEffect(() => {
     if (messageRef.current) {
       // Create a staggered animation for text appearing
@@ -74,7 +79,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
           />
         )}
         
-        <p className="whitespace-pre-line leading-relaxed text-base font-rounded">{message}</p>
+        <p className="whitespace-pre-line leading-relaxed text-base font-rounded">
+          {cleanMessageText(message)}
+        </p>
         {children}
         
         {/* Add tooltip for user to know they can tap on non-user messages for more info */}
