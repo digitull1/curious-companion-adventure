@@ -5,6 +5,7 @@ import WonderWhizLogo from "@/components/WonderWhizLogo";
 import { BookOpen, ChevronRight, MapPin, Rocket, Sparkles, Star } from "lucide-react";
 import confetti from "canvas-confetti";
 import { animate } from "@motionone/dom";
+import { launchConfetti } from "@/utils/confetti";
 
 const Onboarding = () => {
   const [ageRange, setAgeRange] = useState<string>("");
@@ -64,22 +65,32 @@ const Onboarding = () => {
       // Animate current step out
       const currentStep = document.querySelector(".step-content");
       if (currentStep) {
-        animate(
+        // Fix: Store the animation promise and handle properly
+        const animation = animate(
           currentStep,
           { opacity: [1, 0], x: [0, -20] },
           { duration: 0.3, easing: "ease-out" }
-        ).then(() => {
+        );
+        
+        // Wait for animation to complete
+        setTimeout(() => {
           setStep(2);
           setIsAnimating(false);
-        });
+        }, 300); // Match duration with the animation
       }
     } else if (step === 2 && avatar) {
       // Celebration effect when completing onboarding
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      } catch (error) {
+        // Fallback to our own confetti implementation if canvas-confetti fails
+        launchConfetti();
+        console.log("Using fallback confetti:", error);
+      }
       
       // In a real app, you'd store these in a state management solution
       localStorage.setItem("wonderwhiz_age_range", ageRange);
@@ -100,14 +111,18 @@ const Onboarding = () => {
       // Animate current step out
       const currentStep = document.querySelector(".step-content");
       if (currentStep) {
-        animate(
+        // Fix: Store the animation promise and handle properly
+        const animation = animate(
           currentStep,
           { opacity: [1, 0], x: [0, 20] },
           { duration: 0.3, easing: "ease-out" }
-        ).then(() => {
+        );
+        
+        // Wait for animation to complete
+        setTimeout(() => {
           setStep(1);
           setIsAnimating(false);
-        });
+        }, 300); // Match duration with the animation
       }
     }
   };
