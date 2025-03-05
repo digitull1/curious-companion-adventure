@@ -7,6 +7,8 @@ interface ImageBlockProps {
 }
 
 const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, alt }) => {
+  console.log('Rendering ImageBlock with prompt:', prompt);
+  
   // In a real implementation, this would render an AI-generated image
   // For now, we'll just show a placeholder with the prompt
   return (
@@ -15,6 +17,10 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, alt }) => {
         src="/placeholder.svg" 
         alt={alt || `Generated image for ${prompt}`} 
         className="w-full h-48 object-cover" 
+        onError={(e) => {
+          console.error('Error loading image:', e);
+          e.currentTarget.src = '/placeholder.svg';
+        }}
       />
       <div className="p-2 text-xs text-muted-foreground bg-white/80">
         Generated image for: {prompt}

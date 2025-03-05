@@ -2,15 +2,24 @@
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { QuizQuestion } from '@/types/learning';
+import { toast } from 'sonner';
 
 // Create a Supabase client safely
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Log environment variable status to help with debugging
+console.log('Supabase URL status:', supabaseUrl ? 'Exists' : 'Missing');
+console.log('Supabase Key status:', supabaseKey ? 'Exists' : 'Missing');
+
 // Only create the client if we have both URL and key
 const supabaseClient = (supabaseUrl && supabaseKey) 
   ? createClient(supabaseUrl, supabaseKey)
   : null;
+
+if (!supabaseClient) {
+  console.error('Failed to initialize Supabase client. URL or Key is missing.');
+}
 
 // Hook declaration starts here
 export function useOpenAI() {
@@ -22,24 +31,38 @@ export function useOpenAI() {
     try {
       // Check if supabaseClient is available
       if (!supabaseClient) {
-        console.error('Supabase client not initialized. Check your environment variables.');
+        console.error('Supabase client not initialized. Check your environment variables:', {
+          urlExists: Boolean(supabaseUrl),
+          keyExists: Boolean(supabaseKey)
+        });
+        toast.error('Could not connect to the AI service. Please check your environment variables.');
         return 'Could not connect to the AI service. Please check your configuration.';
       }
 
-      // In a real implementation, this would call an API
+      console.log('Calling Supabase Edge Function with prompt:', prompt);
+      
+      // We're calling an edge function here, so let's try a direct call with proper error handling
       const { data, error } = await supabaseClient.functions.invoke('generate-response', {
-        body: { prompt, ageRange }
+        body: { 
+          prompt, 
+          ageRange,
+          requestType: 'text' // Adding requestType to match edge function expectations
+        }
       });
 
       if (error) {
-        console.error('Error generating response:', error);
-        throw new Error('Failed to generate response');
+        console.error('Error generating response from Edge Function:', error);
+        throw new Error(`Failed to generate response: ${error.message}`);
       }
 
-      return data?.response || 'I couldn\'t generate a response. Please try again.';
+      console.log('Response received from Edge Function:', data);
+      
+      // The Edge Function sends back data.content for text responses
+      return data?.content || 'I couldn\'t generate a response. Please try again.';
     } catch (error) {
       console.error('Error in generateResponse:', error);
-      return 'Sorry, there was an error generating a response. Please try again.';
+      toast.error('Sorry, there was an error connecting to the AI service.');
+      return 'Sorry, there was an error generating a response. Please check your configuration and try again.';
     } finally {
       setIsLoading(false);
     }
@@ -49,10 +72,27 @@ export function useOpenAI() {
   const generateImage = async (prompt: string): Promise<string> => {
     setIsLoading(true);
     try {
-      // Mock implementation - in a real app, this would call an image generation API
-      // For now, we'll just return a placeholder image URL
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      return '/placeholder.svg';
+      if (!supabaseClient) {
+        console.error('Supabase client not initialized for image generation');
+        return '/placeholder.svg';
+      }
+
+      console.log('Calling Edge Function for image generation with prompt:', prompt);
+      
+      const { data, error } = await supabaseClient.functions.invoke('generate-response', {
+        body: { 
+          prompt, 
+          requestType: 'image'
+        }
+      });
+
+      if (error) {
+        console.error('Error generating image:', error);
+        throw error;
+      }
+
+      console.log('Image generation response:', data);
+      return data?.imageUrl || '/placeholder.svg';
     } catch (error) {
       console.error('Error generating image:', error);
       return '/placeholder.svg';
@@ -65,19 +105,35 @@ export function useOpenAI() {
   const generateQuiz = async (topic: string): Promise<QuizQuestion> => {
     setIsLoading(true);
     try {
-      // Mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      if (!supabaseClient) {
+        console.error('Supabase client not initialized for quiz generation');
+        return {
+          question: 'Quiz generation failed. Try again?',
+          options: ['Yes', 'No'],
+          correctAnswer: 0
+        };
+      }
+
+      console.log('Calling Edge Function for quiz generation with topic:', topic);
       
-      return {
-        question: `What is the most interesting fact about ${topic}?`,
-        options: [
-          'It was discovered in 1901',
-          'It changed how we understand the world',
-          'It was invented by accident',
-          'It has influenced modern technology'
-        ],
-        correctAnswer: 1,
-        explanation: 'This fact fundamentally changed our understanding of the world around us.'
+      const { data, error } = await supabaseClient.functions.invoke('generate-response', {
+        body: { 
+          prompt: topic, 
+          requestType: 'quiz'
+        }
+      });
+
+      if (error) {
+        console.error('Error generating quiz:', error);
+        throw error;
+      }
+
+      console.log('Quiz generation response:', data);
+      
+      return data || {
+        question: 'Quiz generation failed. Try again?',
+        options: ['Yes', 'No'],
+        correctAnswer: 0
       };
     } catch (error) {
       console.error('Error generating quiz:', error);
