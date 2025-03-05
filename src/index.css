@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -113,7 +112,27 @@
   }
   
   .learning-blocks-container {
-    @apply flex space-x-3 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-wonder-purple/20 scrollbar-track-transparent;
+    @apply flex space-x-3 overflow-x-auto pb-3;
+  }
+  
+  .scrollbar-thin {
+    @apply overflow-auto;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-wonder-purple/20 rounded-full;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-wonder-purple/40;
   }
   
   .scroll-button {

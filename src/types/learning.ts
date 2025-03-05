@@ -23,3 +23,10 @@ export interface MiniChallenge {
   question: string;
   type: 'role-playing' | 'decision-making' | 'predictive' | 'thought-experiment';
 }
+
+export function createTopic(title: string): Topic {
+  return {
+    title: title,
+    description: `Learn all about ${title}`,
+  };
+}

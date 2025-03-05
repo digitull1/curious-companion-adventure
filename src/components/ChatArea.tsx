@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown, ChevronLeft } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -7,6 +8,7 @@ import TableOfContents from "@/components/TableOfContents";
 import ImageBlock from "@/components/ImageBlock";
 import QuizBlock from "@/components/QuizBlock";
 import { animate } from "@motionone/dom";
+import { Topic, createTopic } from "@/types/learning";
 
 interface Message {
   id: string;
@@ -122,6 +124,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return { prev, next };
   };
 
+  // Convert string array to Topic array
+  const getRelatedTopics = (): Topic[] => {
+    return relatedTopics.map(topic => createTopic(topic));
+  };
+
   // Topic pill instead of a sticky header
   const renderTopicPill = () => {
     if (!currentSection) return null;
@@ -219,7 +226,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 />
               )}
               {message.imagePrompt && (
-                <ImageBlock prompt={message.imagePrompt} />
+                <ImageBlock prompt={message.imagePrompt} alt="AI generated illustration" />
               )}
               {message.quiz && (
                 <QuizBlock 
@@ -229,9 +236,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 />
               )}
             </ChatMessage>
-            
-            {/* Next topic navigation button - Only show if this message contains a next topic suggestion */}
-            
             
             {/* Show the previous/next navigation ONLY after a non-user message with content about the current section */}
             {!message.isUser && !message.tableOfContents && currentSection && renderTopicNavigation()}
@@ -261,7 +265,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 
                 <div 
                   ref={learningBlocksRef}
-                  className="learning-blocks-container"
+                  className="learning-blocks-container scrollbar-thin"
                 >
                   {message.blocks.map((block) => (
                     <LearningBlock
