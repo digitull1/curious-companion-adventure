@@ -3,10 +3,14 @@ import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { QuizQuestion } from '@/types/learning';
 
-// Create a Supabase client manually
+// Create a Supabase client safely
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+// Only create the client if we have both URL and key
+const supabaseClient = (supabaseUrl && supabaseKey) 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 // Hook declaration starts here
 export function useOpenAI() {
@@ -16,6 +20,12 @@ export function useOpenAI() {
   const generateResponse = async (prompt: string, ageRange: string): Promise<string> => {
     setIsLoading(true);
     try {
+      // Check if supabaseClient is available
+      if (!supabaseClient) {
+        console.error('Supabase client not initialized. Check your environment variables.');
+        return 'Could not connect to the AI service. Please check your configuration.';
+      }
+
       // In a real implementation, this would call an API
       const { data, error } = await supabaseClient.functions.invoke('generate-response', {
         body: { prompt, ageRange }
@@ -52,11 +62,7 @@ export function useOpenAI() {
   };
 
   // Generate quiz questions
-  const generateQuiz = async (topic: string): Promise<{
-    question: string;
-    options: string[];
-    correctAnswer: number;
-  }> => {
+  const generateQuiz = async (topic: string): Promise<QuizQuestion> => {
     setIsLoading(true);
     try {
       // Mock implementation
@@ -70,7 +76,8 @@ export function useOpenAI() {
           'It was invented by accident',
           'It has influenced modern technology'
         ],
-        correctAnswer: 1
+        correctAnswer: 1,
+        explanation: 'This fact fundamentally changed our understanding of the world around us.'
       };
     } catch (error) {
       console.error('Error generating quiz:', error);

@@ -13,7 +13,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, alt }) => {
     <div className="my-3 rounded-xl overflow-hidden border border-wonder-purple/10 shadow-sm">
       <img 
         src="/placeholder.svg" 
-        alt={alt} 
+        alt={alt || `Generated image for ${prompt}`} 
         className="w-full h-48 object-cover" 
       />
       <div className="p-2 text-xs text-muted-foreground bg-white/80">

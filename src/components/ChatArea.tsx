@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown, ChevronLeft } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -237,10 +236,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               )}
             </ChatMessage>
             
-            {/* Show the previous/next navigation ONLY after a non-user message with content about the current section */}
             {!message.isUser && !message.tableOfContents && currentSection && renderTopicNavigation()}
             
-            {/* Redesigned Learning Blocks */}
             {message.showBlocks && message.blocks && (
               <div className="relative mb-6 overflow-hidden px-4">
                 <div className="flex items-center justify-between mb-2">
@@ -278,7 +275,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               </div>
             )}
             
-            {/* Related topics */}
             {message.isIntroduction && relatedTopics.length > 0 && learningComplete && (
               <div className="mb-6 px-4" ref={relatedTopicsRef}>
                 <h3 className="text-sm font-medium mb-2 text-wonder-purple">Explore more topics:</h3>
