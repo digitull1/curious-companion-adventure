@@ -128,6 +128,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return relatedTopics.map(topicTitle => createTopic(topicTitle));
   };
 
+  // Convert tableOfContents string array to Topic array
+  const convertToTopicArray = (sections: string[]): Topic[] => {
+    return sections.map(section => ({
+      title: section,
+      description: `Learn about ${section}`
+    }));
+  };
+
   // Topic pill instead of a sticky header
   const renderTopicPill = () => {
     if (!currentSection) return null;
@@ -218,7 +226,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             <ChatMessage message={messageTextWithoutNextPrompt} isUser={message.isUser}>
               {message.tableOfContents && (
                 <TableOfContents 
-                  sections={message.tableOfContents} 
+                  sections={convertToTopicArray(message.tableOfContents)}
                   completedSections={completedSections}
                   currentSection={currentSection}
                   onSectionClick={onTocSectionClick}
