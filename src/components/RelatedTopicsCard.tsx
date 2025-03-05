@@ -1,75 +1,76 @@
 
 import React, { useRef, useEffect } from "react";
-import { ArrowRight, Lightbulb } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { animate } from "@motionone/dom";
+import { Topic } from "@/types/learning";
 
 interface RelatedTopicsCardProps {
-  topics: string[];
+  topics: Topic[];
   onTopicClick: (topic: string) => void;
 }
 
 const RelatedTopicsCard: React.FC<RelatedTopicsCardProps> = ({ topics, onTopicClick }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const topicsRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const topicRefs = useRef<(HTMLDivElement | null)[]>([]);
   
   useEffect(() => {
-    if (cardRef.current) {
+    if (containerRef.current) {
       animate(
-        cardRef.current,
+        containerRef.current,
         { opacity: [0, 1], y: [20, 0] },
-        { duration: 0.5, easing: [0.25, 1, 0.5, 1], delay: 0.3 }
+        { duration: 0.5, easing: [0.25, 1, 0.5, 1] }
       );
       
-      // Staggered animation for topics
-      topicsRef.current.forEach((topic, index) => {
+      topicRefs.current.forEach((topic, index) => {
         if (topic) {
           animate(
             topic,
-            { opacity: [0, 1], x: [-10, 0] },
-            { duration: 0.4, easing: "ease-out", delay: 0.5 + (index * 0.1) }
+            { opacity: [0, 1], scale: [0.9, 1], y: [10, 0] },
+            { duration: 0.4, delay: 0.1 * (index + 1), easing: "ease-out" }
           );
         }
       });
     }
   }, [topics]);
   
-  if (!topics.length) return null;
+  if (!topics || topics.length === 0) return null;
   
   return (
     <div 
-      className="bg-white/90 backdrop-blur-sm rounded-xl p-5 shadow-pixar border border-wonder-purple/10 transition-all duration-300 hover:shadow-magical relative overflow-hidden"
-      ref={cardRef}
+      ref={containerRef}
+      className="mt-6 p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-yellow/20 shadow-pixar"
     >
-      {/* Decorative background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-wonder-purple/5 to-transparent pointer-events-none"></div>
-      <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-gradient-radial from-wonder-yellow/10 to-transparent rounded-full"></div>
+      <h3 className="text-wonder-yellow-dark font-bold mb-3 flex items-center">
+        <span className="inline-block p-1 bg-wonder-yellow/20 rounded-lg mr-2">
+          <ChevronRight className="h-4 w-4 text-wonder-yellow-dark" />
+        </span>
+        Continue Your Learning Adventure
+      </h3>
       
-      <div className="flex items-center gap-2 mb-4 relative">
-        <div className="p-2 rounded-full bg-wonder-yellow/20 text-wonder-yellow">
-          <Lightbulb className="h-5 w-5" />
-        </div>
-        <h3 className="font-medium text-wonder-purple">
-          Related topics you might enjoy:
-        </h3>
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative z-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {topics.map((topic, index) => (
-          <button
+          <div
             key={index}
-            ref={el => topicsRef.current[index] = el}
-            onClick={() => onTopicClick(topic)}
-            className="text-left p-3 rounded-lg border border-wonder-purple/10 hover:bg-wonder-purple/5 transition-all duration-300 
-                     flex items-center justify-between group hover:border-wonder-purple/30 hover:shadow-magical
-                     bg-white/70 backdrop-blur-sm transform hover:translate-y-[-2px] active:translate-y-[0px]"
+            ref={el => topicRefs.current[index] = el}
+            onClick={() => onTopicClick(topic.title)}
+            className="related-topic p-4 bg-white rounded-xl border border-wonder-yellow/10 
+                      hover:border-wonder-yellow/30 shadow-sm hover:shadow-magical cursor-pointer 
+                      transition-all duration-300 hover:-translate-y-1 transform touch-manipulation"
             style={{ opacity: 0 }} // Start invisible for animation
           >
-            <span className="font-medium">{topic}</span>
-            <div className="w-6 h-6 rounded-full bg-wonder-purple/10 flex items-center justify-center transform transition-all duration-300 group-hover:bg-wonder-purple/20">
-              <ArrowRight className="h-3.5 w-3.5 text-wonder-purple opacity-70 group-hover:opacity-100 transition-all transform 
-                                group-hover:translate-x-0.5 duration-300" />
+            <div className="flex justify-between items-start mb-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow 
+                             flex items-center justify-center text-wonder-yellow-dark text-lg">
+                {topic.emoji || "✨"}
+              </div>
+              <ChevronRight className="h-4 w-4 text-wonder-yellow-dark/60" />
             </div>
-          </button>
+            <h3 className="font-bold text-wonder-yellow-dark mb-1">{topic.title}</h3>
+            <p className="text-xs text-muted-foreground">{topic.description}</p>
+            <div className="mt-2 text-xs text-wonder-yellow-dark font-medium">
+              Click to explore →
+            </div>
+          </div>
         ))}
       </div>
     </div>
