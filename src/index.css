@@ -193,6 +193,62 @@
   .collapse-exit-active {
     max-height: 0;
   }
+
+  /* New animations for enhanced UI */
+  .animate-scale-in {
+    animation: scale-in 0.5s ease-out forwards;
+  }
+  
+  .animate-scale-out {
+    animation: scale-out 0.3s ease-in forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.5s ease-out forwards;
+  }
+  
+  .animate-slide-down {
+    animation: slide-down 0.5s ease-out forwards;
+  }
+  
+  .animate-slide-left {
+    animation: slide-left 0.5s ease-out forwards;
+  }
+  
+  .animate-slide-right {
+    animation: slide-right 0.5s ease-out forwards;
+  }
+  
+  .animate-wiggle {
+    animation: wiggle 1s ease-in-out;
+  }
+  
+  /* Improved button animations */
+  .btn-primary {
+    @apply bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white rounded-lg px-4 py-2 shadow-magical hover:shadow-magical-hover transition-all duration-300 font-medium relative overflow-hidden;
+  }
+  
+  .btn-primary::after {
+    content: '';
+    @apply absolute inset-0 bg-white opacity-0 transition-opacity duration-300;
+  }
+  
+  .btn-primary:hover::after {
+    @apply opacity-10;
+  }
+  
+  .btn-primary:active::after {
+    @apply opacity-20;
+  }
+  
+  /* Enhanced chat bubbles */
+  .chat-bubble-user {
+    @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white p-4 rounded-xl rounded-tr-sm shadow-wonder max-w-fit ml-auto;
+  }
+  
+  .chat-bubble-ai {
+    @apply bg-white p-4 rounded-xl rounded-tl-sm shadow-wonder max-w-fit backdrop-blur-sm border border-wonder-purple/5;
+  }
 }
 
 @layer utilities {
@@ -296,5 +352,83 @@
   }
   50% {
     transform: translateY(-3px);
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scale-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-left {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-right {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
   }
 }
