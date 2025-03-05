@@ -123,9 +123,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return { prev, next };
   };
 
-  // Convert string array to Topic array
+  // Convert string array to Topic array using the createTopic function
   const getRelatedTopics = (): Topic[] => {
-    return relatedTopics.map(topic => createTopic(topic));
+    return relatedTopics.map(topicTitle => createTopic(topicTitle));
   };
 
   // Topic pill instead of a sticky header
