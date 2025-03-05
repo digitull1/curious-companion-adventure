@@ -7,7 +7,6 @@ import TableOfContents from "@/components/TableOfContents";
 import ImageBlock from "@/components/ImageBlock";
 import QuizBlock from "@/components/QuizBlock";
 import { animate } from "@motionone/dom";
-import { Topic, createTopic } from "@/types/learning";
 
 interface Message {
   id: string;
@@ -123,19 +122,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return { prev, next };
   };
 
-  // Convert string array to Topic array using the createTopic function
-  const getRelatedTopics = (): Topic[] => {
-    return relatedTopics.map(topicTitle => createTopic(topicTitle));
-  };
-
-  // Convert tableOfContents string array to Topic array
-  const convertToTopicArray = (sections: string[]): Topic[] => {
-    return sections.map(section => ({
-      title: section,
-      description: `Learn about ${section}`
-    }));
-  };
-
   // Topic pill instead of a sticky header
   const renderTopicPill = () => {
     if (!currentSection) return null;
@@ -226,14 +212,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             <ChatMessage message={messageTextWithoutNextPrompt} isUser={message.isUser}>
               {message.tableOfContents && (
                 <TableOfContents 
-                  sections={convertToTopicArray(message.tableOfContents)}
+                  sections={message.tableOfContents} 
                   completedSections={completedSections}
                   currentSection={currentSection}
                   onSectionClick={onTocSectionClick}
                 />
               )}
               {message.imagePrompt && (
-                <ImageBlock prompt={message.imagePrompt} alt="AI generated illustration" />
+                <ImageBlock prompt={message.imagePrompt} />
               )}
               {message.quiz && (
                 <QuizBlock 
@@ -244,8 +230,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               )}
             </ChatMessage>
             
+            {/* Next topic navigation button - Only show if this message contains a next topic suggestion */}
+            
+            
+            {/* Show the previous/next navigation ONLY after a non-user message with content about the current section */}
             {!message.isUser && !message.tableOfContents && currentSection && renderTopicNavigation()}
             
+            {/* Redesigned Learning Blocks */}
             {message.showBlocks && message.blocks && (
               <div className="relative mb-6 overflow-hidden px-4">
                 <div className="flex items-center justify-between mb-2">
@@ -283,14 +274,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               </div>
             )}
             
+            {/* Related topics */}
             {message.isIntroduction && relatedTopics.length > 0 && learningComplete && (
               <div className="mb-6 px-4" ref={relatedTopicsRef}>
                 <h3 className="text-sm font-medium mb-2 text-wonder-purple">Explore more topics:</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {getRelatedTopics().map((topic, index) => (
+                  {relatedTopics.map((topic, index) => (
                     <div 
                       key={index}
-                      onClick={() => onRelatedTopicClick(topic.title)}
+                      onClick={() => onRelatedTopicClick(topic)}
                       className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
                                 hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
                                 hover:-translate-y-1 transform touch-manipulation"
@@ -302,7 +294,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                         </div>
                         <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
                       </div>
-                      <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic.title}</h3>
+                      <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
                       <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
                     </div>
                   ))}

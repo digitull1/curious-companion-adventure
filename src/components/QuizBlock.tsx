@@ -1,27 +1,24 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { launchConfetti } from "@/utils/confetti";
-import { Check, X, Trophy, LightbulbIcon, MessageCircle } from "lucide-react";
+import { Check, X, Trophy, LightbulbIcon } from "lucide-react";
 import { animate } from "@motionone/dom";
 
 interface QuizBlockProps {
   question: string;
   options: string[];
   correctAnswer: number;
-  explanation?: string;
   funFact?: string;
 }
 
-const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer, explanation, funFact }) => {
+const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer, funFact }) => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [showFunFact, setShowFunFact] = useState<boolean>(false);
-  const [showExplanation, setShowExplanation] = useState<boolean>(false);
   const quizRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<(HTMLDivElement | null)[]>([]);
   const funFactRef = useRef<HTMLDivElement>(null);
-  const explanationRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (quizRef.current) {
@@ -43,17 +40,6 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
       );
     }
   }, [showFunFact]);
-
-  // Animate explanation when it appears
-  useEffect(() => {
-    if (showExplanation && explanationRef.current) {
-      animate(
-        explanationRef.current,
-        { opacity: [0, 1], scale: [0.95, 1] },
-        { duration: 0.4, easing: "ease-out" }
-      );
-    }
-  }, [showExplanation]);
 
   const handleOptionClick = (index: number) => {
     if (!isSubmitted) {
@@ -80,13 +66,10 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
         // Launch confetti animation on correct answer
         launchConfetti();
         
-        // Show explanation first
-        setShowExplanation(true);
-        
         // Show fun fact after a short delay
         setTimeout(() => {
           setShowFunFact(true);
-        }, 1500);
+        }, 1000);
         
         // Add celebration animation
         if (quizRef.current) {
@@ -111,28 +94,21 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
             sparkles.forEach(sparkle => sparkle.remove());
           }, 3000);
         }
-      } else {
-        // Show explanation even if answer is incorrect
-        setShowExplanation(true);
       }
     }
   };
 
   const getOptionClassName = (index: number) => {
-    let className = "quiz-answer flex items-center mb-3 cursor-pointer transition-all duration-300 p-3 rounded-lg";
+    let className = "quiz-answer flex items-center mb-3 cursor-pointer transition-all duration-300";
     
     if (isSubmitted) {
       if (index === correctAnswer) {
-        className += " bg-wonder-green/20 border border-wonder-green/30";
+        className += " quiz-answer-correct";
       } else if (index === selectedAnswer) {
-        className += " bg-destructive/10 border border-destructive/30";
-      } else {
-        className += " opacity-70";
+        className += " quiz-answer-incorrect";
       }
     } else if (index === selectedAnswer) {
-      className += " bg-wonder-purple/10 border border-wonder-purple/30";
-    } else {
-      className += " hover:bg-wonder-purple/5 border border-gray-200";
+      className += " quiz-answer-selected";
     }
     
     return className;
@@ -149,7 +125,7 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
       </div>
       
       <h3 className="font-bold text-lg mb-4 relative">
-        <span className="text-wonder-purple">Quiz Challenge:</span> {question}
+        {question}
         {/* Decorative element */}
         <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-wonder-purple to-wonder-purple-light rounded-full opacity-70"></div>
       </h3>
@@ -223,25 +199,6 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
         </div>
       )}
       
-      {/* Explanation Section */}
-      {showExplanation && explanation && (
-        <div 
-          ref={explanationRef}
-          className="mt-4 p-4 bg-gradient-to-r from-wonder-blue/10 to-wonder-blue-light/5 rounded-lg border border-wonder-blue/20"
-          style={{ opacity: 0 }} // Start invisible for animation
-        >
-          <div className="flex items-start">
-            <div className="bg-wonder-blue/20 p-1.5 rounded-full mr-2 flex-shrink-0 mt-0.5">
-              <MessageCircle className="h-4 w-4 text-wonder-blue" />
-            </div>
-            <div>
-              <h4 className="font-medium text-wonder-blue text-sm">Why This Matters:</h4>
-              <p className="text-sm text-wonder-blue-dark/90 mt-1">{explanation}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {/* Fun Fact Section - Only shown after a correct answer */}
       {showFunFact && funFact && (
         <div 
@@ -254,7 +211,7 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
               <LightbulbIcon className="h-4 w-4 text-wonder-yellow-dark" />
             </div>
             <div>
-              <h4 className="font-medium text-wonder-yellow-dark text-sm">Bonus Fun Fact Unlocked!</h4>
+              <h4 className="font-medium text-wonder-yellow-dark text-sm">Mind-Blowing Fact!</h4>
               <p className="text-sm text-wonder-yellow-dark/90 mt-1">{funFact}</p>
             </div>
           </div>

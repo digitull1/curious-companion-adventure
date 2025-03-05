@@ -22,31 +22,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
           { opacity: [0, 1], y: [20, 0] },
           { duration: 0.5, easing: [0.25, 1, 0.5, 1] }
         );
-        
-        // For non-user messages, animate paragraphs individually for a more engaging effect
-        if (!isUser) {
-          const paragraphs = message.split('\n\n').filter(p => p.trim().length > 0);
-          
-          if (paragraphs.length > 1) {
-            // Break the text into paragraphs and animate each one
-            textElement.innerHTML = '';
-            
-            paragraphs.forEach((paragraph, index) => {
-              const p = document.createElement('p');
-              p.className = 'mb-3 opacity-0';
-              p.textContent = paragraph;
-              textElement.appendChild(p);
-              
-              setTimeout(() => {
-                animate(
-                  p,
-                  { opacity: [0, 1], y: [10, 0] },
-                  { duration: 0.4, easing: "ease-out" }
-                );
-              }, 300 + (index * 150));
-            });
-          }
-        }
       }
       
       // Add ripple effect to user messages
@@ -68,7 +43,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
         }, 1000);
       }
     }
-  }, [isUser, message]);
+  }, [isUser]);
 
   return (
     <div 
