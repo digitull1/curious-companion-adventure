@@ -1,7 +1,7 @@
 
 import React, { useRef, useEffect } from "react";
 import { animate } from "@motionone/dom";
-import { Sparkles, Star, Info } from "lucide-react";
+import { Sparkles, Star } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ChatMessageProps {
@@ -51,30 +51,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
     }
   }, [isUser]);
 
-  // Extract first sentence for the main message, and the rest for additional content
-  const splitMessage = () => {
-    const cleanedMessage = cleanMessageText(message);
-    const firstSentenceMatch = cleanedMessage.match(/^(.*?[.!?])\s/);
-    
-    if (firstSentenceMatch && !isUser) {
-      const firstSentence = firstSentenceMatch[1];
-      const restOfMessage = cleanedMessage.slice(firstSentence.length).trim();
-      
-      return {
-        mainMessage: firstSentence,
-        additionalContent: restOfMessage
-      };
-    }
-    
-    return {
-      mainMessage: cleanedMessage,
-      additionalContent: ''
-    };
-  };
-
-  const { mainMessage, additionalContent } = splitMessage();
-  const hasAdditionalContent = additionalContent.length > 0 && !isUser;
-
   return (
     <div 
       ref={messageRef}
@@ -104,31 +80,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
         )}
         
         <p className="whitespace-pre-line leading-relaxed text-base font-rounded">
-          {mainMessage}
+          {cleanMessageText(message)}
         </p>
-        
-        {/* Show "Read more" for additional content */}
-        {hasAdditionalContent && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button 
-                  className="mt-2 flex items-center text-sm text-wonder-purple/80 hover:text-wonder-purple transition-colors group"
-                  onClick={() => {
-                    // Additional interaction could be implemented here
-                  }}
-                >
-                  <Info className="h-3.5 w-3.5 mr-1 group-hover:animate-pulse-soft" />
-                  <span>Read more</span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="p-3 max-w-sm">
-                <p className="whitespace-pre-line text-sm">{additionalContent}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-        
         {children}
         
         {/* Add tooltip for user to know they can tap on non-user messages for more info */}

@@ -1,21 +1,8 @@
 
-// Enhanced confetti animation with options
-interface ConfettiOptions {
-  particleCount?: number;
-  spread?: number;
-  origin?: {
-    x?: number;
-    y?: number;
-  };
-  colors?: string[];
-}
-
-export function launchConfetti(options: ConfettiOptions = {}) {
-  const colors = options.colors || ['#9b87f5', '#58d7c5', '#FF7E67', '#FFCA58', '#7ED957'];
-  const numConfetti = options.particleCount || 100;
-  const spread = options.spread || 70;
-  const originX = options.origin?.x || 0.5; // Default to center
-  const originY = options.origin?.y || 0.5; // Default to middle
+// Simple confetti animation
+export function launchConfetti() {
+  const colors = ['#9b87f5', '#58d7c5', '#FF7E67', '#FFCA58', '#7ED957'];
+  const numConfetti = 100;
   
   const container = document.createElement('div');
   container.style.position = 'fixed';
@@ -38,17 +25,12 @@ export function launchConfetti(options: ConfettiOptions = {}) {
     confetti.style.width = `${size}px`;
     confetti.style.height = `${size}px`;
     confetti.style.backgroundColor = color;
-    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0'; // Mix of circles and squares
+    confetti.style.borderRadius = '50%';
     confetti.style.opacity = '0.7';
     
-    // Starting position - use the origin parameters
-    const startX = originX * window.innerWidth;
-    const startY = originY * window.innerHeight;
-    const angle = Math.random() * Math.PI * 2; // Random direction
-    const distance = Math.random() * spread;
-    
-    confetti.style.left = `${startX}px`;
-    confetti.style.top = `${startY}px`;
+    // Starting position
+    confetti.style.left = `${Math.random() * 100}vw`;
+    confetti.style.top = `${Math.random() * 20 - 20}vh`;
     
     // Animation
     confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
@@ -58,12 +40,8 @@ export function launchConfetti(options: ConfettiOptions = {}) {
     
     // Animate after a small delay to trigger the transition
     setTimeout(() => {
-      // Calculate end position based on angle and distance
-      const endX = startX + Math.cos(angle) * distance * 10;
-      const endY = startY + Math.sin(angle) * distance * 5 + 200; // Add gravity effect
-      
-      confetti.style.top = `${endY}px`;
-      confetti.style.left = `${endX}px`;
+      confetti.style.top = `${100 + Math.random() * 20}vh`;
+      confetti.style.left = `${Math.random() * 100}vw`;
       confetti.style.opacity = '0';
     }, 10);
   }
