@@ -265,7 +265,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 
                 <div 
                   ref={learningBlocksRef}
-                  className="learning-blocks-container scrollbar-thin"
+                  className="learning-blocks-container"
                 >
                   {message.blocks.map((block) => (
                     <LearningBlock
@@ -283,10 +283,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               <div className="mb-6 px-4" ref={relatedTopicsRef}>
                 <h3 className="text-sm font-medium mb-2 text-wonder-purple">Explore more topics:</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {relatedTopics.map((topic, index) => (
+                  {getRelatedTopics().map((topic, index) => (
                     <div 
                       key={index}
-                      onClick={() => onRelatedTopicClick(topic)}
+                      onClick={() => onRelatedTopicClick(topic.title)}
                       className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
                                 hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
                                 hover:-translate-y-1 transform touch-manipulation"
@@ -298,7 +298,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                         </div>
                         <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
                       </div>
-                      <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
+                      <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic.title}</h3>
                       <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
                     </div>
                   ))}
