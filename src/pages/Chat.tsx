@@ -17,6 +17,7 @@ interface Message {
   blocks?: BlockType[];
   showBlocks?: boolean;
   imagePrompt?: string;
+  imageSource?: string; // For uploaded homework images
   quiz?: {
     question: string;
     options: string[];
@@ -50,7 +51,7 @@ const Chat = () => {
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [relatedTopics, setRelatedTopics] = useState<string[]>([]);
   const [learningComplete, setLearningComplete] = useState(false);
-  const { isLoading, generateResponse, generateImage, generateQuiz } = useOpenAI();
+  const { isLoading, generateResponse, generateImage, generateQuiz, analyzeImage, textToSpeech } = useOpenAI();
   const [streakCount, setStreakCount] = useState(0);
   const [points, setPoints] = useState(0);
   const [learningProgress, setLearningProgress] = useState(0);
@@ -191,7 +192,7 @@ const Chat = () => {
     };
     
     generatePersonalizedTopics();
-  }, [ageRange, avatar, language, userName]);
+  }, [ageRange, avatar, language, userName, generateResponse, navigate]);
 
   // Check if all sections are completed
   useEffect(() => {
@@ -207,7 +208,7 @@ const Chat = () => {
         }
       }
     }
-  }, [completedSections, topicSectionsGenerated, messages, selectedTopic]);
+  }, [completedSections, topicSectionsGenerated, messages, selectedTopic, generateResponse, ageRange, language]);
   
   const generateRelatedTopics = async (topic: string) => {
     try {
@@ -262,6 +263,64 @@ const Chat = () => {
     
     // Clear chat and generate new welcome message in selected language
     clearChat();
+  };
+
+  const handleImageCapture = async (base64Image: string) => {
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
+    setShowTypingIndicator(true);
+    
+    // Create a message for the uploaded image
+    const userImageMessage: Message = {
+      id: Date.now().toString(),
+      text: "I've uploaded a homework problem for help.",
+      isUser: true,
+      imageSource: base64Image
+    };
+    
+    setMessages(prev => [...prev, userImageMessage]);
+    
+    try {
+      console.log("Analyzing uploaded image...");
+      const analysis = await analyzeImage(base64Image, ageRange, language);
+      
+      // Simulate a delay for typing effect
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setShowTypingIndicator(false);
+      
+      // Create AI response message
+      const aiResponseMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: analysis,
+        isUser: false,
+        blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
+        showBlocks: true
+      };
+      
+      setMessages(prev => [...prev, aiResponseMessage]);
+      
+      // Add points for analyzing homework
+      setPoints(prev => prev + 20);
+      
+    } catch (error) {
+      console.error("Error analyzing image:", error);
+      setShowTypingIndicator(false);
+      toast.error("Sorry, I couldn't analyze that image. Please try again with a clearer picture.");
+      
+      // Create a fallback message
+      const fallbackMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "I couldn't analyze that image clearly. Could you try again with a clearer picture? Make sure the homework problem is well-lit and centered in the image.",
+        isUser: false
+      };
+      
+      setMessages(prev => [...prev, fallbackMessage]);
+      
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const processMessage = async (prompt: string, isUserMessage: boolean = true, skipUserMessage: boolean = false) => {
@@ -620,7 +679,13 @@ const Chat = () => {
             inputValue={inputValue}
             isProcessing={isProcessing}
             selectedTopic={selectedTopic}
-            suggestedPrompts={suggestedTopics.length > 0 ? suggestedTopics : defaultSuggestedPrompts}
+            suggestedPrompts={suggestedTopics.length > 0 ? suggestedTopics : [
+              "Tell me about dinosaurs",
+              "How do planets form?",
+              "What are robots?",
+              "Why is the sky blue?",
+              "How do animals communicate?"
+            ]}
             isListening={isListening}
             showSuggestedPrompts={showSuggestedPrompts}
             onInputChange={handleInputChange}
@@ -630,6 +695,7 @@ const Chat = () => {
             toggleListening={toggleListening}
             onSuggestedPromptClick={handleSuggestedPromptClick}
             setShowSuggestedPrompts={setShowSuggestedPrompts}
+            onImageCapture={handleImageCapture}
           />
         </div>
       </main>

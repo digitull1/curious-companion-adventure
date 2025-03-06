@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +30,71 @@ export function useOpenAI() {
       console.error("Error generating response:", error);
       toast.error("Oops! Something went wrong. Falling back to sample responses.");
       return generateMockResponse(prompt, language);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Analyze an image using OpenAI's vision capabilities
+  const analyzeImage = async (imageBase64: string, ageRange: string = "8-12", language: string = "en") => {
+    setIsLoading(true);
+    
+    try {
+      console.log("Analyzing image with OpenAI...");
+      
+      const { data, error } = await supabase.functions.invoke('generate-response', {
+        body: { imageBase64, ageRange, requestType: 'image-analysis', language }
+      });
+      
+      if (error) {
+        console.error("Error from Supabase function:", error);
+        throw new Error(error.message || "Failed to analyze image");
+      }
+      
+      if (!data || !data.content) {
+        console.error("Invalid response data structure:", data);
+        throw new Error("Invalid image analysis data");
+      }
+      
+      return data.content;
+    } catch (error) {
+      console.error("Error analyzing image:", error);
+      toast.error("Oops! Couldn't analyze this image. Please try again or take a clearer picture.");
+      return "I couldn't analyze this image. Please try again or take a clearer picture of your homework problem.";
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Convert text to speech using OpenAI's TTS capabilities
+  const textToSpeech = async (text: string) => {
+    setIsLoading(true);
+    
+    try {
+      console.log("Converting text to speech...");
+      
+      const { data, error } = await supabase.functions.invoke('generate-response', {
+        body: { prompt: text, requestType: 'text-to-speech' }
+      });
+      
+      if (error) {
+        console.error("Error from Supabase function:", error);
+        throw new Error(error.message || "Failed to convert text to speech");
+      }
+      
+      if (!data || !data.audioContent) {
+        console.error("Invalid TTS response data structure:", data);
+        throw new Error("Invalid TTS data");
+      }
+      
+      return {
+        audioContent: data.audioContent,
+        contentType: data.contentType || 'audio/mpeg'
+      };
+    } catch (error) {
+      console.error("Error converting text to speech:", error);
+      toast.error("Could not generate speech. Please try again later.");
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -262,5 +326,12 @@ export function useOpenAI() {
     }
   };
   
-  return { isLoading, generateResponse, generateImage, generateQuiz };
+  return { 
+    isLoading, 
+    generateResponse, 
+    generateImage, 
+    generateQuiz, 
+    analyzeImage,
+    textToSpeech
+  };
 }

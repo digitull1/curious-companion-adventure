@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -15,6 +14,7 @@ interface Message {
   blocks?: BlockType[];
   showBlocks?: boolean;
   imagePrompt?: string;
+  imageSource?: string; // For uploaded homework images
   quiz?: {
     question: string;
     options: string[];
@@ -192,6 +192,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     }
   };
 
+  // Render uploaded image
+  const renderUploadedImage = (imageSource: string) => {
+    return (
+      <div className="mt-2 p-2 bg-white/70 backdrop-blur-sm rounded-lg border border-wonder-purple/10 shadow-sm">
+        <img 
+          src={imageSource} 
+          alt="Uploaded homework" 
+          className="w-full max-h-64 object-contain rounded"
+        />
+        <p className="text-xs text-wonder-purple/70 mt-2 text-center">
+          Uploaded homework image
+        </p>
+      </div>
+    );
+  };
+
   // Find the welcome message
   const welcomeMessage = messages.find(m => !m.isUser && m.isIntroduction && !m.tableOfContents);
   
@@ -223,14 +239,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           {/* Display welcome message first */}
           {welcomeMessage && (
             <div className="fade-scale-in mb-6 px-4">
-              <ChatMessage message={welcomeMessage.text} isUser={welcomeMessage.isUser} />
+              <ChatMessage 
+                message={welcomeMessage.text} 
+                isUser={welcomeMessage.isUser} 
+                messageId={welcomeMessage.id} 
+              />
             </div>
           )}
           
           {/* Display the intro message with Table of Contents */}
           {introMessage && (
             <div className="fade-scale-in mb-6 px-4">
-              <ChatMessage message={introMessage.text} isUser={introMessage.isUser}>
+              <ChatMessage 
+                message={introMessage.text} 
+                isUser={introMessage.isUser} 
+                messageId={introMessage.id}
+              >
                 <TableOfContents 
                   sections={introMessage.tableOfContents || []} 
                   completedSections={completedSections}
@@ -252,11 +276,21 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           {userMessages.map((message, index) => (
             <React.Fragment key={message.id}>
               <div className="fade-scale-in px-4">
-                <ChatMessage message={message.text} isUser={true} />
+                <ChatMessage 
+                  message={message.text} 
+                  isUser={true} 
+                  messageId={message.id}
+                >
+                  {message.imageSource && renderUploadedImage(message.imageSource)}
+                </ChatMessage>
               </div>
               {aiMessages[index] && (
                 <div className="fade-scale-in px-4">
-                  <ChatMessage message={aiMessages[index].text} isUser={false} />
+                  <ChatMessage 
+                    message={aiMessages[index].text} 
+                    isUser={false} 
+                    messageId={aiMessages[index].id}
+                  />
                 </div>
               )}
             </React.Fragment>

@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, ageRange, requestType, language = 'en' } = await req.json();
+    const { prompt, ageRange, requestType, language = 'en', imageBase64 } = await req.json();
     
     if (!openAIApiKey) {
       console.error('OPENAI_API_KEY is not set in environment variables');
@@ -85,6 +85,149 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } 
+    
+    else if (requestType === 'image-analysis') {
+      try {
+        console.log("Analyzing image with OpenAI...");
+        
+        // For homework helper, especially math problems
+        let systemPrompt = `You are WonderWhiz, an educational AI assistant designed to help children aged ${ageRange} with homework. 
+        You will be shown an image of a homework problem, most likely in subjects like math, science, or language arts.
+        
+        For MATH PROBLEMS:
+        1. Clearly identify what the problem is asking
+        2. Break down the solution into step-by-step explanations
+        3. Use simple, child-friendly language to explain each step
+        4. Teach the underlying concept, not just the answer
+        5. Include a final answer clearly marked
+        
+        For SCIENCE QUESTIONS:
+        1. Explain the core concept in simple terms
+        2. Use relevant real-world examples that children can relate to
+        3. Break down complex ideas into smaller, digestible parts
+        
+        For LANGUAGE ARTS:
+        1. Explain grammar rules clearly
+        2. For writing prompts, suggest an approach and structure
+        3. For reading comprehension, help identify key elements
+        
+        Your explanations should be:
+        - Age-appropriate (for ${ageRange} year olds)
+        - Encouraging and supportive
+        - Educational and factually accurate
+        - Structured in clear steps
+        - Include selective use of emojis to maintain engagement
+        - End with a question or suggestion to deepen understanding`;
+
+        // Add language-specific instructions
+        if (language !== 'en') {
+          systemPrompt += `\n\nIMPORTANT: Respond in ${language} language only. All your content must be in ${language}.`;
+        }
+        
+        response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { 
+                role: 'user', 
+                content: [
+                  { type: 'text', text: 'Help me solve this homework problem:' },
+                  { type: 'image_url', image_url: { url: imageBase64 } }
+                ] 
+              }
+            ],
+            temperature: 0.5,
+            max_tokens: 800
+          }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          console.error("OpenAI image analysis error:", data.error);
+          throw new Error(`OpenAI API error: ${data.error.message || JSON.stringify(data.error)}`);
+        }
+        
+        console.log("Image analysis successful");
+        
+        return new Response(JSON.stringify({ content: data.choices[0].message.content }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (imageAnalysisError) {
+        console.error("Image analysis error:", imageAnalysisError);
+        return new Response(
+          JSON.stringify({ 
+            error: "Failed to analyze image",
+            message: imageAnalysisError.message
+          }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+    } 
+    
+    else if (requestType === 'text-to-speech') {
+      try {
+        console.log("Generating speech with OpenAI TTS...");
+        
+        const voice = "nova"; // Use 'alloy', 'echo', 'fable', 'onyx', 'nova', or 'shimmer'
+        
+        response = await fetch('https://api.openai.com/v1/audio/speech', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'tts-1',
+            voice: voice,
+            input: prompt,
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("OpenAI TTS error:", errorData);
+          throw new Error(`OpenAI TTS API error: ${errorData.error?.message || 'Unknown error'}`);
+        }
+        
+        // Get the audio data as an ArrayBuffer
+        const audioBuffer = await response.arrayBuffer();
+        
+        // Convert to base64
+        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+        
+        console.log("TTS generation successful");
+        
+        return new Response(
+          JSON.stringify({ 
+            audioContent: base64Audio,
+            contentType: 'audio/mpeg' 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (ttsError) {
+        console.error("Text-to-speech error:", ttsError);
+        return new Response(
+          JSON.stringify({ 
+            error: "Failed to generate speech",
+            message: ttsError.message
+          }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+    }
     
     else if (requestType === 'image') {
       try {
