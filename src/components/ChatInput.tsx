@@ -2,7 +2,6 @@
 import React, { useRef } from "react";
 import { MessageCircle, Send, X, Sparkles } from "lucide-react";
 import VoiceInput from "@/components/VoiceInput";
-import ImageUpload from "@/components/ImageUpload";
 
 interface ChatInputProps {
   inputValue: string;
@@ -18,7 +17,6 @@ interface ChatInputProps {
   toggleListening: () => void;
   onSuggestedPromptClick: (prompt: string) => void;
   setShowSuggestedPrompts: (show: boolean) => void;
-  onImageCapture: (base64Image: string) => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -34,8 +32,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onVoiceInput,
   toggleListening,
   onSuggestedPromptClick,
-  setShowSuggestedPrompts,
-  onImageCapture
+  setShowSuggestedPrompts
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -83,7 +80,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onKeyDown={onKeyDown}
             placeholder={selectedTopic ? `Ask me about ${selectedTopic} or explore a section...` : "Ask me anything..."}
             disabled={isProcessing}
-            className="w-full pl-12 pr-24 py-4 rounded-full border border-wonder-purple/20 focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 shadow-magical bg-white/90 backdrop-blur-sm placeholder:text-slate-400 text-foreground font-comic text-base"
+            className="w-full pl-12 pr-16 py-4 rounded-full border border-wonder-purple/20 focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 shadow-magical bg-white/90 backdrop-blur-sm placeholder:text-slate-400 text-foreground font-comic text-base"
           />
           
           <div className="absolute left-4 top-1/2 -translate-y-1/2">
@@ -91,11 +88,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </div>
           
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            <ImageUpload
-              onImageCapture={onImageCapture}
-              isProcessing={isProcessing}
-            />
-            
             <VoiceInput 
               onTranscript={onVoiceInput}
               isListening={isListening}

@@ -3,16 +3,14 @@ import React, { useRef, useEffect } from "react";
 import { animate } from "@motionone/dom";
 import { Sparkles, Star } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import SpeechButton from "@/components/SpeechButton";
 
 interface ChatMessageProps {
   message: string;
   isUser: boolean;
-  messageId: string;
   children?: React.ReactNode;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, messageId, children }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) => {
   const messageRef = useRef<HTMLDivElement>(null);
   
   // Function to clean text content by removing asterisks
@@ -85,18 +83,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, messageId, c
           />
         )}
         
-        <div className="flex justify-between items-start">
-          <p className="whitespace-pre-line leading-relaxed text-base font-rounded pr-6">
-            {cleanedMessage}
-          </p>
-          
-          {!isUser && message.length > 20 && (
-            <div className="ml-2 flex-shrink-0">
-              <SpeechButton text={cleanedMessage} messageId={messageId} />
-            </div>
-          )}
-        </div>
-        
+        <p className="whitespace-pre-line leading-relaxed text-base font-rounded">
+          {cleanedMessage}
+        </p>
         {children}
         
         {/* Add tooltip for user to know they can tap on non-user messages for more info */}

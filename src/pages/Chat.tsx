@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -17,7 +17,6 @@ interface Message {
   blocks?: BlockType[];
   showBlocks?: boolean;
   imagePrompt?: string;
-  imageSource?: string; // For uploaded homework images
   quiz?: {
     question: string;
     options: string[];
@@ -33,10 +32,10 @@ interface Message {
 
 const Chat = () => {
   const navigate = useNavigate();
-  const [ageRange, setAgeRange] = useState(() => localStorage.getItem("wonderwhiz_age_range") || "8-10");
-  const [avatar, setAvatar] = useState(() => localStorage.getItem("wonderwhiz_avatar") || "explorer");
-  const [userName, setUserName] = useState(() => localStorage.getItem("wonderwhiz_username") || "Explorer");
-  const [language, setLanguage] = useState(() => localStorage.getItem("wonderwhiz_language") || "en");
+  const [ageRange, setAgeRange] = useState(localStorage.getItem("wonderwhiz_age_range") || "8-10");
+  const [avatar, setAvatar] = useState(localStorage.getItem("wonderwhiz_avatar") || "explorer");
+  const [userName, setUserName] = useState(localStorage.getItem("wonderwhiz_username") || "Explorer");
+  const [language, setLanguage] = useState(localStorage.getItem("wonderwhiz_language") || "en");
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -51,43 +50,26 @@ const Chat = () => {
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [relatedTopics, setRelatedTopics] = useState<string[]>([]);
   const [learningComplete, setLearningComplete] = useState(false);
-  const { isLoading, generateResponse, generateImage, generateQuiz, analyzeImage, textToSpeech } = useOpenAI();
-  const [streakCount, setStreakCount] = useState(() => parseInt(localStorage.getItem("wonderwhiz_streak") || "1", 10));
-  const [points, setPoints] = useState(() => parseInt(localStorage.getItem("wonderwhiz_points") || "0", 10));
+  const { isLoading, generateResponse, generateImage, generateQuiz } = useOpenAI();
+  const [streakCount, setStreakCount] = useState(0);
+  const [points, setPoints] = useState(0);
   const [learningProgress, setLearningProgress] = useState(0);
   const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(false);
   const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
   const [previousTopics, setPreviousTopics] = useState<string[]>([]);
-  
-  // Use refs to prevent infinite loops with state updates
-  const initRef = useRef(false);
-  const pointsRef = useRef(points);
-  
-  // Update refs when state changes
-  useEffect(() => {
-    pointsRef.current = points;
-  }, [points]);
-  
-  // Save points to localStorage when they change, but throttle updates
-  useEffect(() => {
-    const savePoints = () => {
-      localStorage.setItem("wonderwhiz_points", points.toString());
-    };
-    
-    // Use a debounced save to avoid excessive localStorage writes
-    const timeoutId = setTimeout(savePoints, 2000);
-    return () => clearTimeout(timeoutId);
-  }, [points]);
+
+  // Predefined suggested prompts (fallback if API fails)
+  const defaultSuggestedPrompts = [
+    "Tell me about dinosaurs",
+    "How do planets form?",
+    "What are robots?",
+    "Why is the sky blue?",
+    "How do animals communicate?"
+  ];
   
   // Process topics from a response string into an array
-  const processTopicsFromResponse = useCallback((response: string): string[] => {
+  const processTopicsFromResponse = (response: string): string[] => {
     console.log("Processing topics from response:", response);
-    
-    // Basic guard for empty responses
-    if (!response || response.trim().length === 0) {
-      console.log("Empty response, returning default topics");
-      return ["Dinosaurs", "Space", "Animals", "Robots", "Ocean"];
-    }
     
     // Check if already formatted as a list with numbers or bullets
     if (response.includes("\n")) {
@@ -112,22 +94,10 @@ const Chat = () => {
     // Just return as a single item if no clear separator
     console.log("No clear separator, returning as single item");
     return [response.trim()];
-  }, []);
+  };
   
-  // Default suggested prompts as fallback
-  const defaultSuggestedPrompts = [
-    "Tell me about dinosaurs",
-    "How do planets form?",
-    "What are robots?",
-    "Why is the sky blue?",
-    "How do animals communicate?"
-  ];
-  
-  // Fetch user data and generate welcome message with suggested topics - only once on mount
+  // Fetch user data and generate welcome message with suggested topics
   useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
-    
     console.log("Chat component mounted, initializing...");
     console.log("User data:", { userName, ageRange, avatar, language });
     
@@ -137,6 +107,12 @@ const Chat = () => {
       navigate("/");
       return;
     }
+    
+    // Initialize streak and points
+    const savedStreak = Math.floor(Math.random() * 5) + 1; // Random 1-5 for demo
+    const savedPoints = Math.floor(Math.random() * 500); // Random points for demo
+    setStreakCount(savedStreak);
+    setPoints(savedPoints);
     
     // Set initial loading state
     setShowTypingIndicator(true);
@@ -148,20 +124,7 @@ const Chat = () => {
         
         // Generate age-appropriate topics
         const topicsPrompt = `Generate 5 engaging, educational topics that would interest a ${ageRange} year old child. Format as a short comma-separated list. Topics should be interesting and appropriate for their age group.`;
-        
-        // Use a timeout to ensure we don't get stuck in loading state
-        const timeoutPromise = new Promise<string>(resolve => {
-          setTimeout(() => {
-            resolve("Dinosaurs, Space Exploration, Animal Habitats, How Machines Work, Weather and Climate");
-          }, 3000);
-        });
-        
-        // Race between the actual API call and the timeout
-        const topicsResponse = await Promise.race([
-          generateResponse(topicsPrompt, ageRange, language),
-          timeoutPromise
-        ]);
-        
+        const topicsResponse = await generateResponse(topicsPrompt, ageRange, language);
         console.log("Generated topics response:", topicsResponse);
         
         // Process topics from the response string
@@ -180,7 +143,7 @@ const Chat = () => {
         if (language === "en") {
           welcomeText = `Hi ${userName}! I'm your WonderWhiz assistant, created by leading IB educationalists and Cambridge University child psychologists. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`;
         } else {
-          // Simplified language-specific welcome for non-English
+          // This will be translated by the API for other languages
           welcomeText = `Hi ${userName}! I'm your WonderWhiz assistant. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`;
         }
         
@@ -228,9 +191,9 @@ const Chat = () => {
     };
     
     generatePersonalizedTopics();
-  }, [ageRange, avatar, language, userName, generateResponse, navigate, processTopicsFromResponse]);
+  }, [ageRange, avatar, language, userName]);
 
-  // Check if all sections are completed - with safeguards to prevent infinite loops
+  // Check if all sections are completed
   useEffect(() => {
     if (topicSectionsGenerated && messages.some(m => m.tableOfContents)) {
       const sections = messages.find(m => m.tableOfContents)?.tableOfContents || [];
@@ -244,26 +207,24 @@ const Chat = () => {
         }
       }
     }
-  }, [completedSections, topicSectionsGenerated, messages, selectedTopic, relatedTopics.length]);
+  }, [completedSections, topicSectionsGenerated, messages, selectedTopic]);
   
-  const generateRelatedTopics = useCallback(async (topic: string) => {
+  const generateRelatedTopics = async (topic: string) => {
     try {
       console.log("Generating related topics for:", topic);
+      const relatedTopicsPrompt = `Generate 5 related topics to "${topic}" that might interest a learner aged ${ageRange}. Format as a short comma-separated list.`;
+      const relatedTopicsResponse = await generateResponse(relatedTopicsPrompt, ageRange, language);
+      console.log("Raw related topics response:", relatedTopicsResponse);
       
-      // Define default related topics based on the main topic to avoid API calls
-      let defaultRelated: string[] = ["Space exploration", "Astronomy facts", "Planets and moons", "Solar system formation", "Black holes"];
+      // Process the response to extract topics
+      const newRelatedTopics = processTopicsFromResponse(relatedTopicsResponse);
+      console.log("Processed related topics:", newRelatedTopics);
       
-      if (topic.toLowerCase().includes("dinosaur")) {
-        defaultRelated = ["Prehistoric animals", "Fossils", "Extinction events", "Paleontology", "Ancient reptiles"];
-      } else if (topic.toLowerCase().includes("animal")) {
-        defaultRelated = ["Wildlife habitats", "Ocean creatures", "Animal adaptations", "Endangered species", "Pet care"];
-      } else if (topic.toLowerCase().includes("robot")) {
-        defaultRelated = ["Artificial intelligence", "Coding for kids", "How machines work", "Future technology", "Famous robots"];
-      }
+      // Make sure we have up to 5 topics
+      const finalRelatedTopics = newRelatedTopics.slice(0, 5);
+      console.log("Final related topics list:", finalRelatedTopics);
       
-      // If we're already related topics, just set them without an API call
-      setRelatedTopics(defaultRelated);
-      
+      setRelatedTopics(finalRelatedTopics);
     } catch (error) {
       console.error("Error generating related topics:", error);
       // Fallback related topics
@@ -275,7 +236,7 @@ const Chat = () => {
         "Black holes"
       ]);
     }
-  }, []);
+  };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
@@ -301,64 +262,6 @@ const Chat = () => {
     
     // Clear chat and generate new welcome message in selected language
     clearChat();
-  };
-
-  const handleImageCapture = async (base64Image: string) => {
-    if (isProcessing) return;
-    
-    setIsProcessing(true);
-    setShowTypingIndicator(true);
-    
-    // Create a message for the uploaded image
-    const userImageMessage: Message = {
-      id: Date.now().toString(),
-      text: "I've uploaded a homework problem for help.",
-      isUser: true,
-      imageSource: base64Image
-    };
-    
-    setMessages(prev => [...prev, userImageMessage]);
-    
-    try {
-      console.log("Analyzing uploaded image...");
-      const analysis = await analyzeImage(base64Image, ageRange, language);
-      
-      // Simulate a delay for typing effect
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setShowTypingIndicator(false);
-      
-      // Create AI response message
-      const aiResponseMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: analysis,
-        isUser: false,
-        blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
-        showBlocks: true
-      };
-      
-      setMessages(prev => [...prev, aiResponseMessage]);
-      
-      // Add points for analyzing homework - using the pointsRef to avoid state closure issues
-      setPoints(prev => prev + 20);
-      
-    } catch (error) {
-      console.error("Error analyzing image:", error);
-      setShowTypingIndicator(false);
-      toast.error("Sorry, I couldn't analyze that image. Please try again with a clearer picture.");
-      
-      // Create a fallback message
-      const fallbackMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "I couldn't analyze that image clearly. Could you try again with a clearer picture? Make sure the homework problem is well-lit and centered in the image.",
-        isUser: false
-      };
-      
-      setMessages(prev => [...prev, fallbackMessage]);
-      
-    } finally {
-      setIsProcessing(false);
-    }
   };
 
   const processMessage = async (prompt: string, isUserMessage: boolean = true, skipUserMessage: boolean = false) => {
@@ -727,7 +630,6 @@ const Chat = () => {
             toggleListening={toggleListening}
             onSuggestedPromptClick={handleSuggestedPromptClick}
             setShowSuggestedPrompts={setShowSuggestedPrompts}
-            onImageCapture={handleImageCapture}
           />
         </div>
       </main>
