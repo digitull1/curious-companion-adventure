@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -117,10 +116,10 @@ serve(async (req) => {
         console.log("Enhanced image prompt:", enhancedPrompt);
         
         try {
-          console.log("Calling Hugging Face API with key length:", huggingFaceApiKey ? huggingFaceApiKey.length : 0);
+          console.log("Calling Hugging Face API for FLUX.1-dev model");
           
-          // Use Stable Diffusion XL for higher quality images
-          response = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0', {
+          // Use FLUX.1-dev model
+          response = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${huggingFaceApiKey}`,
@@ -129,20 +128,19 @@ serve(async (req) => {
             body: JSON.stringify({
               inputs: enhancedPrompt,
               options: {
-                wait_for_model: true,
-                use_cache: false
+                wait_for_model: true
               }
             }),
           });
           
-          console.log("Hugging Face API response status:", response.status);
+          console.log("FLUX.1-dev API response status:", response.status);
           console.log("Response headers:", Object.fromEntries(response.headers.entries()));
           
           // Check if response is ok
           if (!response.ok) {
             const errorText = await response.text();
-            console.error("Hugging Face API error response:", errorText);
-            throw new Error(`Hugging Face API error: ${errorText}`);
+            console.error("FLUX.1-dev API error response:", errorText);
+            throw new Error(`FLUX.1-dev API error: ${errorText}`);
           }
           
           // Handle binary response (image data)
@@ -162,6 +160,7 @@ serve(async (req) => {
           return new Response(JSON.stringify({ 
             imageUrl: imageBase64,
             debug: {
+              model: "FLUX.1-dev",
               blobSize: imageBlob.size,
               blobType: imageBlob.type,
               base64Length: typeof imageBase64 === 'string' ? imageBase64.length : 0
@@ -171,13 +170,13 @@ serve(async (req) => {
           });
           
         } catch (hfError) {
-          console.error("Detailed error with Hugging Face API:", {
+          console.error("Detailed error with FLUX.1-dev API:", {
             error: hfError,
             message: hfError.message,
             stack: hfError.stack
           });
           
-          // Try Stable Diffusion v1.5 as an alternative model
+          // Try fallback to another model
           try {
             console.log("Trying alternative Hugging Face model (SD v1.5)");
             
@@ -206,6 +205,7 @@ serve(async (req) => {
             return new Response(JSON.stringify({ 
               imageUrl: imageBase64,
               debug: {
+                model: "stable-diffusion-v1-5",
                 blobSize: imageBlob.size,
                 blobType: imageBlob.type,
                 base64Length: typeof imageBase64 === 'string' ? imageBase64.length : 0,
@@ -357,25 +357,6 @@ const blobToBase64 = async (blob: Blob): Promise<string> => {
   return `data:${blob.type};base64,${base64}`;
 };
 
-// Helper function to enhance image prompts for better results
-const enhanceImagePrompt = (prompt: string, ageRange: string): string => {
-  const lowerPrompt = prompt.toLowerCase();
-  
-  // Base enhancement with child-friendly and educational aspects
-  let enhancedPrompt = `Create a child-friendly, educational illustration of: ${prompt}. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a playful art style.`;
-  
-  // Add topic-specific enhancements
-  if (lowerPrompt.includes("dinosaur") && (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater"))) {
-    enhancedPrompt = `Create a scientifically accurate, child-friendly illustration of carnivorous dinosaurs. The image should show dinosaur predators with their hunting adaptations like sharp teeth and claws. Colorful, detailed, educational style suitable for ${ageRange} year olds.`;
-  } else if (lowerPrompt.includes("dinosaur")) {
-    enhancedPrompt = `Create a scientifically accurate, child-friendly illustration of dinosaurs. Detailed, colorful, educational style suitable for ${ageRange} year olds.`;
-  } else if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
-    enhancedPrompt = `Create an educational illustration of carnivorous animals showing their predatory adaptations. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a playful art style.`;
-  }
-  
-  return enhancedPrompt;
-};
-
 // Helper function to generate fallback text responses
 function generateFallbackTextResponse(prompt: string, language: string = "en") {
   // English responses
@@ -502,3 +483,24 @@ function generateFallbackQuiz(topic: string, language: string = "en") {
     };
   }
 }
+
+// Improved helper function to enhance image prompts for better results
+const enhanceImagePrompt = (prompt: string, ageRange: string): string => {
+  const lowerPrompt = prompt.toLowerCase();
+  
+  // Base enhancement with child-friendly and educational aspects
+  let enhancedPrompt = `Create a high-quality, child-friendly, educational illustration of: ${prompt}. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a detailed art style.`;
+  
+  // Add topic-specific enhancements
+  if (lowerPrompt.includes("dinosaur") && (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater"))) {
+    enhancedPrompt = `Create a scientifically accurate, child-friendly illustration of carnivorous dinosaurs. Show dinosaur predators with their hunting adaptations like sharp teeth and claws. Detailed, educational style suitable for ${ageRange} year olds.`;
+  } else if (lowerPrompt.includes("dinosaur")) {
+    enhancedPrompt = `Create a scientifically accurate, child-friendly illustration of dinosaurs. Detailed, colorful, educational style suitable for ${ageRange} year olds.`;
+  } else if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
+    enhancedPrompt = `Create an educational illustration of carnivorous animals showing their predatory adaptations. The image should be colorful, detailed, suitable for children aged ${ageRange}, with a professional art style.`;
+  } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space")) {
+    enhancedPrompt = `Create a detailed, educational illustration of space or planets. The image should be colorful, scientifically accurate, suitable for children aged ${ageRange}.`;
+  }
+  
+  return enhancedPrompt;
+};

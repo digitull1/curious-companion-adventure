@@ -91,14 +91,6 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
   const toggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
     setExpanded(!expanded);
-    
-    if (blockRef.current) {
-      animate(
-        blockRef.current,
-        { height: expanded ? ["auto", "3rem"] : ["3rem", "auto"] },
-        { duration: 0.3, easing: "ease-out" }
-      );
-    }
   };
 
   const handleExploreClick = (e: React.MouseEvent) => {
@@ -112,20 +104,7 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
       className={`relative rounded-xl border border-wonder-purple/10 bg-white/90 backdrop-blur-sm 
       transition-all duration-300 overflow-hidden flex-shrink-0 snap-center 
       ${shadowColor} ${expanded ? "h-auto" : "h-12"} min-w-[180px] sm:min-w-[220px] cursor-pointer`}
-      onClick={() => {
-        if (!expanded) {
-          setExpanded(true);
-          if (blockRef.current) {
-            animate(
-              blockRef.current,
-              { height: ["3rem", "auto"] },
-              { duration: 0.3, easing: "ease-out" }
-            );
-          }
-        } else {
-          onClick();
-        }
-      }}
+      onClick={toggleExpand}
     >
       {/* Subtle background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5 rounded-xl z-0`}></div>

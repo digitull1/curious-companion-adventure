@@ -130,7 +130,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
       img.src = url;
       
       // Add timeout to prevent hanging on slow loads
-      setTimeout(() => reject(new Error("Image load timeout")), 15000);
+      setTimeout(() => reject(new Error("Image load timeout")), 20000);
     });
   };
   
