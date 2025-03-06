@@ -10,6 +10,8 @@ interface HeaderProps {
   points: number;
   learningProgress: number;
   topicSectionsGenerated: boolean;
+  language?: string;
+  onLanguageChange?: (newLanguage: string) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -17,7 +19,9 @@ const Header: React.FC<HeaderProps> = ({
   streakCount, 
   points, 
   learningProgress, 
-  topicSectionsGenerated 
+  topicSectionsGenerated,
+  language,
+  onLanguageChange
 }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
