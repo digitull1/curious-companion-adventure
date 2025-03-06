@@ -24,6 +24,25 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
     setPromptTruncated(truncated);
   }, [prompt]);
 
+  // Enhanced prompt function to make it more relevant to the topic
+  const enhancePrompt = (originalPrompt: string): string => {
+    // Extract key topic keywords
+    const lowerPrompt = originalPrompt.toLowerCase();
+    
+    // If prompt is about dinosaurs, enhance it for better dinosaur images
+    if (lowerPrompt.includes("dinosaur")) {
+      return `Educational illustration of ${originalPrompt}. Detailed, scientifically accurate, colorful, child-friendly, digital art style.`;
+    }
+    
+    // If prompt is about carnivores, enhance it for better carnivore images
+    if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
+      return `Educational illustration of ${originalPrompt}. Show predatory adaptations, hunting behavior, in natural habitat, colorful, detailed, child-friendly, digital art style.`;
+    }
+    
+    // Default enhancement for educational content
+    return `Educational illustration of: ${originalPrompt}. Detailed, colorful, child-friendly, digital art style.`;
+  };
+
   // Load image with retry logic
   useEffect(() => {
     const loadImage = async () => {
@@ -34,13 +53,18 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
       try {
         console.log(`Generating image (attempt ${retryCount + 1}) with prompt:`, prompt);
         
+        // Enhance the prompt with more specific details for better image generation
+        const enhancedPrompt = enhancePrompt(prompt);
+        console.log("Enhanced prompt:", enhancedPrompt);
+        
         // Simplify prompt to reduce errors
-        const simplifiedPrompt = prompt.length > 250 
-          ? prompt.substring(0, 250) + "..." 
-          : prompt;
+        const simplifiedPrompt = enhancedPrompt.length > 300 
+          ? enhancedPrompt.substring(0, 300) + "..." 
+          : enhancedPrompt;
           
         const response = await generateImage(simplifiedPrompt);
         console.log("Image generation response:", {
+          responseReceived: !!response,
           urlLength: response?.length,
           urlStart: response?.substring(0, 50) + "...",
           isBase64: response?.startsWith("data:image"),
@@ -96,8 +120,12 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
     // Extract keywords from prompt to find relevant image
     const lowerPrompt = prompt.toLowerCase();
     
-    if (lowerPrompt.includes("dinosaur") || lowerPrompt.includes("prehistoric")) {
+    if (lowerPrompt.includes("dinosaur") && lowerPrompt.includes("carnivore")) {
+      return "https://images.unsplash.com/photo-1525877442103-5ddb2089b2bb?w=800&q=80"; // T-Rex or carnivorous dinosaur
+    } else if (lowerPrompt.includes("dinosaur")) {
       return "https://images.unsplash.com/photo-1519880856348-763a8b40aa79?w=800&q=80";
+    } else if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
+      return "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=800&q=80"; // Lion or predator
     } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space") || lowerPrompt.includes("solar system")) {
       return "https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=800&q=80";
     } else if (lowerPrompt.includes("robot") || lowerPrompt.includes("technology")) {

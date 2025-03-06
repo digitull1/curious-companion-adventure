@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -39,7 +40,8 @@ serve(async (req) => {
       - Include selective use of emojis to enhance engagement
       - Structured with paragraph breaks for readability
       - Include mind-blowing facts that will fascinate children
-      - Occasionally use storytelling to explain complex concepts`;
+      - Occasionally use storytelling to explain complex concepts
+      - IMPORTANT: Stay 100% on topic and directly address the specific question or topic`;
       
       // Add language-specific instructions
       if (language !== 'en') {
@@ -109,21 +111,25 @@ serve(async (req) => {
           });
         }
         
-        // Simplify the prompt to avoid errors
-        const simplifiedPrompt = prompt.length > 500 ? prompt.substring(0, 500) + "..." : prompt;
+        // Process and enhance the prompt for better image generation results
+        const enhancedPrompt = enhanceImagePrompt(prompt, ageRange);
+        console.log("Enhanced image prompt:", enhancedPrompt);
         
         try {
-          console.log("Calling Hugging Face API...");
+          console.log("Calling Hugging Face API with key length:", huggingFaceApiKey ? huggingFaceApiKey.length : 0);
           
           // Using Huggingface's Flux-1 model for image generation
-          response = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell', {
+          response = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${huggingFaceApiKey}`,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              inputs: `Create a child-friendly, educational illustration of: ${simplifiedPrompt}. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a playful art style.`,
+              inputs: enhancedPrompt,
+              options: {
+                wait_for_model: true
+              }
             }),
           });
           
@@ -132,9 +138,9 @@ serve(async (req) => {
           
           // Check if response is ok
           if (!response.ok) {
-            const error = await response.text();
-            console.error("Hugging Face API error response:", error);
-            throw new Error(`Hugging Face API error: ${error}`);
+            const errorText = await response.text();
+            console.error("Hugging Face API error response:", errorText);
+            throw new Error(`Hugging Face API error: ${errorText}`);
           }
           
           // Handle binary response (image data)
@@ -145,28 +151,18 @@ serve(async (req) => {
           });
           
           // Convert blob to base64
-          const reader = new FileReader();
-          const imageDataUrl = await new Promise((resolve, reject) => {
-            reader.onloadend = () => {
-              console.log("Base64 conversion successful, first 100 chars:", 
-                reader.result?.toString().substring(0, 100));
-              resolve(reader.result);
-            };
-            reader.onerror = (error) => {
-              console.error("Base64 conversion failed:", error);
-              reject(error);
-            };
-            reader.readAsDataURL(imageBlob);
-          });
+          const imageBase64 = await blobToBase64(imageBlob);
+          console.log("Base64 conversion successful, length:", 
+            typeof imageBase64 === 'string' ? imageBase64.length : 0);
           
           console.log("Successfully processed image data");
           
           return new Response(JSON.stringify({ 
-            imageUrl: imageDataUrl,
+            imageUrl: imageBase64,
             debug: {
               blobSize: imageBlob.size,
               blobType: imageBlob.type,
-              base64Length: typeof imageDataUrl === 'string' ? imageDataUrl.length : 0
+              base64Length: typeof imageBase64 === 'string' ? imageBase64.length : 0
             }
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -179,15 +175,52 @@ serve(async (req) => {
             stack: hfError.stack
           });
           
-          // Fall back to placeholder images
-          const fallbackImageUrl = getFallbackImageUrlByTopic(prompt);
-          return new Response(JSON.stringify({ 
-            imageUrl: fallbackImageUrl,
-            error: hfError.message,
-            fallback: true
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+          // Try an alternative model if the first one fails
+          try {
+            console.log("Trying alternative Hugging Face model");
+            
+            response = await fetch('https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${huggingFaceApiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ 
+                inputs: enhancedPrompt 
+              }),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Alternative model failed with status: ${response.status}`);
+            }
+            
+            const imageBlob = await response.blob();
+            const imageBase64 = await blobToBase64(imageBlob);
+            
+            return new Response(JSON.stringify({ 
+              imageUrl: imageBase64,
+              debug: {
+                blobSize: imageBlob.size,
+                blobType: imageBlob.type,
+                base64Length: typeof imageBase64 === 'string' ? imageBase64.length : 0,
+                alternativeModel: true
+              }
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          } catch (altError) {
+            console.error("Alternative model also failed:", altError);
+            
+            // Fall back to placeholder images if all attempts fail
+            const fallbackImageUrl = getFallbackImageUrlByTopic(prompt);
+            return new Response(JSON.stringify({ 
+              imageUrl: fallbackImageUrl,
+              error: "All image generation attempts failed",
+              fallback: true
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
         }
       } catch (imageError) {
         console.error("Top-level image generation error:", {
@@ -212,7 +245,7 @@ serve(async (req) => {
     } 
     
     else if (requestType === 'quiz') {
-      let systemMessage = `You are an educational quiz generator for children aged ${ageRange}. Create a single multiple-choice question about the topic provided that is educational, engaging, and appropriate for children of this age group. 
+      let systemMessage = `You are an educational quiz generator for children aged ${ageRange}. Create a single multiple-choice question about the specific topic provided that is educational, engaging, and appropriate for children of this age group. 
 
       The response must be in the following JSON format exactly, with no additional text:
       {
@@ -224,7 +257,8 @@ serve(async (req) => {
       
       Where "correctAnswer" is the index (0-3) of the correct option in the "options" array.
       Make sure the question is age-appropriate, factually accurate, and educational.
-      The fun fact should be mind-blowing and memorable.`;
+      The fun fact should be mind-blowing and memorable.
+      IMPORTANT: The question MUST be directly related to the topic provided and not generic.`;
       
       // Add language-specific instructions
       if (language !== 'en') {
@@ -310,20 +344,46 @@ serve(async (req) => {
   }
 });
 
+// Helper function to convert Blob to Base64
+const blobToBase64 = async (blob: Blob): Promise<string> => {
+  const buffer = await blob.arrayBuffer();
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+  return `data:${blob.type};base64,${base64}`;
+};
+
+// Helper function to enhance image prompts for better results
+const enhanceImagePrompt = (prompt: string, ageRange: string): string => {
+  const lowerPrompt = prompt.toLowerCase();
+  
+  // Base enhancement with child-friendly and educational aspects
+  let enhancedPrompt = `Create a child-friendly, educational illustration of: ${prompt}. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a playful art style.`;
+  
+  // Add topic-specific enhancements
+  if (lowerPrompt.includes("dinosaur") && (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater"))) {
+    enhancedPrompt = `Create a scientifically accurate, child-friendly illustration of carnivorous dinosaurs. The image should show dinosaur predators with their hunting adaptations like sharp teeth and claws. Colorful, detailed, educational style suitable for ${ageRange} year olds.`;
+  } else if (lowerPrompt.includes("dinosaur")) {
+    enhancedPrompt = `Create a scientifically accurate, child-friendly illustration of dinosaurs. Detailed, colorful, educational style suitable for ${ageRange} year olds.`;
+  } else if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
+    enhancedPrompt = `Create an educational illustration of carnivorous animals showing their predatory adaptations. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a playful art style.`;
+  }
+  
+  return enhancedPrompt;
+};
+
 // Helper function to generate fallback text responses
 function generateFallbackTextResponse(prompt: string, language: string = "en") {
   // English responses
   if (language === "en") {
     // Mock response based on the prompt
     const lowerPrompt = prompt.toLowerCase();
-    if (lowerPrompt.includes("dinosaur")) {
+    if (lowerPrompt.includes("dinosaur") && (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater"))) {
+      return `Carnivorous dinosaurs were fascinating predators that roamed the Earth millions of years ago! These meat-eating dinosaurs had special adaptations to help them hunt, like sharp teeth for tearing flesh, powerful jaws for crushing bones, and some even had sharp claws for grabbing prey. The most famous carnivorous dinosaur is probably Tyrannosaurus Rex (T-Rex), which had teeth as big as bananas and a bite force strong enough to crush a car!\n\nNot all carnivorous dinosaurs were giants like T-Rex though. Some were small and quick, like Velociraptor, which was about the size of a turkey but could run very fast and hunt in packs. Others, like Spinosaurus, were even bigger than T-Rex and could swim to catch fish! Carnivorous dinosaurs were at the top of the food chain in their ecosystems, helping to keep the population of plant-eating dinosaurs in check, just like lions and tigers do with plant-eaters today.`;
+    } else if (lowerPrompt.includes("dinosaur")) {
       return `Dinosaurs were amazing creatures that lived millions of years ago! They came in all shapes and sizes, from the tiny Compsognathus that was about the size of a chicken, to the enormous Argentinosaurus that could grow up to 30 meters long - that's as long as 3 school buses! They roamed the Earth for about 165 million years, which is much longer than humans have been around.\n\nScientists learn about dinosaurs by studying fossils, which are the preserved remains or traces of ancient animals and plants. When paleontologists (scientists who study fossils) find dinosaur bones, they carefully dig them up and put them together like a puzzle. This helps them figure out what the dinosaurs looked like, what they ate, and how they lived. Some dinosaurs were plant-eaters with long necks to reach tall trees, while others were meat-eaters with sharp teeth and claws!`;
+    } else if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
+      return `Carnivores are animals that eat mainly or only meat. These amazing creatures have special body features that help them hunt and eat other animals. For example, lions have sharp teeth for tearing meat, strong jaws for crushing bones, and powerful legs for chasing down prey. Other carnivores like wolves hunt in packs to take down animals that are bigger than they are!\n\nCarnivores play a very important role in nature. They help keep the populations of other animals healthy by hunting the weak or sick ones. This is called being at the top of the food chain or being an apex predator. Some carnivores you might know are tigers, eagles, sharks, and even your pet cat! Not all carnivores are big - some, like spiders and frogs, are quite small but are still fierce hunters in their own way.`;
     } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space")) {
       return `Our solar system is an incredible place filled with planets, moons, asteroids, and comets! The Sun sits at the center, and eight planets orbit around it. From closest to farthest from the Sun, they are: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune. Each planet is unique - Earth is the only one we know has life, Jupiter has a giant storm called the Great Red Spot, and Saturn has beautiful rings made of ice and rock particles!\n\nSpace is mostly empty, but it's also filled with amazing objects. Stars are giant balls of gas that produce their own light and heat through a process called nuclear fusion. Galaxies are enormous collections of stars, gas, and dust held together by gravity. Our galaxy is called the Milky Way, and it contains billions of stars, including our Sun. Scientists are constantly making new discoveries about space using powerful telescopes and spacecraft!`;
-    } else if (lowerPrompt.includes("robot") || lowerPrompt.includes("ai")) {
-      return `Robots and artificial intelligence (AI) are amazing technologies that help us solve problems and make our lives easier! Robots are machines that can be programmed to perform tasks automatically. Some robots build cars in factories, others explore dangerous places like volcanoes or the deep ocean, and some even help doctors perform surgery with super-precise movements.\n\nArtificial intelligence is the technology that allows computers to learn from experience and make decisions, kind of like humans do. AI helps your favorite video games create challenges that adapt to how you play, powers the voice assistants that answer your questions, and helps scientists analyze huge amounts of data to make new discoveries. As technology continues to advance, robots and AI will become even more helpful and do things we can barely imagine today!`;
-    } else if (lowerPrompt.includes("butter chicken")) {
-      return `Butter Chicken is a delicious Indian dish that's loved all around the world! It features tender pieces of chicken in a creamy tomato sauce that's flavored with aromatic spices. The dish was created in Delhi, India, in the 1950s by a chef who mixed leftover tandoori chicken with a buttery tomato gravy.\n\nThe secret to great Butter Chicken is in the blend of spices - it usually includes garam masala, turmeric, cumin, and coriander. These spices give the dish its distinctive flavor without making it too spicy. The creamy sauce gets its richness from butter (of course!), cream, and tomatoes, which are all simmered together until smooth and velvety. It's traditionally served with fluffy naan bread or steamed rice, which are perfect for soaking up all that delicious sauce!`;
     } else {
       return `That's a great question! Curiosity is the first step to learning amazing things about our world. When we ask questions and explore new ideas, we're exercising our brains just like athletes exercise their muscles. Scientists, inventors, and explorers throughout history have made incredible discoveries because they were curious and wanted to understand how things work.\n\nLearning is an adventure that never ends! Every day, people around the world are making new discoveries and creating new inventions. Some questions have answers we already know, while others are mysteries waiting to be solved. The more you learn, the more connections your brain makes between different subjects, which helps you come up with creative ideas and solve problems in new ways. What other fascinating topics would you like to explore today?`;
     }
@@ -338,8 +398,12 @@ function getFallbackImageUrlByTopic(prompt: string) {
   // Extract keywords from prompt to find relevant image
   const lowerPrompt = prompt.toLowerCase();
   
-  if (lowerPrompt.includes("dinosaur") || lowerPrompt.includes("prehistoric")) {
+  if (lowerPrompt.includes("dinosaur") && (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater"))) {
+    return "https://images.unsplash.com/photo-1525877442103-5ddb2089b2bb?w=800&q=80";
+  } else if (lowerPrompt.includes("dinosaur")) {
     return "https://images.unsplash.com/photo-1519880856348-763a8b40aa79?w=800&q=80";
+  } else if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
+    return "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=800&q=80";
   } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space") || lowerPrompt.includes("solar system")) {
     return "https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=800&q=80";
   } else if (lowerPrompt.includes("robot") || lowerPrompt.includes("technology")) {
@@ -369,12 +433,26 @@ function generateFallbackQuiz(topic: string, language: string = "en") {
     // Mock quiz based on topic
     const lowerTopic = topic.toLowerCase();
     
-    if (lowerTopic.includes("dinosaur")) {
+    if (lowerTopic.includes("dinosaur") && (lowerTopic.includes("carnivore") || lowerTopic.includes("meat-eater"))) {
+      return {
+        question: "Which of these dinosaurs was a carnivore (meat-eater)?",
+        options: ["Brachiosaurus", "Tyrannosaurus Rex", "Triceratops", "Stegosaurus"],
+        correctAnswer: 1,
+        funFact: "Tyrannosaurus Rex had teeth that were up to 12 inches (30 cm) long, as big as bananas!"
+      };
+    } else if (lowerTopic.includes("dinosaur")) {
       return {
         question: "Which dinosaur was the largest meat-eater?",
         options: ["Tyrannosaurus Rex", "Velociraptor", "Spinosaurus", "Allosaurus"],
         correctAnswer: 2,
         funFact: "Spinosaurus was even larger than T-Rex and could swim!"
+      };
+    } else if (lowerTopic.includes("carnivore") || lowerTopic.includes("meat-eater")) {
+      return {
+        question: "Which of these animals is NOT a carnivore (meat-eater)?",
+        options: ["Lion", "Elephant", "Wolf", "Eagle"],
+        correctAnswer: 1,
+        funFact: "Elephants are herbivores and can eat up to 300 pounds (136 kg) of plants in a single day!"
       };
     } else if (lowerTopic.includes("planet") || lowerTopic.includes("space") || lowerTopic.includes("solar")) {
       return {
