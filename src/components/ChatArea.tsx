@@ -42,6 +42,35 @@ interface ChatAreaProps {
   learningProgress: number;
 }
 
+// Helper function to process related topics from a single string
+const processRelatedTopics = (topics: string[]): string[] => {
+  if (topics.length === 0) return [];
+  
+  // If it's a single string that contains line breaks or numbers
+  if (topics.length === 1 && typeof topics[0] === 'string') {
+    const topicStr = topics[0];
+    
+    // Check for numbered list format (e.g., "1. Topic\n2. Topic")
+    if (topicStr.includes('\n')) {
+      return topicStr.split('\n')
+        .map(line => line.replace(/^\d+\.\s*/, '').trim())
+        .filter(line => line.length > 0);
+    }
+    
+    // Check for comma-separated list
+    if (topicStr.includes(',')) {
+      return topicStr.split(',').map(t => t.trim()).filter(t => t.length > 0);
+    }
+    
+    // Check for semicolon-separated list
+    if (topicStr.includes(';')) {
+      return topicStr.split(';').map(t => t.trim()).filter(t => t.length > 0);
+    }
+  }
+  
+  return topics;
+};
+
 const ChatArea: React.FC<ChatAreaProps> = ({
   messages,
   showTypingIndicator,
@@ -60,6 +89,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [currentSectionMessage, setCurrentSectionMessage] = useState<Message | null>(null);
   const [currentBlockMessage, setCurrentBlockMessage] = useState<Message | null>(null);
   const [activeBlock, setActiveBlock] = useState<BlockType | null>(null);
+  
+  // Process related topics
+  const processedRelatedTopics = processRelatedTopics(relatedTopics);
 
   useEffect(() => {
     scrollToBottom();
@@ -93,7 +125,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   useEffect(() => {
     // Apply animations to related topics when they appear
     if (relatedTopicsRef.current && learningComplete) {
-      console.log("Animating related topics", relatedTopics);
+      console.log("Animating related topics", processedRelatedTopics);
       const topics = relatedTopicsRef.current.querySelectorAll('.related-topic');
       topics.forEach((topic, index) => {
         animate(
@@ -103,7 +135,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         );
       });
     }
-  }, [learningComplete, relatedTopics]);
+  }, [learningComplete, processedRelatedTopics]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -164,7 +196,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const introMessage = messages.find(m => m.isIntroduction && m.tableOfContents);
   
   // Check if we have related topics to display and if learning is complete
-  const shouldShowRelatedTopics = relatedTopics.length > 0 && learningComplete;
+  const shouldShowRelatedTopics = processedRelatedTopics.length > 0 && learningComplete;
   
   // Get adjacent sections for navigation
   const { prev, next } = getAdjacentSections();
@@ -231,7 +263,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
             <h3 className="text-sm font-medium mb-3 text-wonder-purple">🎉 Explore more topics:</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {relatedTopics.map((topic, index) => (
+              {processedRelatedTopics.map((topic, index) => (
                 <div 
                   key={index}
                   onClick={() => onRelatedTopicClick(topic)}

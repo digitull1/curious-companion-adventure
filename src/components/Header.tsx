@@ -1,8 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
-import { LogOut, Settings, Star, Crown, BarChart2, Sparkles } from "lucide-react";
+import { LogOut, Settings, Star, Crown, BarChart2, Sparkles, Globe } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   avatar: string;
@@ -49,6 +50,19 @@ const Header: React.FC<HeaderProps> = ({
     localStorage.removeItem("wonderwhiz_avatar");
     navigate("/");
   };
+
+  const languages = [
+    { code: "en", name: "English" },
+    { code: "es", name: "Español" },
+    { code: "fr", name: "Français" },
+    { code: "de", name: "Deutsch" },
+    { code: "it", name: "Italiano" },
+    { code: "pt", name: "Português" },
+    { code: "hi", name: "हिन्दी" },
+    { code: "zh", name: "中文" },
+    { code: "ja", name: "日本語" },
+    { code: "ko", name: "한국어" },
+  ];
 
   return (
     <header className="border-b bg-white/90 backdrop-blur-sm z-10 shadow-sm">
@@ -109,7 +123,7 @@ const Header: React.FC<HeaderProps> = ({
             {getAvatarEmoji()}
           </div>
           
-          <div className="relative">
+          <div className="relative z-50">
             {isMenuOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-pixar py-3 z-50 border border-wonder-purple/10 backdrop-blur-sm bg-white/95 animate-fade-in-up">
                 <div className="px-4 py-3 border-b border-wonder-purple/10">
@@ -127,6 +141,31 @@ const Header: React.FC<HeaderProps> = ({
                 </div>
                 
                 <div className="pt-2">
+                  {/* Language Selection */}
+                  {onLanguageChange && (
+                    <div className="px-4 py-2.5">
+                      <div className="text-sm mb-2 text-muted-foreground">Language / भाषा</div>
+                      <div className="grid grid-cols-2 gap-1">
+                        {languages.slice(0, 6).map((lang) => (
+                          <button
+                            key={lang.code}
+                            className={`text-left px-2 py-1 text-xs rounded-md ${
+                              language === lang.code
+                                ? "bg-wonder-purple/20 text-wonder-purple font-medium"
+                                : "hover:bg-wonder-purple/5"
+                            }`}
+                            onClick={() => {
+                              onLanguageChange(lang.code);
+                              setIsMenuOpen(false);
+                            }}
+                          >
+                            {lang.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <button 
                     className="w-full text-left px-4 py-2.5 text-sm hover:bg-wonder-purple/5 flex items-center text-foreground font-rounded touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}

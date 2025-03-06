@@ -28,6 +28,7 @@ const getTopicEmoji = (section: string): string => {
   if (lowerSection.includes("food") || lowerSection.includes("eat")) return "🍎";
   if (lowerSection.includes("art") || lowerSection.includes("draw") || lowerSection.includes("paint")) return "🎨";
   if (lowerSection.includes("music") || lowerSection.includes("song")) return "🎵";
+  if (lowerSection.includes("chicken") || lowerSection.includes("butter") || lowerSection.includes("बटर चिकन")) return "🍗";
   
   // Default emojis based on position in the list (for topics that don't match above)
   const defaultEmojis = ["📚", "✨", "💡", "🔍", "🧩"];
@@ -35,8 +36,36 @@ const getTopicEmoji = (section: string): string => {
   return defaultEmojis[Math.floor(Math.random() * defaultEmojis.length)];
 };
 
+// Process and separate multilingual sections
+const processMultilingualSections = (sections: string[]): string[] => {
+  if (sections.length === 0) return [];
+  
+  // If we only have one section but it contains multiple lines or separators
+  if (sections.length === 1) {
+    const section = sections[0];
+    
+    // Check if it contains line breaks
+    if (section.includes('\n')) {
+      return section.split('\n').filter(s => s.trim().length > 0);
+    }
+    
+    // Check if it contains numbered list
+    const numberedPattern = /\d+\./;
+    if (numberedPattern.test(section)) {
+      return section.split(/\d+\./).filter(s => s.trim().length > 0);
+    }
+    
+    // Check if it contains other common separators
+    if (section.includes(';')) {
+      return section.split(';').filter(s => s.trim().length > 0);
+    }
+  }
+  
+  return sections;
+};
+
 const TableOfContents: React.FC<TableOfContentsProps> = ({ 
-  sections, 
+  sections,
   completedSections,
   currentSection,
   onSectionClick
@@ -44,6 +73,9 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   const tocRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const celebrationRef = useRef<HTMLDivElement>(null);
+  
+  // Process sections to handle multilingual content properly
+  const processedSections = processMultilingualSections(sections);
   
   useEffect(() => {
     if (tocRef.current) {
@@ -65,11 +97,11 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         }
       });
     }
-  }, [sections]);
+  }, [processedSections]);
   
   // Add celebration animation when all sections are completed
   useEffect(() => {
-    if (completedSections.length === sections.length && sections.length > 0 && celebrationRef.current) {
+    if (completedSections.length === processedSections.length && processedSections.length > 0 && celebrationRef.current) {
       // Animate confetti or celebration effects
       const particles = Array.from({ length: 20 }).map(() => {
         const particle = document.createElement('div');
@@ -89,11 +121,11 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         particles.forEach(particle => particle.remove());
       }, 3000);
     }
-  }, [completedSections, sections]);
+  }, [completedSections, processedSections]);
   
   // Calculate progress percentage
-  const progressPercentage = sections.length 
-    ? Math.round((completedSections.length / sections.length) * 100)
+  const progressPercentage = processedSections.length 
+    ? Math.round((completedSections.length / processedSections.length) * 100)
     : 0;
     
   return (
@@ -119,11 +151,11 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-gradient-radial from-wonder-purple/10 to-transparent rounded-full"></div>
         
         <div className="space-y-2 relative">
-          {sections.map((section, index) => {
+          {processedSections.map((section, index) => {
             const isCompleted = completedSections.includes(section);
             const isCurrent = section === currentSection;
             const topicEmoji = getTopicEmoji(section);
-            const cleanedSection = section.replace(/\*\*/g, '');
+            const cleanedSection = section.replace(/\*\*/g, '').trim();
             
             return (
               <button
@@ -181,7 +213,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
           })}
         </div>
         
-        {completedSections.length === sections.length && sections.length > 0 && (
+        {completedSections.length === processedSections.length && processedSections.length > 0 && (
           <div ref={celebrationRef} className="mt-4 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-dark/20 p-4 rounded-lg border border-wonder-purple/20 relative overflow-hidden">
             <p className="text-center text-wonder-purple font-medium">
               🎉 Congratulations! You've completed all sections! 🏆
