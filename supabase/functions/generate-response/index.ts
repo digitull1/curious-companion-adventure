@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -99,12 +98,11 @@ serve(async (req) => {
     
     else if (requestType === 'image') {
       try {
-        console.log("Generating image with prompt:", prompt);
+        console.log("Starting image generation with prompt:", prompt);
         
         // Check if we have the Hugging Face API Key
         if (!huggingFaceApiKey) {
           console.warn("No HUGGINGFACE_API_KEY found, using fallback image");
-          // Return a placeholder Unsplash image based on the topic
           const fallbackImageUrl = getFallbackImageUrlByTopic(prompt);
           return new Response(JSON.stringify({ imageUrl: fallbackImageUrl }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -114,8 +112,9 @@ serve(async (req) => {
         // Simplify the prompt to avoid errors
         const simplifiedPrompt = prompt.length > 500 ? prompt.substring(0, 500) + "..." : prompt;
         
-        // Use Hugging Face's Flux model
         try {
+          console.log("Calling Hugging Face API...");
+          
           // Using Huggingface's Flux-1 model for image generation
           response = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell', {
             method: 'POST',
@@ -128,45 +127,81 @@ serve(async (req) => {
             }),
           });
           
+          console.log("Hugging Face API response status:", response.status);
+          console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+          
           // Check if response is ok
           if (!response.ok) {
-            const error = await response.json();
-            console.error("Hugging Face API error:", error);
-            throw new Error(`Hugging Face API error: ${JSON.stringify(error)}`);
+            const error = await response.text();
+            console.error("Hugging Face API error response:", error);
+            throw new Error(`Hugging Face API error: ${error}`);
           }
           
           // Handle binary response (image data)
           const imageBlob = await response.blob();
-          const reader = new FileReader();
+          console.log("Received image blob:", {
+            size: imageBlob.size,
+            type: imageBlob.type
+          });
           
-          // Wrap in a promise to handle FileReader's callback-based API
+          // Convert blob to base64
+          const reader = new FileReader();
           const imageDataUrl = await new Promise((resolve, reject) => {
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
+            reader.onloadend = () => {
+              console.log("Base64 conversion successful, first 100 chars:", 
+                reader.result?.toString().substring(0, 100));
+              resolve(reader.result);
+            };
+            reader.onerror = (error) => {
+              console.error("Base64 conversion failed:", error);
+              reject(error);
+            };
             reader.readAsDataURL(imageBlob);
           });
           
-          console.log("Successfully generated image data URL");
+          console.log("Successfully processed image data");
           
-          return new Response(JSON.stringify({ imageUrl: imageDataUrl }), {
+          return new Response(JSON.stringify({ 
+            imageUrl: imageDataUrl,
+            debug: {
+              blobSize: imageBlob.size,
+              blobType: imageBlob.type,
+              base64Length: typeof imageDataUrl === 'string' ? imageDataUrl.length : 0
+            }
+          }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
+          
         } catch (hfError) {
-          console.error("Error with Hugging Face API:", hfError);
+          console.error("Detailed error with Hugging Face API:", {
+            error: hfError,
+            message: hfError.message,
+            stack: hfError.stack
+          });
+          
           // Fall back to placeholder images
           const fallbackImageUrl = getFallbackImageUrlByTopic(prompt);
-          return new Response(JSON.stringify({ imageUrl: fallbackImageUrl }), {
+          return new Response(JSON.stringify({ 
+            imageUrl: fallbackImageUrl,
+            error: hfError.message,
+            fallback: true
+          }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
       } catch (imageError) {
-        console.error("Image generation error:", imageError);
+        console.error("Top-level image generation error:", {
+          error: imageError,
+          message: imageError.message,
+          stack: imageError.stack
+        });
         
         // Return a more graceful error with fallback image
         const fallbackImageUrl = getFallbackImageUrlByTopic(prompt);
         return new Response(
           JSON.stringify({ 
             imageUrl: fallbackImageUrl,
+            error: imageError.message,
             fallback: true
           }),
           { 

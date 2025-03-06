@@ -1,4 +1,4 @@
-
+importtypescript
 import React, { useState, useEffect } from "react";
 import { useOpenAI } from "@/hooks/useOpenAI";
 import { Image as ImageIcon, ImageOff, RefreshCw } from "lucide-react";
@@ -32,25 +32,31 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
       setErrorMessage("");
       
       try {
-        console.log(`Generating image (attempt ${retryCount + 1}) with prompt:`, prompt.substring(0, 50) + "...");
+        console.log(`Generating image (attempt ${retryCount + 1}) with prompt:`, prompt);
         
-        // Simplify prompt to reduce errors - truncate long prompts
+        // Simplify prompt to reduce errors
         const simplifiedPrompt = prompt.length > 250 
           ? prompt.substring(0, 250) + "..." 
           : prompt;
           
-        const url = await generateImage(simplifiedPrompt);
-        console.log("Image URL received:", url);
+        const response = await generateImage(simplifiedPrompt);
+        console.log("Image generation response:", {
+          urlLength: response?.length,
+          urlStart: response?.substring(0, 50) + "...",
+          isBase64: response?.startsWith("data:image"),
+          isHttps: response?.startsWith("https:")
+        });
         
-        if (!url || url.trim() === "") {
+        if (!response || response.trim() === "") {
           console.error("Empty image URL received");
           throw new Error("Failed to generate image");
         }
         
         // Preload the image to check if it's valid
-        await preloadImage(url);
+        await preloadImage(response);
+        console.log("Image preloaded successfully");
         
-        setImageUrl(url);
+        setImageUrl(response);
         setHasError(false);
       } catch (error) {
         console.error("Error loading image:", error);
