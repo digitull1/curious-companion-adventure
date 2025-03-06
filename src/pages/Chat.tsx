@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -253,13 +254,8 @@ const Chat = () => {
         // Add points for starting a new learning journey
         setPoints(prev => prev + 25);
         setLearningProgress(10);
-
-        // Auto-select the first section after a short delay
-        setTimeout(() => {
-          if (sections.length > 0) {
-            handleTocSectionClick(sections[0]);
-          }
-        }, 1000);
+        
+        // No longer auto-select the first section
       } catch (error) {
         console.error("Error generating TOC:", error);
         toast.error("Sorry, there was an error processing your request. Please try again.");
@@ -294,12 +290,28 @@ const Chat = () => {
           blockResponse = await generateResponse(`Share an amazing story or legend related to: ${messageText} appropriate for a ${ageRange} year old. Keep it engaging and educational.`, ageRange);
           break;
         case "see-it":
-          blockResponse = "Here's a visual representation I created for you:";
-          imagePrompt = `${messageText} in a style that appeals to ${ageRange} year old children, educational, detailed, colorful, Pixar style illustration`;
+          try {
+            blockResponse = "Here's a visual representation I created for you:";
+            imagePrompt = `${messageText} in a style that appeals to ${ageRange} year old children, educational, detailed, colorful, Pixar style illustration`;
+          } catch (error) {
+            console.error("Error generating image:", error);
+            blockResponse = "I'm sorry, I couldn't create an image right now. Let me tell you about it instead!";
+            const fallbackResponse = await generateResponse(`Describe ${messageText} visually for a ${ageRange} year old in vivid, colorful terms.`, ageRange);
+            blockResponse += "\n\n" + fallbackResponse;
+          }
           break;
         case "quiz":
           blockResponse = "Let's test your knowledge with a quick quiz! Get all answers right to earn bonus points! 🎯";
-          quiz = await generateQuiz(messageText);
+          try {
+            quiz = await generateQuiz(messageText);
+          } catch (error) {
+            console.error("Error generating quiz:", error);
+            quiz = {
+              question: "Which of these is a fact about this topic?",
+              options: ["Option 1", "Option 2", "Option 3", "Option 4"],
+              correctAnswer: 0
+            };
+          }
           break;
       }
 
@@ -319,6 +331,7 @@ const Chat = () => {
     } catch (error) {
       console.error("Error processing learning block:", error);
       setShowTypingIndicator(false);
+      toast.error("Sorry, I couldn't process that right now. Please try again.");
     } finally {
       setIsProcessing(false);
     }

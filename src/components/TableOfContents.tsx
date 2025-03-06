@@ -122,7 +122,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
           {sections.map((section, index) => {
             const isCompleted = completedSections.includes(section);
             const isCurrent = section === currentSection;
-            const isNext = section === getNextSection();
+            const isNext = !currentSection && completedSections.length === 0 && index === 0 ? false : section === getNextSection();
             const topicEmoji = getTopicEmoji(section);
             
             return (
@@ -137,7 +137,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                     : isCurrent
                       ? "bg-gradient-to-r from-wonder-blue/10 to-wonder-blue/5 border border-wonder-blue/20 shadow-magical"
                       : isNext
-                        ? "bg-gradient-to-r from-wonder-yellow/10 to-wonder-yellow/5 border border-wonder-yellow/20 shadow-magical animate-pulse-soft"
+                        ? "bg-gradient-to-r from-wonder-blue/5 to-wonder-blue/2 border border-wonder-blue/10 shadow-sm"
                         : "bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-wonder-purple/20 hover:bg-wonder-purple/5 hover:shadow-magical"
                   }`}
                 style={{ opacity: 0 }} // Start invisible for animation
@@ -149,7 +149,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                                   : isCurrent
                                     ? "bg-wonder-blue text-white shadow-magical"
                                     : isNext
-                                      ? "bg-wonder-yellow text-white shadow-magical"
+                                      ? "bg-wonder-blue/70 text-white"
                                       : "bg-wonder-purple/10 text-wonder-purple"}`}>
                     {isCompleted 
                       ? <CheckCircle className="h-5 w-5" /> 
@@ -162,7 +162,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                       : isCurrent
                         ? "text-wonder-blue font-medium"
                         : isNext
-                          ? "text-wonder-yellow-dark font-medium"
+                          ? "text-wonder-blue-dark"
                           : "group-hover:text-wonder-purple"
                   }`}>
                     {section} <span className="ml-1">{topicEmoji}</span>
@@ -175,7 +175,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                                   : isCurrent
                                     ? "bg-wonder-blue/10"
                                     : isNext
-                                      ? "bg-wonder-yellow/10 animate-pulse-soft"
+                                      ? "bg-wonder-blue/10"
                                       : "bg-gray-100 group-hover:bg-wonder-purple/10"}`}>
                   <ArrowRight className={`h-3.5 w-3.5 transition-all transform 
                                        ${isCompleted 
@@ -183,7 +183,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                                         : isCurrent
                                           ? "text-wonder-blue"
                                           : isNext
-                                            ? "text-wonder-yellow-dark"
+                                            ? "text-wonder-blue-dark"
                                             : "text-gray-400 group-hover:text-wonder-purple group-hover:translate-x-0.5"}`} />
                 </div>
               </button>
