@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { launchConfetti } from "@/utils/confetti";
 import { Check, X, Trophy, LightbulbIcon } from "lucide-react";
 import { animate } from "@motionone/dom";
+import { toast } from "sonner";
 
 interface QuizBlockProps {
   question: string;
@@ -19,6 +20,11 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
   const quizRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<(HTMLDivElement | null)[]>([]);
   const funFactRef = useRef<HTMLDivElement>(null);
+  
+  // Debug log to verify quiz data
+  useEffect(() => {
+    console.log("QuizBlock rendered with data:", { question, options, correctAnswer, funFact });
+  }, [question, options, correctAnswer, funFact]);
   
   useEffect(() => {
     if (quizRef.current) {
@@ -66,6 +72,9 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
         // Launch confetti animation on correct answer
         launchConfetti();
         
+        // Show toast for correct answer
+        toast.success("Great job! That's correct! 🎉");
+        
         // Show fun fact after a short delay
         setTimeout(() => {
           setShowFunFact(true);
@@ -94,6 +103,9 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
             sparkles.forEach(sparkle => sparkle.remove());
           }, 3000);
         }
+      } else {
+        // Show toast for incorrect answer
+        toast.error("Not quite right. Try again next time!");
       }
     }
   };
@@ -113,6 +125,19 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
     
     return className;
   };
+
+  // If we don't have valid quiz data, show a fallback message
+  if (!question || !options || options.length === 0) {
+    return (
+      <div className="mt-4 bg-white rounded-xl p-5 shadow-pixar">
+        <div className="text-center p-4">
+          <LightbulbIcon className="h-8 w-8 mx-auto text-wonder-yellow mb-3" />
+          <h3 className="font-bold text-lg mb-2">Quiz Coming Soon!</h3>
+          <p className="text-muted-foreground">We're preparing an exciting quiz for you. Check back in a moment!</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4 bg-white rounded-xl p-5 shadow-pixar relative overflow-hidden" ref={quizRef}>

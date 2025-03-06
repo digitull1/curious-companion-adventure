@@ -100,32 +100,39 @@ export function useOpenAI() {
         }
         
         // Validate the URL by trying to fetch it
-        await fetch(data.imageUrl, { method: 'HEAD' })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`Image URL returned error: ${response.status}`);
-            }
-          });
+        try {
+          const response = await fetch(data.imageUrl, { method: 'HEAD' });
+          if (!response.ok) {
+            throw new Error(`Image URL returned error: ${response.status}`);
+          }
+        } catch (fetchError) {
+          console.error("Error validating image URL:", fetchError);
+          throw new Error("Invalid image URL");
+        }
         
-        console.log("Image URL received:", data.imageUrl);
+        console.log("Image URL validated and received:", data.imageUrl);
         return data.imageUrl;
       } catch (error) {
         console.error(`Error generating image (attempt ${retryCount + 1}):`, error);
         
         if (retryCount < maxRetries) {
           retryCount++;
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retrying
           console.log(`Retrying image generation, attempt ${retryCount + 1}...`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retrying
         } else {
           // After max retries, fall back to placeholder
           console.log("Max retries reached, using fallback image");
-          toast.error("Couldn't generate an image right now. Using a sample image instead.");
           return generateMockImageUrl(prompt);
+        }
+      } finally {
+        if (retryCount === maxRetries) {
+          setIsLoading(false);
         }
       }
     }
     
-    // This should never execute due to the return in the catch block above
+    // Default fallback (should not reach here due to the return in the loop)
+    setIsLoading(false);
     return generateMockImageUrl(prompt);
   };
   
@@ -165,6 +172,7 @@ export function useOpenAI() {
       });
       
       if (error) {
+        console.error("Error from quiz generation:", error);
         throw new Error(error.message || "Failed to generate quiz");
       }
       
@@ -175,6 +183,7 @@ export function useOpenAI() {
         throw new Error("Invalid quiz data");
       }
       
+      console.log("Quiz generated successfully:", data);
       return data;
     } catch (error) {
       console.error("Error generating quiz:", error);
@@ -187,6 +196,8 @@ export function useOpenAI() {
   
   // Fallback mock quiz when API requests fail
   const generateMockQuiz = (topic: string, language: string = "en") => {
+    console.log("Generating mock quiz for:", topic);
+    
     // For English quizzes
     if (language === "en") {
       // Mock quiz based on topic
@@ -229,7 +240,19 @@ export function useOpenAI() {
         };
       }
     } else {
-      // Generic quiz for non-English languages
+      // Non-English quiz (Hindi and others)
+      const lowerTopic = topic.toLowerCase();
+      
+      if (language === "hi") {
+        return {
+          question: "भारत की राष्ट्रीय पक्षी कौन सी है?",
+          options: ["कबूतर", "मोर", "बाज़", "तोता"],
+          correctAnswer: 1,
+          funFact: "मोर की आवाज इतनी तेज होती है कि इसे 1 किलोमीटर दूर से भी सुना जा सकता है!"
+        };
+      }
+      
+      // Generic fallback for other languages
       return {
         question: "Which is the correct answer?",
         options: ["Option A", "Option B", "Option C", "Option D"],

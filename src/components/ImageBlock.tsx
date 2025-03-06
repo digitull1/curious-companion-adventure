@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useOpenAI } from "@/hooks/useOpenAI";
 import { Image as ImageIcon, ImageOff, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 interface ImageBlockProps {
   prompt: string;
@@ -33,9 +34,9 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
       try {
         console.log(`Generating image (attempt ${retryCount + 1}) with prompt:`, prompt.substring(0, 50) + "...");
         
-        // Simplify prompt to reduce errors
-        const simplifiedPrompt = prompt.length > 300 
-          ? prompt.substring(0, 300) + "..." 
+        // Simplify prompt to reduce errors - truncate long prompts
+        const simplifiedPrompt = prompt.length > 250 
+          ? prompt.substring(0, 250) + "..." 
           : prompt;
           
         const url = await generateImage(simplifiedPrompt);
@@ -60,6 +61,9 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
         const fallbackUrl = getFallbackImageUrl(prompt);
         console.log("Using fallback image:", fallbackUrl);
         setImageUrl(fallbackUrl);
+        
+        // Show toast notification for error
+        toast.error("Couldn't generate an image right now. Using a sample image instead.");
       } finally {
         setIsLoading(false);
       }
@@ -75,10 +79,13 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
       img.onload = () => resolve();
       img.onerror = () => reject(new Error("Failed to load image"));
       img.src = url;
+      
+      // Add timeout to prevent hanging on slow loads
+      setTimeout(() => reject(new Error("Image load timeout")), 15000);
     });
   };
   
-  // Improved fallback image function
+  // Improved fallback image function with more options
   const getFallbackImageUrl = (prompt: string) => {
     // Extract keywords from prompt to find relevant image
     const lowerPrompt = prompt.toLowerCase();
@@ -93,8 +100,14 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
       return "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=800&q=80";
     } else if (lowerPrompt.includes("ocean") || lowerPrompt.includes("sea")) {
       return "https://images.unsplash.com/photo-1518399681705-1c1a55e5e883?w=800&q=80";
-    } else if (lowerPrompt.includes("butter chicken") || lowerPrompt.includes("food")) {
+    } else if (lowerPrompt.includes("butter chicken") || lowerPrompt.includes("food") || lowerPrompt.includes("cooking")) {
       return "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=80";
+    } else if (lowerPrompt.includes("history") || lowerPrompt.includes("ancient")) {
+      return "https://images.unsplash.com/photo-1564399263809-d2e8673cb2a4?w=800&q=80";
+    } else if (lowerPrompt.includes("science") || lowerPrompt.includes("experiment")) {
+      return "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&q=80";
+    } else if (lowerPrompt.includes("nature") || lowerPrompt.includes("landscape")) {
+      return "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80";
     } else {
       // Default image for other topics
       return "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80";

@@ -104,7 +104,17 @@ const ContentBox: React.FC<ContentBoxProps> = ({
         );
       });
     }
-  }, [title, content, isContentLoading]); // Re-run animations when content changes or loading state changes
+  }, [title, content, isContentLoading]);
+  
+  // Debug logs for quiz and image display
+  useEffect(() => {
+    if (activeBlock === 'see-it') {
+      console.log("See-It block active, image prompt:", imagePrompt);
+    }
+    if (activeBlock === 'quiz') {
+      console.log("Quiz block active, quiz data:", quiz);
+    }
+  }, [activeBlock, imagePrompt, quiz]);
   
   // Map BlockType to more descriptive titles, icons, and descriptions
   const blockInfo = {
@@ -185,14 +195,14 @@ const ContentBox: React.FC<ContentBoxProps> = ({
             
             {/* Display image if there's an image prompt and active block is see-it */}
             {imagePrompt && activeBlock === 'see-it' && (
-              <div className="mt-6 mb-6">
+              <div className="mt-6 mb-6" key={`image-${imagePrompt.substring(0, 20)}`}>
                 <ImageBlock prompt={imagePrompt} />
               </div>
             )}
             
             {/* Display quiz if there's quiz data and active block is quiz */}
             {quiz && activeBlock === 'quiz' && (
-              <div className="mt-6 mb-6">
+              <div className="mt-6 mb-6" key={`quiz-${quiz.question.substring(0, 20)}`}>
                 <QuizBlock 
                   question={quiz.question} 
                   options={quiz.options}
