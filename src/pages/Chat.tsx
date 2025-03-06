@@ -99,6 +99,10 @@ const Chat = () => {
   
   // Fetch user data and generate welcome message with suggested topics
   useEffect(() => {
+    console.log("Points updated:", points);
+  }, [points]);
+
+  useEffect(() => {
     console.log("Chat component mounted, initializing...");
     console.log("User data:", { userName, ageRange, avatar, language });
     
@@ -109,11 +113,11 @@ const Chat = () => {
       return;
     }
     
-    // Initialize streak and points
-    const savedStreak = Math.floor(Math.random() * 5) + 1; // Random 1-5 for demo
-    const savedPoints = Math.floor(Math.random() * 500); // Random points for demo
-    setStreakCount(savedStreak);
-    setPoints(savedPoints);
+    // Initialize streak and points - ONLY ONCE
+    const savedStreak = localStorage.getItem("wonderwhiz_streak") || "1";
+    const savedPoints = localStorage.getItem("wonderwhiz_points") || "0";
+    setStreakCount(parseInt(savedStreak, 10));
+    setPoints(parseInt(savedPoints, 10));
     
     // Set initial loading state
     setShowTypingIndicator(true);
