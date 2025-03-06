@@ -44,16 +44,17 @@ interface ChatAreaProps {
 
 // Helper function to process related topics from a single string
 const processRelatedTopics = (topics: string[]): string[] => {
-  if (topics.length === 0) return [];
+  console.log("Processing related topics:", topics);
+  if (!topics || topics.length === 0) return [];
   
-  // If it's a single string that contains line breaks or numbers
+  // If it's a single string containing multiple topics
   if (topics.length === 1 && typeof topics[0] === 'string') {
     const topicStr = topics[0];
     
     // Check for numbered list format (e.g., "1. Topic\n2. Topic")
     if (topicStr.includes('\n')) {
       return topicStr.split('\n')
-        .map(line => line.replace(/^\d+\.\s*/, '').trim())
+        .map(line => line.replace(/^\d+[\.\)]?\s*/, '').trim())
         .filter(line => line.length > 0);
     }
     
@@ -68,7 +69,8 @@ const processRelatedTopics = (topics: string[]): string[] => {
     }
   }
   
-  return topics;
+  // Already an array of topics
+  return topics.filter(t => t && typeof t === 'string' && t.trim().length > 0);
 };
 
 const ChatArea: React.FC<ChatAreaProps> = ({
@@ -92,6 +94,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   
   // Process related topics
   const processedRelatedTopics = processRelatedTopics(relatedTopics);
+  console.log("Processed related topics:", processedRelatedTopics);
 
   useEffect(() => {
     scrollToBottom();
@@ -125,7 +128,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   useEffect(() => {
     // Apply animations to related topics when they appear
     if (relatedTopicsRef.current && learningComplete) {
-      console.log("Animating related topics", processedRelatedTopics);
+      console.log("Animating related topics:", processedRelatedTopics);
       const topics = relatedTopicsRef.current.querySelectorAll('.related-topic');
       topics.forEach((topic, index) => {
         animate(
@@ -203,6 +206,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   
   // Filter user messages to display in the chat flow
   const userMessages = messages.filter(m => m.isUser);
+  
+  // Filter AI messages that are not special (TOC, welcome, etc.)
+  const aiMessages = messages.filter(m => !m.isUser && !m.isIntroduction && !m.tableOfContents && !m.imagePrompt && !m.quiz);
 
   return (
     <div 
@@ -211,97 +217,115 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     >
       {currentSection && renderTopicPill()}
       
-      {/* Display welcome message first */}
-      {welcomeMessage && (
-        <div className="fade-scale-in mb-6 px-4">
-          <ChatMessage message={welcomeMessage.text} isUser={welcomeMessage.isUser} />
-        </div>
-      )}
-      
-      {/* Display the intro message with Table of Contents */}
-      {introMessage && (
-        <div className="fade-scale-in mb-6 px-4">
-          <ChatMessage message={introMessage.text} isUser={introMessage.isUser}>
-            <TableOfContents 
-              sections={introMessage.tableOfContents || []} 
-              completedSections={completedSections}
-              currentSection={currentSection}
-              onSectionClick={onTocSectionClick}
-            />
-          </ChatMessage>
-        </div>
-      )}
-      
-      {/* Display user messages */}
-      {userMessages.map((message) => (
-        <div key={message.id} className="fade-scale-in px-4">
-          <ChatMessage message={message.text} isUser={true} />
-        </div>
-      ))}
-      
-      {/* Display content box for current section if selected */}
-      {currentSection && currentSectionMessage && (
-        <div className="px-4 max-w-4xl mx-auto">
-          <ContentBox
-            title={currentSection}
-            content={currentSectionMessage.text}
-            prevSection={prev}
-            nextSection={next}
-            blocks={currentSectionMessage.blocks || ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"]}
-            onBlockClick={handleContentBoxBlockClick}
-            onNavigate={onTocSectionClick}
-            activeBlock={activeBlock}
-            imagePrompt={currentBlockMessage?.imagePrompt}
-            quiz={currentBlockMessage?.quiz}
-          />
-        </div>
-      )}
-      
-      {/* Show related topics at the bottom if learning is complete */}
-      {shouldShowRelatedTopics && (
-        <div className="mx-auto max-w-3xl px-4 mb-6" ref={relatedTopicsRef}>
-          <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
-            <h3 className="text-sm font-medium mb-3 text-wonder-purple">🎉 Explore more topics:</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {processedRelatedTopics.map((topic, index) => (
-                <div 
-                  key={index}
-                  onClick={() => onRelatedTopicClick(topic)}
-                  className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
-                            hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
-                            hover:-translate-y-1 transform touch-manipulation"
-                  style={{ opacity: 0 }} // Initially invisible for animation
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
-                      <ChevronRight className="h-3 w-3" />
-                    </div>
-                    <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
-                  </div>
-                  <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
-                  <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
+      {/* Display typing indicator at the appropriate position in the chat */}
+      <div className="relative">
+        {/* Main chat content */}
+        <div className="space-y-6">
+          {/* Display welcome message first */}
+          {welcomeMessage && (
+            <div className="fade-scale-in mb-6 px-4">
+              <ChatMessage message={welcomeMessage.text} isUser={welcomeMessage.isUser} />
+            </div>
+          )}
+          
+          {/* Display the intro message with Table of Contents */}
+          {introMessage && (
+            <div className="fade-scale-in mb-6 px-4">
+              <ChatMessage message={introMessage.text} isUser={introMessage.isUser}>
+                <TableOfContents 
+                  sections={introMessage.tableOfContents || []} 
+                  completedSections={completedSections}
+                  currentSection={currentSection}
+                  onSectionClick={onTocSectionClick}
+                />
+              </ChatMessage>
+            </div>
+          )}
+          
+          {/* Display user and AI message pairs in sequence */}
+          {userMessages.map((message, index) => (
+            <React.Fragment key={message.id}>
+              <div className="fade-scale-in px-4">
+                <ChatMessage message={message.text} isUser={true} />
+              </div>
+              {aiMessages[index] && (
+                <div className="fade-scale-in px-4">
+                  <ChatMessage message={aiMessages[index].text} isUser={false} />
                 </div>
-              ))}
+              )}
+            </React.Fragment>
+          ))}
+          
+          {/* Display content box for current section if selected */}
+          {currentSection && currentSectionMessage && (
+            <div className="px-4 max-w-4xl mx-auto">
+              <ContentBox
+                title={currentSection}
+                content={currentSectionMessage.text}
+                prevSection={prev}
+                nextSection={next}
+                blocks={currentSectionMessage.blocks || ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"]}
+                onBlockClick={handleContentBoxBlockClick}
+                onNavigate={onTocSectionClick}
+                activeBlock={activeBlock}
+                imagePrompt={currentBlockMessage?.imagePrompt}
+                quiz={currentBlockMessage?.quiz}
+              />
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Show a message if all sections are completed but no related topics are displayed */}
-      {learningComplete && !shouldShowRelatedTopics && (
-        <div className="px-4 mt-8 mb-6 max-w-3xl mx-auto">
-          <div className="p-4 bg-white/90 rounded-xl border border-wonder-purple/10 shadow-sm">
-            <div className="text-center">
-              <h3 className="text-wonder-purple font-medium mb-2">🎉 Congratulations!</h3>
-              <p className="text-muted-foreground text-sm">You've completed all sections of this topic.</p>
+          )}
+          
+          {/* Show related topics at the bottom if learning is complete */}
+          {shouldShowRelatedTopics && (
+            <div className="mx-auto max-w-3xl px-4 mb-6" ref={relatedTopicsRef}>
+              <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
+                <h3 className="text-sm font-medium mb-3 text-wonder-purple">🎉 Explore more topics:</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {processedRelatedTopics.map((topic, index) => (
+                    <div 
+                      key={index}
+                      onClick={() => onRelatedTopicClick(topic)}
+                      className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
+                                hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
+                                hover:-translate-y-1 transform touch-manipulation"
+                      style={{ opacity: 0 }} // Initially invisible for animation
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
+                          <ChevronRight className="h-3 w-3" />
+                        </div>
+                        <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
+                      </div>
+                      <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+          
+          {/* Show a message if all sections are completed but no related topics are displayed */}
+          {learningComplete && !shouldShowRelatedTopics && (
+            <div className="px-4 mt-8 mb-6 max-w-3xl mx-auto">
+              <div className="p-4 bg-white/90 rounded-xl border border-wonder-purple/10 shadow-sm">
+                <div className="text-center">
+                  <h3 className="text-wonder-purple font-medium mb-2">🎉 Congratulations!</h3>
+                  <p className="text-muted-foreground text-sm">You've completed all sections of this topic.</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Place typing indicator right after the last message */}
+          {showTypingIndicator && (
+            <div className="px-4 mb-2">
+              <TypingIndicator />
+            </div>
+          )}
+          
+          <div ref={messagesEndRef} />
         </div>
-      )}
-      
-      {showTypingIndicator && <TypingIndicator />}
-      
-      <div ref={messagesEndRef} />
+      </div>
     </div>
   );
 };

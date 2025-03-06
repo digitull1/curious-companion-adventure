@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
 import { LogOut, Settings, Star, Crown, BarChart2, Sparkles, Globe } from "lucide-react";
@@ -26,6 +26,23 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   const getAvatarEmoji = () => {
     switch (avatar) {
@@ -63,6 +80,8 @@ const Header: React.FC<HeaderProps> = ({
     { code: "ja", name: "日本語" },
     { code: "ko", name: "한국어" },
   ];
+
+  console.log("Header rendering, isMenuOpen:", isMenuOpen);
 
   return (
     <header className="border-b bg-white/90 backdrop-blur-sm z-10 shadow-sm">
@@ -117,13 +136,16 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center ml-3">
           <div 
             className={`h-10 w-10 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical cursor-pointer transition-all duration-300 hover:shadow-magical-hover text-lg touch-manipulation`}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={() => {
+              console.log("Avatar clicked, toggling menu state");
+              setIsMenuOpen(!isMenuOpen);
+            }}
             aria-label="Open user menu"
           >
             {getAvatarEmoji()}
           </div>
           
-          <div className="relative z-50">
+          <div className="relative z-50" ref={menuRef}>
             {isMenuOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-pixar py-3 z-50 border border-wonder-purple/10 backdrop-blur-sm bg-white/95 animate-fade-in-up">
                 <div className="px-4 py-3 border-b border-wonder-purple/10">
@@ -155,6 +177,7 @@ const Header: React.FC<HeaderProps> = ({
                                 : "hover:bg-wonder-purple/5"
                             }`}
                             onClick={() => {
+                              console.log("Language selected:", lang.code);
                               onLanguageChange(lang.code);
                               setIsMenuOpen(false);
                             }}

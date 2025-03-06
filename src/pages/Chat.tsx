@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -68,6 +67,35 @@ const Chat = () => {
     "How do animals communicate?"
   ];
   
+  // Process topics from a response string into an array
+  const processTopicsFromResponse = (response: string): string[] => {
+    console.log("Processing topics from response:", response);
+    
+    // Check if already formatted as a list with numbers or bullets
+    if (response.includes("\n")) {
+      const lines = response.split("\n").map(line => 
+        line.replace(/^\d+[\.\)]?\s*|\*\s*|•\s*|-\s*/, "").trim()
+      ).filter(line => line.length > 0);
+      
+      console.log("Processed as numbered/bulleted list:", lines);
+      return lines;
+    }
+    
+    // Check if it's a comma-separated list
+    if (response.includes(",")) {
+      const topics = response.split(",").map(topic => 
+        topic.replace(/^\d+[\.\)]?\s*/, "").trim()
+      ).filter(topic => topic.length > 0);
+      
+      console.log("Processed as comma-separated list:", topics);
+      return topics;
+    }
+    
+    // Just return as a single item if no clear separator
+    console.log("No clear separator, returning as single item");
+    return [response.trim()];
+  };
+  
   // Fetch user data and generate welcome message with suggested topics
   useEffect(() => {
     console.log("Chat component mounted, initializing...");
@@ -99,9 +127,15 @@ const Chat = () => {
         const topicsResponse = await generateResponse(topicsPrompt, ageRange, language);
         console.log("Generated topics response:", topicsResponse);
         
-        const topics = topicsResponse.split(",").map(topic => topic.trim());
-        console.log("Parsed topics:", topics);
-        setSuggestedTopics(topics.length > 0 ? topics : defaultSuggestedPrompts);
+        // Process topics from the response string
+        const topics = processTopicsFromResponse(topicsResponse);
+        console.log("Processed topics:", topics);
+        
+        // Make sure we have exactly 5 topics
+        const finalTopics = topics.length >= 5 ? topics.slice(0, 5) : [...topics, ...defaultSuggestedPrompts.slice(0, 5 - topics.length)];
+        console.log("Final topics list:", finalTopics);
+        
+        setSuggestedTopics(finalTopics);
         
         // Create personalized welcome message with name
         let welcomeText = "";
@@ -125,6 +159,12 @@ const Chat = () => {
         console.log("Setting welcome message:", welcomeMessage);
         setMessages([welcomeMessage]);
         setShowTypingIndicator(false);
+        
+        // Auto-show suggested prompts after welcome
+        setTimeout(() => {
+          setShowSuggestedPrompts(true);
+        }, 1000);
+        
       } catch (error) {
         console.error("Error generating personalized topics:", error);
         setSuggestedTopics(defaultSuggestedPrompts);
@@ -142,6 +182,11 @@ const Chat = () => {
         console.log("Setting fallback welcome message");
         setMessages([welcomeMessage]);
         setShowTypingIndicator(false);
+        
+        // Auto-show suggested prompts after welcome
+        setTimeout(() => {
+          setShowSuggestedPrompts(true);
+        }, 1000);
       }
     };
     
@@ -169,9 +214,17 @@ const Chat = () => {
       console.log("Generating related topics for:", topic);
       const relatedTopicsPrompt = `Generate 5 related topics to "${topic}" that might interest a learner aged ${ageRange}. Format as a short comma-separated list.`;
       const relatedTopicsResponse = await generateResponse(relatedTopicsPrompt, ageRange, language);
-      const newRelatedTopics = relatedTopicsResponse.split(",").map(t => t.trim());
-      console.log("Generated related topics:", newRelatedTopics);
-      setRelatedTopics(newRelatedTopics);
+      console.log("Raw related topics response:", relatedTopicsResponse);
+      
+      // Process the response to extract topics
+      const newRelatedTopics = processTopicsFromResponse(relatedTopicsResponse);
+      console.log("Processed related topics:", newRelatedTopics);
+      
+      // Make sure we have up to 5 topics
+      const finalRelatedTopics = newRelatedTopics.slice(0, 5);
+      console.log("Final related topics list:", finalRelatedTopics);
+      
+      setRelatedTopics(finalRelatedTopics);
     } catch (error) {
       console.error("Error generating related topics:", error);
       // Fallback related topics
@@ -235,6 +288,7 @@ const Chat = () => {
 
       // Generate response based on the prompt
       const response = await generateResponse(prompt, ageRange, language);
+      console.log("Generated response:", response);
       
       // Simulate a delay for typing effect
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -313,7 +367,12 @@ const Chat = () => {
     }
 
     // Check if this is a new topic request (not a follow-up on sections)
-    const isNewTopicRequest = !selectedTopic || !topicSectionsGenerated;
+    const isNewTopicRequest = !selectedTopic || !topicSectionsGenerated || 
+                              (inputValue.toLowerCase().indexOf("tell me about") === 0) ||
+                              (inputValue.toLowerCase().indexOf("what is") === 0) ||
+                              (inputValue.toLowerCase().indexOf("how does") === 0);
+    
+    console.log("Handle send message - isNewTopicRequest:", isNewTopicRequest);
     
     // If it's a new topic, generate table of contents
     if (isNewTopicRequest) {
@@ -333,15 +392,12 @@ const Chat = () => {
         setShowTypingIndicator(false);
         
         // Generate table of contents for encyclopedia-style approach
-        const tocResponse = await generateResponse(`Generate a concise table of contents with 4-5 sections for learning about: ${inputValue}. Format as a numbered list.`, ageRange, language);
+        const tocPrompt = `Generate a concise table of contents with 4-5 sections for learning about: ${inputValue}. Format as a numbered list.`;
+        const tocResponse = await generateResponse(tocPrompt, ageRange, language);
         console.log("Generated TOC response:", tocResponse);
         
         // Parse the TOC into sections
-        const sections = tocResponse
-          .split(/\d+\./)
-          .map(s => s.trim())
-          .filter(s => s.length > 0);
-        
+        const sections = processTopicsFromResponse(tocResponse);
         console.log("Parsed TOC sections:", sections);
         
         // Create introduction message with TOC
@@ -400,6 +456,7 @@ const Chat = () => {
           try {
             blockResponse = "Here's a visual representation I created for you:";
             imagePrompt = `${messageText} in a style that appeals to ${ageRange} year old children, educational, detailed, colorful, Pixar style illustration`;
+            console.log("Generating image with prompt:", imagePrompt);
           } catch (error) {
             console.error("Error generating image:", error);
             blockResponse = "I'm sorry, I couldn't create an image right now. Let me tell you about it instead!";
@@ -410,7 +467,9 @@ const Chat = () => {
         case "quiz":
           blockResponse = "Let's test your knowledge with a quick quiz! Get all answers right to earn bonus points! 🎯";
           try {
+            console.log("Generating quiz for topic:", messageText, "in", language, "language");
             quiz = await generateQuiz(messageText, language);
+            console.log("Quiz generated successfully:", quiz);
           } catch (error) {
             console.error("Error generating quiz:", error);
             quiz = {
@@ -434,6 +493,7 @@ const Chat = () => {
         quiz: quiz || undefined
       };
 
+      console.log("Adding block message:", blockMessage);
       setMessages(prev => [...prev, blockMessage]);
     } catch (error) {
       console.error("Error processing learning block:", error);
