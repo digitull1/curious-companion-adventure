@@ -41,6 +41,7 @@ serve(async (req) => {
       - Structured with paragraph breaks for readability
       - Include mind-blowing facts that will fascinate children
       - Occasionally use storytelling to explain complex concepts
+      - IMPORTANT: Limit your content to 5 main points or less
       - IMPORTANT: Stay 100% on topic and directly address the specific question or topic`;
       
       // Add language-specific instructions
@@ -118,7 +119,7 @@ serve(async (req) => {
         try {
           console.log("Calling Hugging Face API with key length:", huggingFaceApiKey ? huggingFaceApiKey.length : 0);
           
-          // Using Huggingface's Flux-1 model for image generation
+          // Use Stable Diffusion XL for higher quality images
           response = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0', {
             method: 'POST',
             headers: {
@@ -128,7 +129,8 @@ serve(async (req) => {
             body: JSON.stringify({
               inputs: enhancedPrompt,
               options: {
-                wait_for_model: true
+                wait_for_model: true,
+                use_cache: false
               }
             }),
           });
@@ -175,9 +177,9 @@ serve(async (req) => {
             stack: hfError.stack
           });
           
-          // Try an alternative model if the first one fails
+          // Try Stable Diffusion v1.5 as an alternative model
           try {
-            console.log("Trying alternative Hugging Face model");
+            console.log("Trying alternative Hugging Face model (SD v1.5)");
             
             response = await fetch('https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5', {
               method: 'POST',
@@ -186,7 +188,11 @@ serve(async (req) => {
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({ 
-                inputs: enhancedPrompt 
+                inputs: enhancedPrompt,
+                options: {
+                  wait_for_model: true,
+                  use_cache: false
+                }
               }),
             });
             
@@ -467,13 +473,6 @@ function generateFallbackQuiz(topic: string, language: string = "en") {
         options: ["Sophia", "Atlas", "R2-D2", "Spot"],
         correctAnswer: 2,
         funFact: "Boston Dynamics' robot dog 'Spot' can open doors and climb stairs!"
-      };
-    } else if (lowerTopic.includes("butter chicken") || lowerTopic.includes("food")) {
-      return {
-        question: "Which country did Butter Chicken originate from?",
-        options: ["Thailand", "India", "China", "Mexico"],
-        correctAnswer: 1,
-        funFact: "Butter Chicken was invented in the 1950s at a restaurant in Delhi, India!"
       };
     } else {
       return {

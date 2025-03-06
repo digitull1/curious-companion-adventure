@@ -155,6 +155,12 @@ const ContentBox: React.FC<ContentBoxProps> = ({
     }
   };
   
+  // Handler for clicking on interactive blocks
+  const handleBlockButtonClick = (blockType: BlockType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onBlockClick(blockType);
+  };
+  
   return (
     <div 
       ref={contentBoxRef} 
@@ -219,7 +225,7 @@ const ContentBox: React.FC<ContentBoxProps> = ({
                 {blocks.map((block) => (
                   <button
                     key={block}
-                    onClick={() => onBlockClick(block)}
+                    onClick={(e) => handleBlockButtonClick(block, e)}
                     className={`explore-link group relative p-3 bg-gradient-to-br ${
                       activeBlock === block ? blockInfo[block].color : 'from-white to-white/90'
                     } rounded-lg border ${

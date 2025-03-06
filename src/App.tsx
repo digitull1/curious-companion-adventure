@@ -9,8 +9,16 @@ import Onboarding from "./pages/Onboarding";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
-// Create a new query client
-const queryClient = new QueryClient();
+// Create a query client with retry options and error handling
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -24,28 +24,37 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
     setPromptTruncated(truncated);
   }, [prompt]);
 
-  // Enhanced prompt function to make it more relevant to the topic
+  // Enhanced prompt function focused on topic relevance
   const enhancePrompt = (originalPrompt: string): string => {
-    // Extract key topic keywords
+    // Extract main topic from prompt
     const lowerPrompt = originalPrompt.toLowerCase();
+    let enhancedPrompt = "";
     
-    // If prompt is about dinosaurs, enhance it for better dinosaur images
+    // Topic-specific prompts for better relevance
     if (lowerPrompt.includes("dinosaur")) {
-      return `Educational illustration of ${originalPrompt}. Detailed, scientifically accurate, colorful, child-friendly, digital art style.`;
+      enhancedPrompt = `Educational illustration of a dinosaur: ${originalPrompt}. Detailed, scientifically accurate, colorful, child-friendly, digital art style.`;
+    } else if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
+      enhancedPrompt = `Educational illustration of a carnivorous animal: ${originalPrompt}. Show predatory adaptations like teeth and claws, in natural habitat, colorful, detailed, child-friendly.`;
+    } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space")) {
+      enhancedPrompt = `Educational illustration of space/planetary science: ${originalPrompt}. Detailed, colorful, scientifically accurate, child-friendly.`;
+    } else if (lowerPrompt.includes("ancient") || lowerPrompt.includes("history")) {
+      enhancedPrompt = `Educational illustration of historical scene: ${originalPrompt}. Detailed, historically accurate, colorful, child-friendly.`;
+    } else {
+      // Default enhancement for other topics
+      enhancedPrompt = `Educational illustration about: ${originalPrompt}. Detailed, colorful, child-friendly, educational style.`;
     }
     
-    // If prompt is about carnivores, enhance it for better carnivore images
-    if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
-      return `Educational illustration of ${originalPrompt}. Show predatory adaptations, hunting behavior, in natural habitat, colorful, detailed, child-friendly, digital art style.`;
-    }
-    
-    // Default enhancement for educational content
-    return `Educational illustration of: ${originalPrompt}. Detailed, colorful, child-friendly, digital art style.`;
+    console.log("Enhanced image prompt:", enhancedPrompt);
+    return enhancedPrompt;
   };
 
-  // Load image with retry logic
+  // Load image with improved error handling
   useEffect(() => {
+    let isMounted = true;
+    
     const loadImage = async () => {
+      if (!isMounted) return;
+      
       setIsLoading(true);
       setHasError(false);
       setErrorMessage("");
@@ -53,22 +62,21 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
       try {
         console.log(`Generating image (attempt ${retryCount + 1}) with prompt:`, prompt);
         
-        // Enhance the prompt with more specific details for better image generation
+        // Create an enhanced prompt for better image generation
         const enhancedPrompt = enhancePrompt(prompt);
-        console.log("Enhanced prompt:", enhancedPrompt);
         
         // Simplify prompt to reduce errors
         const simplifiedPrompt = enhancedPrompt.length > 300 
-          ? enhancedPrompt.substring(0, 300) + "..." 
+          ? enhancedPrompt.substring(0, 300) 
           : enhancedPrompt;
           
         const response = await generateImage(simplifiedPrompt);
         console.log("Image generation response:", {
           responseReceived: !!response,
-          urlLength: response?.length,
-          urlStart: response?.substring(0, 50) + "...",
-          isBase64: response?.startsWith("data:image"),
-          isHttps: response?.startsWith("https:")
+          urlLength: response?.length || 0,
+          urlStart: response?.substring(0, 50) + "..." || "",
+          isBase64: response?.startsWith("data:image") || false,
+          isHttps: response?.startsWith("https:") || false
         });
         
         if (!response || response.trim() === "") {
@@ -80,26 +88,37 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
         await preloadImage(response);
         console.log("Image preloaded successfully");
         
-        setImageUrl(response);
-        setHasError(false);
+        if (isMounted) {
+          setImageUrl(response);
+          setHasError(false);
+        }
       } catch (error) {
         console.error("Error loading image:", error);
-        setHasError(true);
-        setErrorMessage(error instanceof Error ? error.message : "Unknown error");
         
-        // Fallback to a placeholder image based on the prompt
-        const fallbackUrl = getFallbackImageUrl(prompt);
-        console.log("Using fallback image:", fallbackUrl);
-        setImageUrl(fallbackUrl);
-        
-        // Show toast notification for error
-        toast.error("Couldn't generate an image right now. Using a sample image instead.");
+        if (isMounted) {
+          setHasError(true);
+          setErrorMessage(error instanceof Error ? error.message : "Unknown error");
+          
+          // Use a topic-specific fallback image
+          const fallbackUrl = getFallbackImageUrl(prompt);
+          console.log("Using fallback image:", fallbackUrl);
+          setImageUrl(fallbackUrl);
+          
+          // Show toast notification for error
+          toast.error("Couldn't generate an image right now. Using a sample image instead.");
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadImage();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [prompt, generateImage, retryCount]);
   
   // Helper function to preload image
@@ -115,35 +134,27 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
     });
   };
   
-  // Improved fallback image function with more options
+  // Improved topic-specific fallback image function
   const getFallbackImageUrl = (prompt: string) => {
     // Extract keywords from prompt to find relevant image
     const lowerPrompt = prompt.toLowerCase();
     
     if (lowerPrompt.includes("dinosaur") && lowerPrompt.includes("carnivore")) {
-      return "https://images.unsplash.com/photo-1525877442103-5ddb2089b2bb?w=800&q=80"; // T-Rex or carnivorous dinosaur
+      return "https://images.unsplash.com/photo-1525877442103-5ddb2089b2bb?w=800&q=80"; // T-Rex
     } else if (lowerPrompt.includes("dinosaur")) {
-      return "https://images.unsplash.com/photo-1519880856348-763a8b40aa79?w=800&q=80";
+      return "https://images.unsplash.com/photo-1519880856348-763a8b40aa79?w=800&q=80"; // General dinosaur
     } else if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
       return "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=800&q=80"; // Lion or predator
-    } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space") || lowerPrompt.includes("solar system")) {
-      return "https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=800&q=80";
-    } else if (lowerPrompt.includes("robot") || lowerPrompt.includes("technology")) {
-      return "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80";
+    } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space")) {
+      return "https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=800&q=80"; // Space
     } else if (lowerPrompt.includes("animal") || lowerPrompt.includes("wildlife")) {
-      return "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=800&q=80";
+      return "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=800&q=80"; // Wildlife
     } else if (lowerPrompt.includes("ocean") || lowerPrompt.includes("sea")) {
-      return "https://images.unsplash.com/photo-1518399681705-1c1a55e5e883?w=800&q=80";
-    } else if (lowerPrompt.includes("butter chicken") || lowerPrompt.includes("food") || lowerPrompt.includes("cooking")) {
-      return "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=80";
+      return "https://images.unsplash.com/photo-1518399681705-1c1a55e5e883?w=800&q=80"; // Ocean
     } else if (lowerPrompt.includes("history") || lowerPrompt.includes("ancient")) {
-      return "https://images.unsplash.com/photo-1564399263809-d2e8673cb2a4?w=800&q=80";
-    } else if (lowerPrompt.includes("science") || lowerPrompt.includes("experiment")) {
-      return "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&q=80";
-    } else if (lowerPrompt.includes("nature") || lowerPrompt.includes("landscape")) {
-      return "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80";
+      return "https://images.unsplash.com/photo-1564399263809-d2e8673cb2a4?w=800&q=80"; // History
     } else {
-      // Default image for other topics
+      // Default image
       return "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80";
     }
   };

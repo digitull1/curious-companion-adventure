@@ -35,8 +35,8 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
           title: "Did You Know?",
           description: "Discover fascinating facts",
           className: "learning-block-did-you-know",
-          gradient: "from-wonder-blue/80 to-wonder-blue-light/40",
-          shadowColor: "shadow-[0_4px_12px_-2px_rgba(14,165,233,0.25)]"
+          gradient: "from-wonder-yellow/80 to-wonder-yellow-light/40",
+          shadowColor: "shadow-[0_4px_12px_-2px_rgba(245,158,11,0.25)]"
         };
       case "mind-blowing":
         return {
@@ -80,7 +80,7 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
           title: "Did You Know?",
           description: "Discover fascinating facts",
           className: "learning-block-did-you-know",
-          gradient: "from-wonder-blue/80 to-wonder-blue-light/40",
+          gradient: "from-wonder-yellow/80 to-wonder-yellow-light/40",
           shadowColor: "shadow-[0_4px_12px_-2px_rgba(14,165,233,0.25)]"
         };
     }
@@ -99,6 +99,11 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
         { duration: 0.3, easing: "ease-out" }
       );
     }
+  };
+
+  const handleExploreClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClick();
   };
 
   return (
@@ -138,6 +143,7 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
         <button 
           className="text-wonder-purple/70 hover:text-wonder-purple transition-colors"
           onClick={toggleExpand}
+          aria-label={expanded ? "Collapse" : "Expand"}
         >
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
@@ -147,10 +153,7 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
       <div className={`px-3 pb-3 pt-0 ${expanded ? "block" : "hidden"}`}>
         <p className="text-xs text-muted-foreground mb-3">{description}</p>
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}
+          onClick={handleExploreClick}
           className="w-full py-2 px-3 text-xs font-medium text-white rounded-lg bg-gradient-to-r from-wonder-purple to-wonder-purple-dark hover:shadow-magical-hover transition-all duration-300 transform hover:scale-102 active:scale-98"
         >
           Explore
