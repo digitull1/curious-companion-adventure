@@ -93,6 +93,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   useEffect(() => {
     // Apply animations to related topics when they appear
     if (relatedTopicsRef.current && learningComplete) {
+      console.log("Animating related topics", relatedTopics);
       const topics = relatedTopicsRef.current.querySelectorAll('.related-topic');
       topics.forEach((topic, index) => {
         animate(
@@ -157,16 +158,19 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   };
 
   // Find the welcome message
-  const welcomeMessage = messages.find(m => !m.isUser && m.text.includes("Hi") && !m.tableOfContents);
+  const welcomeMessage = messages.find(m => !m.isUser && m.isIntroduction && !m.tableOfContents);
   
   // Find the introduction message that contains the table of contents
   const introMessage = messages.find(m => m.isIntroduction && m.tableOfContents);
   
   // Check if we have related topics to display and if learning is complete
   const shouldShowRelatedTopics = relatedTopics.length > 0 && learningComplete;
-
+  
   // Get adjacent sections for navigation
   const { prev, next } = getAdjacentSections();
+  
+  // Filter user messages to display in the chat flow
+  const userMessages = messages.filter(m => m.isUser);
 
   return (
     <div 
@@ -197,7 +201,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       )}
       
       {/* Display user messages */}
-      {messages.filter(m => m.isUser).map((message) => (
+      {userMessages.map((message) => (
         <div key={message.id} className="fade-scale-in px-4">
           <ChatMessage message={message.text} isUser={true} />
         </div>

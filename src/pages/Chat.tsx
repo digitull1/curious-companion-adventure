@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ const Chat = () => {
   const [ageRange, setAgeRange] = useState(localStorage.getItem("wonderwhiz_age_range") || "8-10");
   const [avatar, setAvatar] = useState(localStorage.getItem("wonderwhiz_avatar") || "explorer");
   const [userName, setUserName] = useState(localStorage.getItem("wonderwhiz_username") || "Explorer");
+  const [language, setLanguage] = useState(localStorage.getItem("wonderwhiz_language") || "en");
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -55,6 +57,7 @@ const Chat = () => {
   const [learningProgress, setLearningProgress] = useState(0);
   const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(false);
   const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
+  const [previousTopics, setPreviousTopics] = useState<string[]>([]);
 
   // Predefined suggested prompts (fallback if API fails)
   const defaultSuggestedPrompts = [
@@ -67,8 +70,12 @@ const Chat = () => {
   
   // Fetch user data and generate welcome message with suggested topics
   useEffect(() => {
+    console.log("Chat component mounted, initializing...");
+    console.log("User data:", { userName, ageRange, avatar, language });
+    
     // If user hasn't completed onboarding, redirect them
     if (!ageRange || !avatar) {
+      console.log("Incomplete user data, redirecting to onboarding");
       navigate("/");
       return;
     }
@@ -85,22 +92,37 @@ const Chat = () => {
     // Generate personalized topics based on age range
     const generatePersonalizedTopics = async () => {
       try {
+        console.log("Generating personalized topics for age range:", ageRange);
+        
         // Generate age-appropriate topics
         const topicsPrompt = `Generate 5 engaging, educational topics that would interest a ${ageRange} year old child. Format as a short comma-separated list. Topics should be interesting and appropriate for their age group.`;
-        const topicsResponse = await generateResponse(topicsPrompt, ageRange);
+        const topicsResponse = await generateResponse(topicsPrompt, ageRange, language);
+        console.log("Generated topics response:", topicsResponse);
+        
         const topics = topicsResponse.split(",").map(topic => topic.trim());
-        setSuggestedTopics(topics);
+        console.log("Parsed topics:", topics);
+        setSuggestedTopics(topics.length > 0 ? topics : defaultSuggestedPrompts);
         
         // Create personalized welcome message with name
+        let welcomeText = "";
+        
+        if (language === "en") {
+          welcomeText = `Hi ${userName}! I'm your WonderWhiz assistant, created by leading IB educationalists and Cambridge University child psychologists. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`;
+        } else {
+          // This will be translated by the API for other languages
+          welcomeText = `Hi ${userName}! I'm your WonderWhiz assistant. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`;
+        }
+        
         const welcomeMessage: Message = {
           id: "welcome",
-          text: `Hi ${userName}! I'm your WonderWhiz assistant, created by leading IB educationalists and Cambridge University child psychologists. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`,
+          text: welcomeText,
           isUser: false,
           blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
           showBlocks: true,
           isIntroduction: true
         };
         
+        console.log("Setting welcome message:", welcomeMessage);
         setMessages([welcomeMessage]);
         setShowTypingIndicator(false);
       } catch (error) {
@@ -117,23 +139,51 @@ const Chat = () => {
           isIntroduction: true
         };
         
+        console.log("Setting fallback welcome message");
         setMessages([welcomeMessage]);
         setShowTypingIndicator(false);
       }
     };
     
     generatePersonalizedTopics();
-  }, [ageRange, avatar]);
+  }, [ageRange, avatar, language, userName]);
 
   // Check if all sections are completed
   useEffect(() => {
     if (topicSectionsGenerated && messages.some(m => m.tableOfContents)) {
       const sections = messages.find(m => m.tableOfContents)?.tableOfContents || [];
       if (sections.length > 0 && completedSections.length === sections.length) {
+        console.log("All sections completed, setting learningComplete to true");
         setLearningComplete(true);
+        
+        // Generate related topics if not already generated
+        if (relatedTopics.length === 0 && selectedTopic) {
+          generateRelatedTopics(selectedTopic);
+        }
       }
     }
-  }, [completedSections, topicSectionsGenerated, messages]);
+  }, [completedSections, topicSectionsGenerated, messages, selectedTopic]);
+  
+  const generateRelatedTopics = async (topic: string) => {
+    try {
+      console.log("Generating related topics for:", topic);
+      const relatedTopicsPrompt = `Generate 5 related topics to "${topic}" that might interest a learner aged ${ageRange}. Format as a short comma-separated list.`;
+      const relatedTopicsResponse = await generateResponse(relatedTopicsPrompt, ageRange, language);
+      const newRelatedTopics = relatedTopicsResponse.split(",").map(t => t.trim());
+      console.log("Generated related topics:", newRelatedTopics);
+      setRelatedTopics(newRelatedTopics);
+    } catch (error) {
+      console.error("Error generating related topics:", error);
+      // Fallback related topics
+      setRelatedTopics([
+        "Space exploration", 
+        "Astronomy facts", 
+        "Planets and moons", 
+        "Solar system formation", 
+        "Black holes"
+      ]);
+    }
+  };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
@@ -150,6 +200,15 @@ const Chat = () => {
     localStorage.setItem("wonderwhiz_age_range", newRange);
     setShowAgeSelector(false);
     toast.success(`Learning content will now be tailored for age ${newRange}!`);
+  };
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    localStorage.setItem("wonderwhiz_language", newLanguage);
+    toast.success(`Language changed to ${newLanguage}!`);
+    
+    // Clear chat and generate new welcome message in selected language
+    clearChat();
   };
 
   const processMessage = async (prompt: string, isUserMessage: boolean = true, skipUserMessage: boolean = false) => {
@@ -175,7 +234,7 @@ const Chat = () => {
       );
 
       // Generate response based on the prompt
-      const response = await generateResponse(prompt, ageRange);
+      const response = await generateResponse(prompt, ageRange, language);
       
       // Simulate a delay for typing effect
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -238,16 +297,23 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isProcessing) return;
 
-    // Reset topic sections if starting a new conversation
-    if (topicSectionsGenerated && !selectedTopic) {
+    // If starting a new topic after completing previous one
+    if (learningComplete && topicSectionsGenerated) {
+      // Save the previous topic before resetting
+      if (selectedTopic) {
+        setPreviousTopics(prev => [...prev, selectedTopic]);
+      }
+      
+      // Reset topic-related states
       setTopicSectionsGenerated(false);
       setCompletedSections([]);
       setCurrentSection(null);
       setLearningComplete(false);
+      setRelatedTopics([]);
     }
 
     // Check if this is a new topic request (not a follow-up on sections)
-    const isNewTopicRequest = !selectedTopic && !topicSectionsGenerated;
+    const isNewTopicRequest = !selectedTopic || !topicSectionsGenerated;
     
     // If it's a new topic, generate table of contents
     if (isNewTopicRequest) {
@@ -262,17 +328,21 @@ const Chat = () => {
       setShowTypingIndicator(true);
 
       try {
+        console.log("Generating TOC for new topic:", inputValue);
         await new Promise(resolve => setTimeout(resolve, 1000));
         setShowTypingIndicator(false);
         
         // Generate table of contents for encyclopedia-style approach
-        const tocResponse = await generateResponse(`Generate a concise table of contents with 4-5 sections for learning about: ${inputValue}. Format as a numbered list.`, ageRange);
+        const tocResponse = await generateResponse(`Generate a concise table of contents with 4-5 sections for learning about: ${inputValue}. Format as a numbered list.`, ageRange, language);
+        console.log("Generated TOC response:", tocResponse);
         
         // Parse the TOC into sections
         const sections = tocResponse
           .split(/\d+\./)
           .map(s => s.trim())
           .filter(s => s.length > 0);
+        
+        console.log("Parsed TOC sections:", sections);
         
         // Create introduction message with TOC
         const tocMessage: Message = {
@@ -287,17 +357,12 @@ const Chat = () => {
         setSelectedTopic(inputValue);
         setTopicSectionsGenerated(true);
         
-        // Suggest related topics based on the main topic
-        const relatedTopicsResponse = await generateResponse(`Generate 5 related topics to ${inputValue} that might interest a learner. Format as a short comma-separated list.`, ageRange);
-        setRelatedTopics(relatedTopicsResponse.split(",").map(topic => topic.trim()));
+        // Generate related topics based on the main topic
+        generateRelatedTopics(inputValue);
         
         // Add points for starting a new learning journey
         setPoints(prev => prev + 25);
         setLearningProgress(10);
-        
-        // No longer auto-select the first section - removed this part
-        // setCurrentSection(sections[0]);
-        // processMessage(`Tell me about "${sections[0]}" in detail`, false, true);
       } catch (error) {
         console.error("Error generating TOC:", error);
         toast.error("Sorry, there was an error processing your request. Please try again.");
@@ -323,13 +388,13 @@ const Chat = () => {
       
       switch (type) {
         case "did-you-know":
-          blockResponse = await generateResponse(`Give me an interesting fact related to: ${messageText} that would amaze a ${ageRange} year old. Be fun and educational.`, ageRange);
+          blockResponse = await generateResponse(`Give me an interesting fact related to: ${messageText} that would amaze a ${ageRange} year old. Be fun and educational.`, ageRange, language);
           break;
         case "mind-blowing":
-          blockResponse = await generateResponse(`Tell me something mind-blowing about the science related to: ${messageText} that would fascinate a ${ageRange} year old. Use an enthusiastic tone.`, ageRange);
+          blockResponse = await generateResponse(`Tell me something mind-blowing about the science related to: ${messageText} that would fascinate a ${ageRange} year old. Use an enthusiastic tone.`, ageRange, language);
           break;
         case "amazing-stories":
-          blockResponse = await generateResponse(`Share an amazing story or legend related to: ${messageText} appropriate for a ${ageRange} year old. Keep it engaging and educational.`, ageRange);
+          blockResponse = await generateResponse(`Share an amazing story or legend related to: ${messageText} appropriate for a ${ageRange} year old. Keep it engaging and educational.`, ageRange, language);
           break;
         case "see-it":
           try {
@@ -338,14 +403,14 @@ const Chat = () => {
           } catch (error) {
             console.error("Error generating image:", error);
             blockResponse = "I'm sorry, I couldn't create an image right now. Let me tell you about it instead!";
-            const fallbackResponse = await generateResponse(`Describe ${messageText} visually for a ${ageRange} year old in vivid, colorful terms.`, ageRange);
+            const fallbackResponse = await generateResponse(`Describe ${messageText} visually for a ${ageRange} year old in vivid, colorful terms.`, ageRange, language);
             blockResponse += "\n\n" + fallbackResponse;
           }
           break;
         case "quiz":
           blockResponse = "Let's test your knowledge with a quick quiz! Get all answers right to earn bonus points! 🎯";
           try {
-            quiz = await generateQuiz(messageText);
+            quiz = await generateQuiz(messageText, language);
           } catch (error) {
             console.error("Error generating quiz:", error);
             quiz = {
@@ -412,12 +477,16 @@ const Chat = () => {
     setCurrentSection(null);
     setLearningProgress(0);
     setLearningComplete(false);
+    setRelatedTopics([]);
+    setPreviousTopics([]);
     toast.success("Chat cleared! Ready for a new adventure!");
   };
 
   const handleTocSectionClick = (section: string) => {
     // If clicking on the same section that's already current, don't do anything
     if (section === currentSection) return;
+    
+    console.log("Clicked TOC section:", section);
     
     // Set the current section immediately for a more responsive feel
     setCurrentSection(section);
@@ -427,11 +496,24 @@ const Chat = () => {
   };
 
   const handleRelatedTopicClick = (topic: string) => {
-    clearChat();
-    // Auto-send the related topic
-    setTimeout(() => {
-      processMessage(`Tell me about ${topic}`, true);
-    }, 100);
+    console.log("Clicked related topic:", topic);
+    
+    // Save the previous topic before clearing
+    if (selectedTopic) {
+      setPreviousTopics(prev => [...prev, selectedTopic]);
+    }
+    
+    // Reset states for the new topic
+    setSelectedTopic(null);
+    setTopicSectionsGenerated(false);
+    setCompletedSections([]);
+    setCurrentSection(null);
+    setLearningProgress(0);
+    setLearningComplete(false);
+    setRelatedTopics([]);
+    
+    // Process the related topic as a new user message
+    processMessage(`Tell me about ${topic}`, true);
   };
 
   return (
@@ -452,6 +534,8 @@ const Chat = () => {
         points={points}
         learningProgress={learningProgress}
         topicSectionsGenerated={topicSectionsGenerated}
+        language={language}
+        onLanguageChange={handleLanguageChange}
       />
       
       {/* Main Content Area */}

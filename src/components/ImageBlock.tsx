@@ -31,7 +31,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
       setErrorMessage("");
       
       try {
-        console.log(`Generating image (attempt ${retryCount + 1}) with prompt:`, promptTruncated);
+        console.log(`Generating image (attempt ${retryCount + 1}) with prompt:`, prompt.substring(0, 50) + "...");
         
         // Simplify prompt to reduce errors
         const simplifiedPrompt = prompt.length > 300 
@@ -50,6 +50,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
         await preloadImage(url);
         
         setImageUrl(url);
+        setHasError(false);
       } catch (error) {
         console.error("Error loading image:", error);
         setHasError(true);

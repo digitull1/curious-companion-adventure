@@ -84,8 +84,18 @@ export function useOpenAI() {
           throw new Error(error.message || "Failed to generate image");
         }
         
-        if (!data || !data.imageUrl) {
-          console.error("No image URL returned from API");
+        if (!data) {
+          console.error("Empty response from image generation");
+          throw new Error("Empty response from image generation");
+        }
+        
+        if (data.error) {
+          console.error("Error in image generation response:", data.error);
+          throw new Error(data.error);
+        }
+        
+        if (!data.imageUrl) {
+          console.error("No image URL returned:", data);
           throw new Error("No image URL returned");
         }
         
@@ -108,12 +118,9 @@ export function useOpenAI() {
           console.log(`Retrying image generation, attempt ${retryCount + 1}...`);
         } else {
           // After max retries, fall back to placeholder
+          console.log("Max retries reached, using fallback image");
           toast.error("Couldn't generate an image right now. Using a sample image instead.");
           return generateMockImageUrl(prompt);
-        }
-      } finally {
-        if (retryCount === maxRetries) {
-          setIsLoading(false);
         }
       }
     }
@@ -124,24 +131,26 @@ export function useOpenAI() {
   
   // Fallback mock image URLs when API requests fail
   const generateMockImageUrl = (prompt: string) => {
+    console.log("Generating mock image URL for prompt:", prompt.substring(0, 50) + "...");
+    
     // Return different image URLs based on the prompt
     const lowerPrompt = prompt.toLowerCase();
     
     if (lowerPrompt.includes("dinosaur")) {
-      return "https://images.unsplash.com/photo-1519880856348-763a8b40aa79";
+      return "https://images.unsplash.com/photo-1519880856348-763a8b40aa79?w=800&q=80";
     } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space") || lowerPrompt.includes("solar")) {
-      return "https://images.unsplash.com/photo-1614732414444-096e5f1122d5";
+      return "https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=800&q=80";
     } else if (lowerPrompt.includes("robot")) {
-      return "https://images.unsplash.com/photo-1485827404703-89b55fcc595e";
+      return "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80";
     } else if (lowerPrompt.includes("animal")) {
-      return "https://images.unsplash.com/photo-1474511320723-9a56873867b5";
+      return "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=800&q=80";
     } else if (lowerPrompt.includes("ocean")) {
-      return "https://images.unsplash.com/photo-1518399681705-1c1a55e5e883";
+      return "https://images.unsplash.com/photo-1518399681705-1c1a55e5e883?w=800&q=80";
     } else if (lowerPrompt.includes("butter chicken") || lowerPrompt.includes("food") || lowerPrompt.includes("dish")) {
-      return "https://images.unsplash.com/photo-1565557623262-b51c2513a641";
+      return "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=80";
     } else {
       // Default image
-      return "https://images.unsplash.com/photo-1501854140801-50d01698950b";
+      return "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80";
     }
   };
   
@@ -149,7 +158,7 @@ export function useOpenAI() {
     setIsLoading(true);
     
     try {
-      console.log(`Generating quiz for topic: "${topic}" in ${language} language`);
+      console.log(`Generating quiz for topic: "${topic.substring(0, 50)}..." in ${language} language`);
       
       const { data, error } = await supabase.functions.invoke('generate-response', {
         body: { prompt: topic, requestType: 'quiz', language }
