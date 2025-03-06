@@ -15,7 +15,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
   
   // Function to clean text content by removing asterisks
   const cleanMessageText = (text: string) => {
-    return text.replace(/\*\*/g, "");
+    // Remove all asterisks from text
+    return text.replace(/\*/g, "");
   };
   
   useEffect(() => {

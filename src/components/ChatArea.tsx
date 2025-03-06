@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown, ChevronLeft } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -194,6 +195,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     );
   };
 
+  // Find the introduction message that contains the table of contents
+  const introMessage = messages.find(m => m.isIntroduction && m.tableOfContents);
+  
+  // Check if we have related topics to display and if learning is complete
+  const shouldShowRelatedTopics = relatedTopics.length > 0 && learningComplete;
+
   return (
     <div 
       className="flex-1 overflow-y-auto py-6 scrollbar-thin relative" 
@@ -229,9 +236,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 />
               )}
             </ChatMessage>
-            
-            {/* Next topic navigation button - Only show if this message contains a next topic suggestion */}
-            
             
             {/* Show the previous/next navigation ONLY after a non-user message with content about the current section */}
             {!message.isUser && !message.tableOfContents && currentSection && renderTopicNavigation()}
@@ -274,36 +278,68 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               </div>
             )}
             
-            {/* Related topics */}
-            {message.isIntroduction && relatedTopics.length > 0 && learningComplete && (
+            {/* Related topics - Display under the message if it's the intro message and learning is complete */}
+            {message.isIntroduction && shouldShowRelatedTopics && (
               <div className="mb-6 px-4" ref={relatedTopicsRef}>
-                <h3 className="text-sm font-medium mb-2 text-wonder-purple">Explore more topics:</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {relatedTopics.map((topic, index) => (
-                    <div 
-                      key={index}
-                      onClick={() => onRelatedTopicClick(topic)}
-                      className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
-                                hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
-                                hover:-translate-y-1 transform touch-manipulation"
-                      style={{ opacity: 0 }} // Initially invisible for animation
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
-                          <ChevronRight className="h-3 w-3" />
+                <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
+                  <h3 className="text-sm font-medium mb-3 text-wonder-purple">🎉 Explore more topics:</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    {relatedTopics.map((topic, index) => (
+                      <div 
+                        key={index}
+                        onClick={() => onRelatedTopicClick(topic)}
+                        className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
+                                  hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
+                                  hover:-translate-y-1 transform touch-manipulation"
+                        style={{ opacity: 0 }} // Initially invisible for animation
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
+                            <ChevronRight className="h-3 w-3" />
+                          </div>
+                          <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
                         </div>
-                        <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
+                        <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
+                        <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
                       </div>
-                      <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
-                      <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
           </div>
         );
       })}
+      
+      {/* Show related topics at the bottom if learning is complete */}
+      {shouldShowRelatedTopics && !messages.some(m => m.isIntroduction && shouldShowRelatedTopics) && (
+        <div className="mx-auto max-w-3xl px-4 mb-6" ref={relatedTopicsRef}>
+          <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
+            <h3 className="text-sm font-medium mb-3 text-wonder-purple">🎉 Explore more topics:</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {relatedTopics.map((topic, index) => (
+                <div 
+                  key={index}
+                  onClick={() => onRelatedTopicClick(topic)}
+                  className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
+                            hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
+                            hover:-translate-y-1 transform touch-manipulation"
+                  style={{ opacity: 0 }} // Initially invisible for animation
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
+                      <ChevronRight className="h-3 w-3" />
+                    </div>
+                    <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
+                  </div>
+                  <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
+                  <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       
       {showTypingIndicator && <TypingIndicator />}
       

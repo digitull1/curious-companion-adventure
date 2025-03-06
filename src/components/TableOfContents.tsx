@@ -122,7 +122,8 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
           {sections.map((section, index) => {
             const isCompleted = completedSections.includes(section);
             const isCurrent = section === currentSection;
-            const isNext = !currentSection && completedSections.length === 0 && index === 0 ? false : section === getNextSection();
+            // Remove isNext variable which was causing second item to flash
+            
             const topicEmoji = getTopicEmoji(section);
             
             return (
@@ -136,9 +137,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                     ? "bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 border border-wonder-purple/20 shadow-sm"
                     : isCurrent
                       ? "bg-gradient-to-r from-wonder-blue/10 to-wonder-blue/5 border border-wonder-blue/20 shadow-magical"
-                      : isNext
-                        ? "bg-gradient-to-r from-wonder-blue/5 to-wonder-blue/2 border border-wonder-blue/10 shadow-sm"
-                        : "bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-wonder-purple/20 hover:bg-wonder-purple/5 hover:shadow-magical"
+                      : "bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-wonder-purple/20 hover:bg-wonder-purple/5 hover:shadow-magical"
                   }`}
                 style={{ opacity: 0 }} // Start invisible for animation
               >
@@ -148,9 +147,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                                   ? "bg-wonder-purple text-white shadow-magical" 
                                   : isCurrent
                                     ? "bg-wonder-blue text-white shadow-magical"
-                                    : isNext
-                                      ? "bg-wonder-blue/70 text-white"
-                                      : "bg-wonder-purple/10 text-wonder-purple"}`}>
+                                    : "bg-wonder-purple/10 text-wonder-purple"}`}>
                     {isCompleted 
                       ? <CheckCircle className="h-5 w-5" /> 
                       : <span className="text-sm font-medium">{index + 1}</span>
@@ -161,9 +158,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                       ? "text-wonder-purple font-medium" 
                       : isCurrent
                         ? "text-wonder-blue font-medium"
-                        : isNext
-                          ? "text-wonder-blue-dark"
-                          : "group-hover:text-wonder-purple"
+                        : "group-hover:text-wonder-purple"
                   }`}>
                     {section} <span className="ml-1">{topicEmoji}</span>
                   </span>
@@ -174,17 +169,13 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                                   ? "bg-wonder-purple/10" 
                                   : isCurrent
                                     ? "bg-wonder-blue/10"
-                                    : isNext
-                                      ? "bg-wonder-blue/10"
-                                      : "bg-gray-100 group-hover:bg-wonder-purple/10"}`}>
+                                    : "bg-gray-100 group-hover:bg-wonder-purple/10"}`}>
                   <ArrowRight className={`h-3.5 w-3.5 transition-all transform 
                                        ${isCompleted 
                                         ? "text-wonder-purple" 
                                         : isCurrent
                                           ? "text-wonder-blue"
-                                          : isNext
-                                            ? "text-wonder-blue-dark"
-                                            : "text-gray-400 group-hover:text-wonder-purple group-hover:translate-x-0.5"}`} />
+                                          : "text-gray-400 group-hover:text-wonder-purple group-hover:translate-x-0.5"}`} />
                 </div>
               </button>
             );

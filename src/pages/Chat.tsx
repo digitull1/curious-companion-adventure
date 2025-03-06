@@ -255,7 +255,9 @@ const Chat = () => {
         setPoints(prev => prev + 25);
         setLearningProgress(10);
         
-        // No longer auto-select the first section
+        // No longer auto-select the first section - removed this part
+        // setCurrentSection(sections[0]);
+        // processMessage(`Tell me about "${sections[0]}" in detail`, false, true);
       } catch (error) {
         console.error("Error generating TOC:", error);
         toast.error("Sorry, there was an error processing your request. Please try again.");
