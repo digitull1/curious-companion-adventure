@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
 import { LogOut, Settings, Star, Crown, BarChart2, Sparkles, Globe } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 interface HeaderProps {
   avatar: string;
@@ -27,22 +28,46 @@ const Header: React.FC<HeaderProps> = ({
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      console.log("Click event detected, isMenuOpen:", isMenuOpen);
+      
+      if (
+        menuRef.current && 
+        !menuRef.current.contains(event.target as Node) &&
+        avatarRef.current && 
+        !avatarRef.current.contains(event.target as Node)
+      ) {
+        console.log("Click outside menu detected, closing menu");
         setIsMenuOpen(false);
+      } else {
+        console.log("Click inside menu or avatar detected");
       }
     };
 
     if (isMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      console.log("Added click outside listener");
     }
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      console.log("Removed click outside listener");
     };
   }, [isMenuOpen]);
+
+  // Add a click handler specifically for menu items
+  const handleMenuItemClick = (action: () => void) => {
+    console.log("Menu item clicked");
+    // Execute the action
+    action();
+    // Close the menu
+    setIsMenuOpen(false);
+  };
 
   const getAvatarEmoji = () => {
     switch (avatar) {
@@ -81,7 +106,13 @@ const Header: React.FC<HeaderProps> = ({
     { code: "ko", name: "한국어" },
   ];
 
+  // Debug log for menu state
   console.log("Header rendering, isMenuOpen:", isMenuOpen);
+
+  const handleAvatarClick = () => {
+    console.log("Avatar clicked, toggling menu state");
+    setIsMenuOpen(!isMenuOpen);
+  };
 
   return (
     <header className="border-b bg-white/90 backdrop-blur-sm z-10 shadow-sm">
@@ -133,22 +164,29 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
         
+        {/* User menu container with improved positioning */}
         <div className="flex items-center ml-3 relative">
+          {/* Avatar button with ref for click detection */}
           <div 
-            className={`h-10 w-10 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical cursor-pointer transition-all duration-300 hover:shadow-magical-hover text-lg touch-manipulation`}
-            onClick={() => {
-              console.log("Avatar clicked, toggling menu state");
-              setIsMenuOpen(!isMenuOpen);
-            }}
+            ref={avatarRef}
+            className={`h-10 w-10 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical cursor-pointer transition-all duration-300 hover:shadow-magical-hover text-lg touch-manipulation z-20`}
+            onClick={handleAvatarClick}
             aria-label="Open user menu"
           >
             {getAvatarEmoji()}
           </div>
           
-          {/* Fixed menu position and z-index */}
-          <div className="absolute right-0 top-12 z-50" ref={menuRef}>
+          {/* Menu container with higher z-index and fixed positioning */}
+          <div 
+            ref={menuRef} 
+            className="absolute right-0 top-12 z-50"
+            style={{ 
+              pointerEvents: isMenuOpen ? 'auto' : 'none',
+              visibility: isMenuOpen ? 'visible' : 'hidden' 
+            }}
+          >
             {isMenuOpen && (
-              <div className="w-64 bg-white rounded-xl shadow-pixar py-3 border border-wonder-purple/10 backdrop-blur-0 bg-white/95 animate-fade-in-up">
+              <div className="w-64 bg-white rounded-xl shadow-pixar py-3 border border-wonder-purple/10 bg-white animate-fade-in-up">
                 <div className="px-4 py-3 border-b border-wonder-purple/10">
                   <div className="flex items-center gap-3">
                     <div className={`h-14 w-14 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical text-2xl`}>
@@ -179,7 +217,9 @@ const Header: React.FC<HeaderProps> = ({
                             }`}
                             onClick={() => {
                               console.log("Language selected:", lang.code);
-                              onLanguageChange(lang.code);
+                              if (onLanguageChange) {
+                                onLanguageChange(lang.code);
+                              }
                               setIsMenuOpen(false);
                             }}
                           >
@@ -192,14 +232,21 @@ const Header: React.FC<HeaderProps> = ({
 
                   <button 
                     className="w-full text-left px-4 py-2.5 text-sm hover:bg-wonder-purple/5 flex items-center text-foreground font-rounded touch-manipulation"
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={() => {
+                      console.log("Settings clicked");
+                      toast({
+                        title: "Settings",
+                        description: "Settings feature coming soon!",
+                      });
+                      setIsMenuOpen(false);
+                    }}
                   >
                     <Settings className="h-4 w-4 mr-3 text-wonder-purple" />
                     Settings
                   </button>
                   <button 
                     className="w-full text-left px-4 py-2.5 text-sm text-wonder-coral hover:bg-wonder-coral/5 flex items-center font-rounded touch-manipulation"
-                    onClick={handleLogout}
+                    onClick={() => handleMenuItemClick(handleLogout)}
                   >
                     <LogOut className="h-4 w-4 mr-3" />
                     Sign out
