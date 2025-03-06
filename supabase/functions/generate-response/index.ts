@@ -46,6 +46,13 @@ serve(async (req) => {
         systemMessage += `\n\nIMPORTANT: Respond in ${language} language only. All your content must be in ${language}.`;
       }
       
+      console.log("Making request to OpenAI with:", {
+        model: 'gpt-4o-mini',
+        prompt: prompt,
+        language: language,
+        systemMessage: systemMessage
+      });
+
       response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -53,7 +60,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemMessage },
             { role: 'user', content: prompt }
@@ -64,8 +71,8 @@ serve(async (req) => {
       });
       
       const data = await response.json();
+      console.log("OpenAI API Response:", data);
       
-      // Add error logging and check for expected response structure
       if (!data) {
         console.error("Empty response from OpenAI");
         throw new Error("Empty response from OpenAI");
@@ -90,7 +97,6 @@ serve(async (req) => {
       try {
         console.log("Analyzing image with OpenAI...");
         
-        // For homework helper, especially math problems
         let systemPrompt = `You are WonderWhiz, an educational AI assistant designed to help children aged ${ageRange} with homework. 
         You will be shown an image of a homework problem, most likely in subjects like math, science, or language arts.
         
@@ -124,6 +130,12 @@ serve(async (req) => {
           systemPrompt += `\n\nIMPORTANT: Respond in ${language} language only. All your content must be in ${language}.`;
         }
         
+        console.log("Making request to OpenAI Vision API with:", {
+          model: 'gpt-4o-mini',
+          imageBase64: imageBase64.substring(0, 50) + "...",
+          language: language
+        });
+
         response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -131,7 +143,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: 'gpt-4o-mini',
             messages: [
               { role: 'system', content: systemPrompt },
               { 
@@ -148,6 +160,7 @@ serve(async (req) => {
         });
         
         const data = await response.json();
+        console.log("OpenAI Vision API Response:", data);
         
         if (data.error) {
           console.error("OpenAI image analysis error:", data.error);
@@ -266,7 +279,6 @@ serve(async (req) => {
           });
         }
         
-        // Continue with OpenAI image generation if not using fallback
         // Simplify the prompt to avoid errors
         const simplifiedPrompt = prompt.length > 500 ? prompt.substring(0, 500) + "..." : prompt;
         
@@ -285,8 +297,8 @@ serve(async (req) => {
         });
         
         const data = await response.json();
+        console.log("OpenAI Image API Response:", data);
         
-        // Add extensive error logging
         if (!data) {
           console.error("Empty response from OpenAI image API");
           throw new Error("Empty response from image generation API");
@@ -308,18 +320,6 @@ serve(async (req) => {
           throw new Error(`OpenAI API error: ${data.error.message || JSON.stringify(data.error)}`);
         }
         
-        if (!data.data || !data.data[0]) {
-          console.error("Invalid data structure:", JSON.stringify(data));
-          throw new Error("Invalid data structure in response");
-        }
-        
-        if (!data.data[0].url) {
-          console.error("No URL in response:", JSON.stringify(data.data[0]));
-          throw new Error("No URL in response");
-        }
-        
-        console.log("Successfully generated image URL:", data.data[0].url.substring(0, 50) + "...");
-        
         return new Response(JSON.stringify({ imageUrl: data.data[0].url }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -340,100 +340,6 @@ serve(async (req) => {
         );
       }
     } 
-    
-    else if (requestType === 'quiz') {
-      let systemMessage = `You are an educational quiz generator for children aged ${ageRange}. Create a single multiple-choice question about the topic provided that is educational, engaging, and appropriate for children of this age group. 
-
-      The response must be in the following JSON format exactly, with no additional text:
-      {
-        "question": "The question text here",
-        "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-        "correctAnswer": 0,
-        "funFact": "A brief, fascinating fact related to the correct answer that would amaze a child."
-      }
-      
-      Where "correctAnswer" is the index (0-3) of the correct option in the "options" array.
-      Make sure the question is age-appropriate, factually accurate, and educational.
-      The fun fact should be mind-blowing and memorable.`;
-      
-      // Add language-specific instructions
-      if (language !== 'en') {
-        systemMessage += `\n\nIMPORTANT: Generate the quiz in ${language} language only. All content including question, options, and fun fact must be in ${language}.`;
-      }
-      
-      try {
-        response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openAIApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-3.5-turbo',
-            messages: [
-              { role: 'system', content: systemMessage },
-              { role: 'user', content: `Create a quiz question about: ${prompt}` }
-            ],
-            temperature: 0.7,
-            max_tokens: 400
-          }),
-        });
-        
-        const data = await response.json();
-        
-        if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
-          console.error("Invalid response structure from OpenAI quiz generation:", JSON.stringify(data));
-          throw new Error("Invalid response from quiz generation");
-        }
-        
-        let quizData;
-        
-        try {
-          quizData = JSON.parse(data.choices[0].message.content);
-          
-          // Ensure all required fields are present
-          if (!quizData.question || !quizData.options || !Array.isArray(quizData.options) || 
-              typeof quizData.correctAnswer !== 'number' || quizData.options.length < 2) {
-            console.error("Invalid quiz data structure:", JSON.stringify(quizData));
-            throw new Error("Invalid quiz data structure");
-          }
-          
-          if (!quizData.funFact) {
-            quizData.funFact = "Did you know? Learning is like exercise for your brain - it makes your brain stronger!";
-          }
-          
-          console.log("Successfully generated quiz:", JSON.stringify(quizData).substring(0, 100) + "...");
-        } catch (parseError) {
-          console.error("Error parsing quiz JSON:", parseError, "Raw content:", data.choices[0].message.content);
-          quizData = {
-            question: "Which animal has the best sense of smell?",
-            options: ["Elephant", "Dog", "Bear", "Shark"],
-            correctAnswer: 1,
-            funFact: "Did you know? A dog's sense of smell is up to 100,000 times stronger than humans! They can even smell some diseases."
-          };
-        }
-        
-        return new Response(JSON.stringify(quizData), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (quizError) {
-        console.error("Quiz generation error:", quizError);
-        
-        // Return a fallback quiz with error information
-        return new Response(
-          JSON.stringify({
-            question: "Which animal has the best sense of smell?",
-            options: ["Elephant", "Dog", "Bear", "Shark"],
-            correctAnswer: 1,
-            funFact: "Did you know? A dog's sense of smell is up to 100,000 times stronger than humans! They can even smell some diseases.",
-            error: quizError.message
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-    }
     
     return new Response(JSON.stringify({ error: 'Invalid request type' }), {
       status: 400,

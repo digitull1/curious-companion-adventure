@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -33,10 +33,10 @@ interface Message {
 
 const Chat = () => {
   const navigate = useNavigate();
-  const [ageRange, setAgeRange] = useState(localStorage.getItem("wonderwhiz_age_range") || "8-10");
-  const [avatar, setAvatar] = useState(localStorage.getItem("wonderwhiz_avatar") || "explorer");
-  const [userName, setUserName] = useState(localStorage.getItem("wonderwhiz_username") || "Explorer");
-  const [language, setLanguage] = useState(localStorage.getItem("wonderwhiz_language") || "en");
+  const [ageRange] = useState(() => localStorage.getItem("wonderwhiz_age_range") || "8-10");
+  const [avatar] = useState(() => localStorage.getItem("wonderwhiz_avatar") || "explorer");
+  const [userName] = useState(() => localStorage.getItem("wonderwhiz_username") || "Explorer");
+  const [language] = useState(() => localStorage.getItem("wonderwhiz_language") || "en");
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -52,8 +52,8 @@ const Chat = () => {
   const [relatedTopics, setRelatedTopics] = useState<string[]>([]);
   const [learningComplete, setLearningComplete] = useState(false);
   const { isLoading, generateResponse, generateImage, generateQuiz, analyzeImage, textToSpeech } = useOpenAI();
-  const [streakCount, setStreakCount] = useState(0);
-  const [points, setPoints] = useState(0);
+  const [streakCount] = useState(() => parseInt(localStorage.getItem("wonderwhiz_streak") || "1", 10));
+  const [points] = useState(() => parseInt(localStorage.getItem("wonderwhiz_points") || "0", 10));
   const [learningProgress, setLearningProgress] = useState(0);
   const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(false);
   const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
@@ -112,12 +112,6 @@ const Chat = () => {
       navigate("/");
       return;
     }
-    
-    // Initialize streak and points - ONLY ONCE
-    const savedStreak = localStorage.getItem("wonderwhiz_streak") || "1";
-    const savedPoints = localStorage.getItem("wonderwhiz_points") || "0";
-    setStreakCount(parseInt(savedStreak, 10));
-    setPoints(parseInt(savedPoints, 10));
     
     // Set initial loading state
     setShowTypingIndicator(true);
