@@ -33,10 +33,10 @@ interface Message {
 
 const Chat = () => {
   const navigate = useNavigate();
-  const [ageRange] = useState(() => localStorage.getItem("wonderwhiz_age_range") || "8-10");
-  const [avatar] = useState(() => localStorage.getItem("wonderwhiz_avatar") || "explorer");
-  const [userName] = useState(() => localStorage.getItem("wonderwhiz_username") || "Explorer");
-  const [language] = useState(() => localStorage.getItem("wonderwhiz_language") || "en");
+  const [ageRange, setAgeRange] = useState(() => localStorage.getItem("wonderwhiz_age_range") || "8-10");
+  const [avatar, setAvatar] = useState(() => localStorage.getItem("wonderwhiz_avatar") || "explorer");
+  const [userName, setUserName] = useState(() => localStorage.getItem("wonderwhiz_username") || "Explorer");
+  const [language, setLanguage] = useState(() => localStorage.getItem("wonderwhiz_language") || "en");
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -52,8 +52,8 @@ const Chat = () => {
   const [relatedTopics, setRelatedTopics] = useState<string[]>([]);
   const [learningComplete, setLearningComplete] = useState(false);
   const { isLoading, generateResponse, generateImage, generateQuiz, analyzeImage, textToSpeech } = useOpenAI();
-  const [streakCount] = useState(() => parseInt(localStorage.getItem("wonderwhiz_streak") || "1", 10));
-  const [points] = useState(() => parseInt(localStorage.getItem("wonderwhiz_points") || "0", 10));
+  const [streakCount, setStreakCount] = useState(() => parseInt(localStorage.getItem("wonderwhiz_streak") || "1", 10));
+  const [points, setPoints] = useState(() => parseInt(localStorage.getItem("wonderwhiz_points") || "0", 10));
   const [learningProgress, setLearningProgress] = useState(0);
   const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(false);
   const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
