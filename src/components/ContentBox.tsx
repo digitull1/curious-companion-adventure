@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { animate } from "@motionone/dom";
 import { ChevronLeft, ChevronRight, Book, Star, Sparkles, Lightbulb, AtomIcon, MessageSquareText, Video, HelpCircle, Loader2 } from "lucide-react";
 import { BlockType } from "@/components/LearningBlock";
+import ImageBlock from "@/components/ImageBlock";
+import QuizBlock from "@/components/QuizBlock";
 
 interface ContentBoxProps {
   title: string;
@@ -12,6 +14,14 @@ interface ContentBoxProps {
   blocks: BlockType[];
   onBlockClick: (block: BlockType) => void;
   onNavigate: (section: string) => void;
+  activeBlock?: BlockType | null;
+  imagePrompt?: string;
+  quiz?: {
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    funFact?: string;
+  };
 }
 
 const ContentBox: React.FC<ContentBoxProps> = ({
@@ -21,14 +31,16 @@ const ContentBox: React.FC<ContentBoxProps> = ({
   nextSection,
   blocks,
   onBlockClick,
-  onNavigate
+  onNavigate,
+  activeBlock,
+  imagePrompt,
+  quiz
 }) => {
   const contentBoxRef = useRef<HTMLDivElement>(null);
   const exploreMoreRef = useRef<HTMLDivElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isContentLoading, setIsContentLoading] = useState(false);
-  const [activeBlock, setActiveBlock] = useState<BlockType | null>(null);
   
   // Clean text by removing asterisks
   const cleanText = (text: string) => {
@@ -171,6 +183,25 @@ const ContentBox: React.FC<ContentBoxProps> = ({
               />
             </div>
             
+            {/* Display image if there's an image prompt */}
+            {imagePrompt && (
+              <div className="mt-6 mb-6">
+                <ImageBlock prompt={imagePrompt} />
+              </div>
+            )}
+            
+            {/* Display quiz if there's quiz data */}
+            {quiz && (
+              <div className="mt-6 mb-6">
+                <QuizBlock 
+                  question={quiz.question} 
+                  options={quiz.options}
+                  correctAnswer={quiz.correctAnswer}
+                  funFact={quiz.funFact}
+                />
+              </div>
+            )}
+            
             {/* Explore More section */}
             <div ref={exploreMoreRef} className="mt-8 pt-4 border-t border-wonder-purple/10">
               <h3 className="text-sm font-medium text-wonder-purple mb-3">Explore More</h3>
@@ -178,10 +209,7 @@ const ContentBox: React.FC<ContentBoxProps> = ({
                 {blocks.map((block) => (
                   <button
                     key={block}
-                    onClick={() => {
-                      setActiveBlock(block);
-                      onBlockClick(block);
-                    }}
+                    onClick={() => onBlockClick(block)}
                     className={`explore-link group relative p-3 bg-gradient-to-br ${
                       activeBlock === block ? blockInfo[block].color : 'from-white to-white/90'
                     } rounded-lg border ${
@@ -224,7 +252,6 @@ const ContentBox: React.FC<ContentBoxProps> = ({
               onClick={() => {
                 setIsContentLoading(true);
                 onNavigate(prevSection!);
-                setActiveBlock(null);
               }}
               className="flex-1 p-3 bg-white hover:bg-wonder-purple/5 border border-wonder-purple/20 rounded-xl 
                        shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-left
@@ -250,7 +277,6 @@ const ContentBox: React.FC<ContentBoxProps> = ({
               onClick={() => {
                 setIsContentLoading(true);
                 onNavigate(nextSection!);
-                setActiveBlock(null);
               }}
               className="flex-1 p-3 bg-white hover:bg-wonder-purple/5 border border-wonder-purple/20 rounded-xl 
                        shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-right

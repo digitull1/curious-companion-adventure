@@ -5,8 +5,6 @@ import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
 import TypingIndicator from "@/components/TypingIndicator";
 import TableOfContents from "@/components/TableOfContents";
-import ImageBlock from "@/components/ImageBlock";
-import QuizBlock from "@/components/QuizBlock";
 import ContentBox from "@/components/ContentBox";
 import { animate } from "@motionone/dom";
 
@@ -21,6 +19,7 @@ interface Message {
     question: string;
     options: string[];
     correctAnswer: number;
+    funFact?: string;
   };
   code?: {
     snippet: string;
@@ -59,23 +58,35 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const chatHistoryRef = useRef<HTMLDivElement>(null);
   const relatedTopicsRef = useRef<HTMLDivElement>(null);
   const [currentSectionMessage, setCurrentSectionMessage] = useState<Message | null>(null);
+  const [currentBlockMessage, setCurrentBlockMessage] = useState<Message | null>(null);
+  const [activeBlock, setActiveBlock] = useState<BlockType | null>(null);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, showTypingIndicator]);
 
+  // When a new message with image or quiz is added, update the current block message
   useEffect(() => {
-    // Find the most recent non-user message about the current section
+    const blockMessage = messages.find(m => (m.imagePrompt || m.quiz) && !m.isUser);
+    if (blockMessage) {
+      setCurrentBlockMessage(blockMessage);
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    // Find the most recent non-user message about the current section that isn't a block-related message
     if (currentSection) {
       const sectionMessage = [...messages]
         .reverse()
-        .find(m => !m.isUser && !m.tableOfContents && !m.quiz && !m.imagePrompt);
+        .find(m => !m.isUser && !m.tableOfContents && !m.imagePrompt && !m.quiz);
       
       if (sectionMessage) {
         setCurrentSectionMessage(sectionMessage);
       }
     } else {
       setCurrentSectionMessage(null);
+      setCurrentBlockMessage(null);
+      setActiveBlock(null);
     }
   }, [currentSection, messages]);
 
@@ -91,7 +102,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         );
       });
     }
-  }, [learningComplete]);
+  }, [learningComplete, relatedTopics]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -135,6 +146,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         </div>
       </div>
     );
+  };
+
+  // Handle specific block click within ContentBox
+  const handleContentBoxBlockClick = (block: BlockType) => {
+    if (currentSectionMessage) {
+      setActiveBlock(block);
+      onBlockClick(block, currentSectionMessage.id, currentSectionMessage.text);
+    }
   };
 
   // Find the introduction message that contains the table of contents
@@ -213,29 +232,26 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             prevSection={prev}
             nextSection={next}
             blocks={currentSectionMessage.blocks || ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"]}
-            onBlockClick={(block) => onBlockClick(block, currentSectionMessage.id, currentSectionMessage.text)}
+            onBlockClick={handleContentBoxBlockClick}
             onNavigate={onTocSectionClick}
+            activeBlock={activeBlock}
+            imagePrompt={currentBlockMessage?.imagePrompt}
+            quiz={currentBlockMessage?.quiz}
           />
         </div>
       )}
       
-      {/* Display image blocks and quizzes */}
-      {messages.filter(m => (m.imagePrompt || m.quiz) && !m.isUser).map((message) => (
-        <div key={message.id} className="fade-scale-in px-4 mb-6">
-          <ChatMessage message={message.text} isUser={false}>
-            {message.imagePrompt && (
-              <ImageBlock prompt={message.imagePrompt} />
-            )}
-            {message.quiz && (
-              <QuizBlock 
-                question={message.quiz.question} 
-                options={message.quiz.options}
-                correctAnswer={message.quiz.correctAnswer}
-              />
-            )}
-          </ChatMessage>
+      {/* Show a message if all sections are completed but no related topics are displayed */}
+      {learningComplete && !shouldShowRelatedTopics && (
+        <div className="px-4 mt-8 mb-6 max-w-3xl mx-auto">
+          <div className="p-4 bg-white/90 rounded-xl border border-wonder-purple/10 shadow-sm">
+            <div className="text-center">
+              <h3 className="text-wonder-purple font-medium mb-2">🎉 Congratulations!</h3>
+              <p className="text-muted-foreground text-sm">You've completed all sections of this topic.</p>
+            </div>
+          </div>
         </div>
-      ))}
+      )}
       
       {/* Show related topics at the bottom if learning is complete and not already shown */}
       {shouldShowRelatedTopics && !introMessage && (

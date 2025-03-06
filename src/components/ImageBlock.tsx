@@ -11,12 +11,14 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const { generateImage } = useOpenAI();
 
   useEffect(() => {
     const loadImage = async () => {
       setIsLoading(true);
       setHasError(false);
+      setErrorMessage("");
       
       try {
         console.log("Generating image with prompt:", prompt);
@@ -28,10 +30,14 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
           throw new Error("Failed to generate image");
         }
         
+        // Preload the image to check if it's valid
+        await preloadImage(url);
+        
         setImageUrl(url);
       } catch (error) {
         console.error("Error loading image:", error);
         setHasError(true);
+        setErrorMessage(error instanceof Error ? error.message : "Unknown error");
         
         // Fallback to a placeholder image based on the prompt
         const fallbackUrl = getFallbackImageUrl(prompt);
@@ -44,6 +50,16 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
 
     loadImage();
   }, [prompt, generateImage]);
+  
+  // Helper function to preload image
+  const preloadImage = (url: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = url;
+    });
+  };
   
   // Improved fallback image function
   const getFallbackImageUrl = (prompt: string) => {
@@ -60,6 +76,8 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
       return "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=800&q=80";
     } else if (lowerPrompt.includes("ocean") || lowerPrompt.includes("sea")) {
       return "https://images.unsplash.com/photo-1518399681705-1c1a55e5e883?w=800&q=80";
+    } else if (lowerPrompt.includes("butter chicken") || lowerPrompt.includes("food")) {
+      return "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=80";
     } else {
       // Default image for other topics
       return "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80";
@@ -120,8 +138,8 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
             onError={(e) => {
               // If the image fails to load, replace with a fallback
               const target = e.target as HTMLImageElement;
+              console.log("Image failed to load, using fallback");
               if (!target.src.includes('unsplash')) {
-                console.log("Image failed to load, using fallback");
                 target.src = getFallbackImageUrl(prompt);
                 setHasError(true);
                 target.onerror = null; // Prevent infinite fallback loops
@@ -131,7 +149,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white text-sm rounded-b-lg">
             <div className="flex items-center">
               <ImageIcon className="h-4 w-4 mr-2" />
-              <span>AI-generated image based on: "{prompt}"</span>
+              <span>AI-generated image based on: "{prompt.length > 50 ? prompt.substring(0, 50) + '...' : prompt}"</span>
             </div>
           </div>
         </div>
