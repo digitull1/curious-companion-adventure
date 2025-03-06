@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -395,7 +394,16 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white overflow-hidden">
+    <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white overflow-hidden relative">
+      {/* Background pattern */}
+      <div className="absolute inset-0 pointer-events-none opacity-5 z-0">
+        <img 
+          src="/lovable-uploads/22fa1957-ce26-4f1a-ae37-bf442630d36d.png" 
+          alt="" 
+          className="w-full h-full object-cover"
+        />
+      </div>
+      
       {/* Header with Stats integrated */}
       <Header 
         avatar={avatar} 
@@ -406,7 +414,7 @@ const Chat = () => {
       />
       
       {/* Main Content Area */}
-      <main className="flex-1 overflow-hidden bg-gradient-to-b from-wonder-background/50 to-white/30 backdrop-blur-sm">
+      <main className="flex-1 overflow-hidden backdrop-blur-sm relative z-10">
         <div className="w-full h-full mx-auto flex flex-col">
           {/* Chat Messages */}
           <ChatArea 
@@ -451,7 +459,7 @@ const Chat = () => {
       )}
       
       {/* Footer - Now with a link for suggested prompts */}
-      <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 flex justify-between items-center">
+      <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 flex justify-between items-center z-10">
         <span className="text-xs text-muted-foreground">
           <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium font-bubbly">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
         </span>

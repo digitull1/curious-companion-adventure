@@ -16,7 +16,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
   // Function to clean text content by removing asterisks
   const cleanMessageText = (text: string) => {
     // Remove all asterisks from text
-    return text.replace(/\*/g, "");
+    return text.replace(/\*\*/g, "");
   };
   
   useEffect(() => {
@@ -86,7 +86,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
         {children}
         
         {/* Add tooltip for user to know they can tap on non-user messages for more info */}
-        {!isUser && (
+        {!isUser && !message.includes("I'd love to teach you about") && (
           <div className="mt-2 text-xs text-wonder-purple/70 flex items-center opacity-70">
             <TooltipProvider>
               <Tooltip>

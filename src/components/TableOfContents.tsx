@@ -122,9 +122,8 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
           {sections.map((section, index) => {
             const isCompleted = completedSections.includes(section);
             const isCurrent = section === currentSection;
-            // Remove isNext variable which was causing second item to flash
-            
             const topicEmoji = getTopicEmoji(section);
+            const cleanedSection = section.replace(/\*\*/g, '');
             
             return (
               <button
@@ -160,7 +159,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                         ? "text-wonder-blue font-medium"
                         : "group-hover:text-wonder-purple"
                   }`}>
-                    {section} <span className="ml-1">{topicEmoji}</span>
+                    {cleanedSection} <span className="ml-1">{topicEmoji}</span>
                   </span>
                 </div>
                 
@@ -195,20 +194,6 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       </div>
     </div>
   );
-  
-  // Determine the next section to study
-  function getNextSection() {
-    if (currentSection) {
-      const currentIndex = sections.indexOf(currentSection);
-      if (currentIndex < sections.length - 1) {
-        return sections[currentIndex + 1];
-      }
-    } else if (sections.length > 0 && completedSections.length < sections.length) {
-      // Find the first incomplete section
-      return sections.find(section => !completedSections.includes(section)) || null;
-    }
-    return null;
-  }
 };
 
 export default TableOfContents;
