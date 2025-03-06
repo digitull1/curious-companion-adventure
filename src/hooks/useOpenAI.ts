@@ -99,18 +99,7 @@ export function useOpenAI() {
           throw new Error("No image URL returned");
         }
         
-        // Validate the URL by trying to fetch it
-        try {
-          const response = await fetch(data.imageUrl, { method: 'HEAD' });
-          if (!response.ok) {
-            throw new Error(`Image URL returned error: ${response.status}`);
-          }
-        } catch (fetchError) {
-          console.error("Error validating image URL:", fetchError);
-          throw new Error("Invalid image URL");
-        }
-        
-        console.log("Image URL validated and received:", data.imageUrl);
+        console.log("Image URL received:", data.imageUrl.substring(0, 50) + "...");
         return data.imageUrl;
       } catch (error) {
         console.error(`Error generating image (attempt ${retryCount + 1}):`, error);
@@ -241,8 +230,6 @@ export function useOpenAI() {
       }
     } else {
       // Non-English quiz (Hindi and others)
-      const lowerTopic = topic.toLowerCase();
-      
       if (language === "hi") {
         return {
           question: "भारत की राष्ट्रीय पक्षी कौन सी है?",
