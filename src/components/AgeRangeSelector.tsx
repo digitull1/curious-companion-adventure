@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { X, Sparkles, Star, HelpCircle } from "lucide-react";
+import { X, Sparkles, Star, HelpCircle, CheckCircle } from "lucide-react";
 import { 
   Tooltip, 
   TooltipContent, 
@@ -61,54 +61,57 @@ const AgeRangeSelector: React.FC<AgeRangeSelectorProps> = ({
   };
   
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in">
-      <div className="bg-white rounded-xl p-6 shadow-wonder-lg max-w-md w-full mx-4 animate-scale-in relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute -top-10 -right-10 h-40 w-40 bg-wonder-purple/5 rounded-full"></div>
-        <div className="absolute -bottom-8 -left-8 h-32 w-32 bg-wonder-yellow/5 rounded-full"></div>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center animate-fade-in">
+      <div className="bg-gradient-to-br from-white/95 to-white/90 rounded-2xl p-6 shadow-wonder max-w-md w-full mx-4 animate-scale-in relative overflow-hidden border border-wonder-purple/20">
+        {/* Cosmic background decoration */}
+        <div className="absolute -top-20 -right-20 h-60 w-60 bg-wonder-purple/5 rounded-full opacity-70"></div>
+        <div className="absolute -bottom-20 -left-20 h-60 w-60 bg-wonder-yellow/5 rounded-full opacity-70"></div>
+        <div className="absolute top-1/4 left-1/3 h-4 w-4 bg-wonder-yellow/30 rounded-full animate-pulse-glow"></div>
+        <div className="absolute bottom-1/4 right-1/4 h-3 w-3 bg-wonder-purple/30 rounded-full animate-pulse-glow" style={{ animationDelay: "1s" }}></div>
+        <div className="absolute bottom-1/3 left-1/5 h-2 w-2 bg-wonder-teal/30 rounded-full animate-pulse-glow" style={{ animationDelay: "2s" }}></div>
         
-        <div className="flex items-center justify-between mb-4 relative z-10">
-          <h3 className="font-bold text-lg flex items-center">
+        <div className="flex items-center justify-between mb-5 relative z-10">
+          <h3 className="font-bold text-xl flex items-center text-wonder-purple">
             Customize Learning Level
             <Sparkles className="h-4 w-4 ml-2 text-wonder-yellow animate-pulse-soft" />
           </h3>
           <button 
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-wonder-purple/10 transition-colors"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4 text-wonder-purple" />
           </button>
         </div>
         
-        <p className="text-muted-foreground mb-5 relative z-10">
+        <p className="text-muted-foreground mb-6 relative z-10">
           Select the age range to customize explanations and content complexity
         </p>
         
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {ageRanges.map((range) => (
             <div key={range.value} className="relative">
               <button
                 onClick={() => handleSelect(range.value)}
-                className={`p-4 rounded-xl border w-full transition-all duration-300 ${
+                className={`p-4 rounded-xl border-2 w-full transition-all duration-300 ${
                   currentRange === range.value
-                    ? "border-wonder-purple bg-wonder-purple/10 shadow-wonder transform scale-[1.02]"
-                    : "border-gray-200 hover:border-wonder-purple/30 hover:bg-wonder-purple/5 hover:scale-[1.01]"
+                    ? "border-wonder-purple bg-gradient-to-br from-wonder-purple/10 to-wonder-purple/5 shadow-wonder transform scale-[1.03]"
+                    : "border-gray-200 hover:border-wonder-purple/30 hover:bg-wonder-purple/5 hover:scale-[1.02]"
                 }`}
               >
-                <div className="text-2xl mb-1 animate-bounce-subtle">
+                <div className="text-2xl mb-2 animate-bounce-subtle">
                   {range.emoji}
                 </div>
-                <div className={`font-medium ${currentRange === range.value ? "text-wonder-purple" : ""}`}>
+                <div className={`font-medium text-lg ${currentRange === range.value ? "text-wonder-purple" : ""}`}>
                   {range.label}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="text-xs text-muted-foreground mt-2">
                   {range.description}
                 </div>
                 
                 {/* Selected indicator */}
                 {currentRange === range.value && (
-                  <div className="absolute -top-1 -right-1 bg-wonder-purple text-white h-5 w-5 rounded-full flex items-center justify-center">
-                    <Star className="h-3 w-3" fill="white" />
+                  <div className="absolute -top-2 -right-2 bg-wonder-purple text-white h-7 w-7 rounded-full flex items-center justify-center shadow-sm">
+                    <CheckCircle className="h-5 w-5" fill="white" />
                   </div>
                 )}
               </button>
@@ -118,8 +121,7 @@ const AgeRangeSelector: React.FC<AgeRangeSelectorProps> = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button 
-                      onClick={() => setShowInfo(range.value === showInfo ? null : range.value)}
-                      className="absolute bottom-1 right-1 h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-muted-foreground hover:bg-gray-200"
+                      className="absolute bottom-2 right-2 h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center text-muted-foreground hover:bg-gray-200"
                     >
                       <HelpCircle className="h-3 w-3" />
                     </button>
@@ -133,7 +135,8 @@ const AgeRangeSelector: React.FC<AgeRangeSelectorProps> = ({
           ))}
         </div>
         
-        <div className="mt-5 text-sm text-muted-foreground text-center relative z-10">
+        <div className="mt-6 text-sm text-muted-foreground text-center relative z-10 flex items-center justify-center">
+          <Star className="h-3 w-3 mr-1.5 text-wonder-yellow" />
           You can change this anytime by clicking on the age display
         </div>
       </div>

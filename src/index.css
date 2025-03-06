@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 
 @tailwind base;
@@ -60,6 +59,13 @@
   --wonder-green-light: 167, 243, 208;
   
   --wonder-background: 250, 248, 254;
+  
+  /* New cosmic theme colors */
+  --cosmic-dark: 13, 10, 37;
+  --cosmic-blue: 59, 52, 134;
+  --cosmic-purple: 124, 58, 237;
+  --cosmic-pink: 248, 113, 158;
+  --cosmic-yellow: 250, 204, 21;
 }
 
 @layer base {
@@ -92,23 +98,27 @@
 
 @layer components {
   .shadow-magical {
-    box-shadow: 0 4px 12px rgba(var(--wonder-purple), 0.15), 0 2px 4px rgba(var(--wonder-purple), 0.1);
+    box-shadow: 0 4px 20px rgba(var(--wonder-purple), 0.15), 0 2px 8px rgba(var(--wonder-purple), 0.1);
   }
   
   .shadow-magical-hover {
-    box-shadow: 0 6px 16px rgba(var(--wonder-purple), 0.2), 0 3px 6px rgba(var(--wonder-purple), 0.15);
+    box-shadow: 0 8px 25px rgba(var(--wonder-purple), 0.2), 0 4px 10px rgba(var(--wonder-purple), 0.15);
   }
   
   .shadow-wonder {
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
   }
   
+  .shadow-wonder-lg {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05);
+  }
+  
   .chat-bubble-user {
-    @apply bg-wonder-purple text-white p-4 rounded-xl rounded-tr-sm shadow-wonder max-w-fit ml-auto;
+    @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white p-4 rounded-xl rounded-tr-sm shadow-wonder max-w-fit ml-auto border border-wonder-purple/20;
   }
   
   .chat-bubble-ai {
-    @apply bg-white p-4 rounded-xl rounded-tl-sm shadow-wonder max-w-fit;
+    @apply bg-white p-4 rounded-xl rounded-tl-sm shadow-wonder max-w-fit border border-gray-100;
   }
   
   .learning-blocks-container {
@@ -116,7 +126,7 @@
   }
   
   .learning-block {
-    @apply min-w-[180px] sm:min-w-[220px] p-3 rounded-xl bg-white/90 border border-wonder-purple/10 shadow-sm relative overflow-hidden flex-shrink-0 snap-center transition-all duration-300 hover:shadow-magical;
+    @apply min-w-[180px] sm:min-w-[220px] p-3 rounded-xl bg-gradient-to-br from-white/95 to-white/85 border border-wonder-purple/10 shadow-sm relative overflow-hidden flex-shrink-0 snap-center transition-all duration-300 hover:shadow-magical;
   }
   
   .scroll-button {
@@ -156,7 +166,7 @@
   }
   
   .child-friendly-container {
-    @apply rounded-xl border-2 border-wonder-purple/20 bg-white/80 backdrop-blur-sm p-3 shadow-wonder;
+    @apply rounded-xl border-2 border-wonder-purple/20 bg-gradient-to-br from-white/95 to-white/85 backdrop-blur-sm p-3 shadow-wonder;
   }
   
   .kid-friendly-text {
@@ -198,6 +208,27 @@
   .collapse-exit-active {
     max-height: 0;
   }
+  
+  /* Enhanced cosmic-inspired UI classes */
+  .cosmic-card {
+    @apply bg-gradient-to-br from-white/95 to-white/85 backdrop-blur-md border border-wonder-purple/10 rounded-xl shadow-magical;
+  }
+  
+  .cosmic-input {
+    @apply bg-white/80 backdrop-blur-sm border border-wonder-purple/20 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 shadow-sm hover:shadow-wonder transition-all duration-300;
+  }
+  
+  .cosmic-button {
+    @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-lg px-4 py-2 shadow-magical hover:shadow-magical-hover transition-all duration-300 font-medium hover:-translate-y-0.5 active:translate-y-0;
+  }
+  
+  .cosmic-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-wonder-purple/10 text-wonder-purple;
+  }
+  
+  .cosmic-tooltip {
+    @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-lg px-3 py-1.5 text-xs shadow-magical;
+  }
 }
 
 @layer utilities {
@@ -232,6 +263,18 @@
   
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+  
+  .bg-cosmic-gradient {
+    background: linear-gradient(135deg, rgba(var(--wonder-purple), 0.1), rgba(var(--wonder-blue), 0.05));
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 10px rgba(var(--wonder-purple), 0.5);
+  }
+  
+  .cosmic-blur {
+    backdrop-filter: blur(10px);
   }
 }
 
