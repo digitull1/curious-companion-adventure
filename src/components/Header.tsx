@@ -176,17 +176,14 @@ const Header: React.FC<HeaderProps> = ({
             {getAvatarEmoji()}
           </div>
           
-          {/* Menu container with higher z-index and fixed positioning */}
-          <div 
-            ref={menuRef} 
-            className="absolute right-0 top-12 z-50"
-            style={{ 
-              pointerEvents: isMenuOpen ? 'auto' : 'none',
-              visibility: isMenuOpen ? 'visible' : 'hidden' 
-            }}
-          >
-            {isMenuOpen && (
-              <div className="w-64 bg-white rounded-xl shadow-pixar py-3 border border-wonder-purple/10 bg-white animate-fade-in-up">
+          {/* Menu container with improved styling and positioning */}
+          {isMenuOpen && (
+            <div 
+              ref={menuRef} 
+              className="absolute right-0 top-12 z-50"
+              style={{ pointerEvents: 'auto' }}
+            >
+              <div className="w-64 bg-white rounded-xl shadow-pixar py-3 border border-wonder-purple/10 animate-fade-in-up isolate">
                 <div className="px-4 py-3 border-b border-wonder-purple/10">
                   <div className="flex items-center gap-3">
                     <div className={`h-14 w-14 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical text-2xl`}>
@@ -253,8 +250,8 @@ const Header: React.FC<HeaderProps> = ({
                   </button>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
