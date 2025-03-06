@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { HfInference } from "https://esm.sh/@huggingface/inference@2.3.2";
 
 const groqApiKey = Deno.env.get('GROQ_API_KEY');
 const huggingFaceApiKey = Deno.env.get('HUGGINGFACE_API_KEY');
@@ -17,10 +18,18 @@ serve(async (req) => {
 
   try {
     const { prompt, ageRange, requestType, language = 'en' } = await req.json();
+    console.log(`[DEBUG] Request received - Type: ${requestType}, Age: ${ageRange}, Language: ${language}`);
+    console.log(`[DEBUG] Prompt: ${prompt?.substring(0, 100)}...`);
     
+    // Check API keys
     if (!groqApiKey && requestType !== 'image') {
-      console.error('GROQ_API_KEY is not set in environment variables');
+      console.error('[ERROR] GROQ_API_KEY is not set in environment variables');
       throw new Error('GROQ_API_KEY is not set in environment variables');
+    }
+
+    if (requestType === 'image' && !huggingFaceApiKey) {
+      console.error('[ERROR] HUGGINGFACE_API_KEY is not set for image generation');
+      throw new Error('HUGGINGFACE_API_KEY is not set for image generation');
     }
 
     let response;
@@ -100,62 +109,44 @@ serve(async (req) => {
     
     else if (requestType === 'image') {
       try {
-        console.log("Starting image generation with prompt:", prompt);
+        console.log("[DEBUG] Starting image generation process");
+        
+        // Process and enhance the prompt for better image generation results
+        const enhancedPrompt = enhanceImagePrompt(prompt, ageRange);
+        console.log(`[DEBUG] Enhanced image prompt: ${enhancedPrompt.substring(0, 100)}...`);
         
         // Check if we have the Hugging Face API Key
         if (!huggingFaceApiKey) {
-          console.warn("No HUGGINGFACE_API_KEY found, using fallback image");
+          console.warn("[WARN] No HUGGINGFACE_API_KEY found, using fallback image");
           const fallbackImageUrl = getFallbackImageUrlByTopic(prompt);
           return new Response(JSON.stringify({ imageUrl: fallbackImageUrl }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
         
-        // Process and enhance the prompt for better image generation results
-        const enhancedPrompt = enhanceImagePrompt(prompt, ageRange);
-        console.log("Enhanced image prompt:", enhancedPrompt);
+        console.log("[DEBUG] Using HfInference for FLUX.1-dev model");
+        // Initialize Hugging Face client
+        const hf = new HfInference(huggingFaceApiKey);
         
         try {
-          console.log("Calling Hugging Face API for FLUX.1-dev model");
+          console.log("[DEBUG] Calling FLUX.1-dev model API");
           
-          // Use FLUX.1-dev model
-          response = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${huggingFaceApiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              inputs: enhancedPrompt,
-              options: {
-                wait_for_model: true
-              }
-            }),
+          // Use FLUX.1-dev model directly via HfInference
+          const imageBlob = await hf.textToImage({
+            inputs: enhancedPrompt,
+            model: "black-forest-labs/FLUX.1-dev",
+            parameters: {
+              guidance_scale: 3.5,
+              num_inference_steps: 40
+            }
           });
           
-          console.log("FLUX.1-dev API response status:", response.status);
-          console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-          
-          // Check if response is ok
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("FLUX.1-dev API error response:", errorText);
-            throw new Error(`FLUX.1-dev API error: ${errorText}`);
-          }
-          
-          // Handle binary response (image data)
-          const imageBlob = await response.blob();
-          console.log("Received image blob:", {
-            size: imageBlob.size,
-            type: imageBlob.type
-          });
+          console.log("[DEBUG] FLUX.1-dev API response received successfully");
+          console.log(`[DEBUG] Image blob type: ${imageBlob.type}, size: ${imageBlob.size} bytes`);
           
           // Convert blob to base64
           const imageBase64 = await blobToBase64(imageBlob);
-          console.log("Base64 conversion successful, length:", 
-            typeof imageBase64 === 'string' ? imageBase64.length : 0);
-          
-          console.log("Successfully processed image data");
+          console.log(`[DEBUG] Base64 conversion successful, length: ${imageBase64.length}`);
           
           return new Response(JSON.stringify({ 
             imageUrl: imageBase64,
@@ -163,14 +154,14 @@ serve(async (req) => {
               model: "FLUX.1-dev",
               blobSize: imageBlob.size,
               blobType: imageBlob.type,
-              base64Length: typeof imageBase64 === 'string' ? imageBase64.length : 0
+              base64Length: imageBase64.length
             }
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
           
         } catch (hfError) {
-          console.error("Detailed error with FLUX.1-dev API:", {
+          console.error("[ERROR] Detailed error with FLUX.1-dev API:", {
             error: hfError,
             message: hfError.message,
             stack: hfError.stack
@@ -178,8 +169,9 @@ serve(async (req) => {
           
           // Try fallback to another model
           try {
-            console.log("Trying alternative Hugging Face model (SD v1.5)");
+            console.log("[DEBUG] Trying alternative Hugging Face model (SD v1.5)");
             
+            // Use raw fetch for fallback to have more control
             response = await fetch('https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5', {
               method: 'POST',
               headers: {
@@ -195,12 +187,19 @@ serve(async (req) => {
               }),
             });
             
+            console.log(`[DEBUG] Alternative model response status: ${response.status}`);
+            
             if (!response.ok) {
+              const errorText = await response.text();
+              console.error(`[ERROR] Alternative model error: ${errorText}`);
               throw new Error(`Alternative model failed with status: ${response.status}`);
             }
             
             const imageBlob = await response.blob();
+            console.log(`[DEBUG] Alternative model blob type: ${imageBlob.type}, size: ${imageBlob.size} bytes`);
+            
             const imageBase64 = await blobToBase64(imageBlob);
+            console.log(`[DEBUG] Alternative model base64 conversion successful, length: ${imageBase64.length}`);
             
             return new Response(JSON.stringify({ 
               imageUrl: imageBase64,
@@ -208,14 +207,14 @@ serve(async (req) => {
                 model: "stable-diffusion-v1-5",
                 blobSize: imageBlob.size,
                 blobType: imageBlob.type,
-                base64Length: typeof imageBase64 === 'string' ? imageBase64.length : 0,
+                base64Length: imageBase64.length,
                 alternativeModel: true
               }
             }), {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             });
           } catch (altError) {
-            console.error("Alternative model also failed:", altError);
+            console.error("[ERROR] Alternative model also failed:", altError);
             
             // Fall back to placeholder images if all attempts fail
             const fallbackImageUrl = getFallbackImageUrlByTopic(prompt);
@@ -229,7 +228,7 @@ serve(async (req) => {
           }
         }
       } catch (imageError) {
-        console.error("Top-level image generation error:", {
+        console.error("[ERROR] Top-level image generation error:", {
           error: imageError,
           message: imageError.message,
           stack: imageError.stack
@@ -342,7 +341,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in generate-response function:', error);
+    console.error('[ERROR] Error in generate-response function:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -352,9 +351,15 @@ serve(async (req) => {
 
 // Helper function to convert Blob to Base64
 const blobToBase64 = async (blob: Blob): Promise<string> => {
-  const buffer = await blob.arrayBuffer();
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-  return `data:${blob.type};base64,${base64}`;
+  try {
+    const buffer = await blob.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    console.log(`[DEBUG] Base64 conversion - Buffer length: ${buffer.byteLength}, Base64 length: ${base64.length}`);
+    return `data:${blob.type};base64,${base64}`;
+  } catch (error) {
+    console.error('[ERROR] Error in blobToBase64:', error);
+    throw error;
+  }
 };
 
 // Helper function to generate fallback text responses
@@ -489,7 +494,7 @@ const enhanceImagePrompt = (prompt: string, ageRange: string): string => {
   const lowerPrompt = prompt.toLowerCase();
   
   // Base enhancement with child-friendly and educational aspects
-  let enhancedPrompt = `Create a high-quality, child-friendly, educational illustration of: ${prompt}. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a detailed art style.`;
+  let enhancedPrompt = `Create a high-quality, child-friendly, educational illustration of: ${prompt.substring(0, 250)}. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a detailed art style.`;
   
   // Add topic-specific enhancements
   if (lowerPrompt.includes("dinosaur") && (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater"))) {
@@ -502,5 +507,6 @@ const enhanceImagePrompt = (prompt: string, ageRange: string): string => {
     enhancedPrompt = `Create a detailed, educational illustration of space or planets. The image should be colorful, scientifically accurate, suitable for children aged ${ageRange}.`;
   }
   
-  return enhancedPrompt;
+  // Trim to prevent overly long prompts
+  return enhancedPrompt.substring(0, 500);
 };

@@ -95,7 +95,15 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
 
   const handleExploreClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log(`Explore clicked for ${type} block`);
     onClick();
+  };
+
+  const handleBlockClick = () => {
+    console.log(`Block clicked: ${type}`);
+    if (!expanded) {
+      setExpanded(true);
+    }
   };
 
   return (
@@ -104,7 +112,7 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
       className={`relative rounded-xl border border-wonder-purple/10 bg-white/90 backdrop-blur-sm 
       transition-all duration-300 overflow-hidden flex-shrink-0 snap-center 
       ${shadowColor} ${expanded ? "h-auto" : "h-12"} min-w-[180px] sm:min-w-[220px] cursor-pointer`}
-      onClick={toggleExpand}
+      onClick={handleBlockClick}
     >
       {/* Subtle background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5 rounded-xl z-0`}></div>

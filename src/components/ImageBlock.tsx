@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useOpenAI } from "@/hooks/useOpenAI";
 import { Image as ImageIcon, ImageOff, RefreshCw } from "lucide-react";
@@ -32,16 +31,16 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
     
     // Topic-specific prompts for better relevance
     if (lowerPrompt.includes("dinosaur")) {
-      enhancedPrompt = `Educational illustration of a dinosaur: ${originalPrompt}. Detailed, scientifically accurate, colorful, child-friendly, digital art style.`;
+      enhancedPrompt = `Educational illustration of a dinosaur: ${originalPrompt.substring(0, 200)}. Detailed, scientifically accurate, colorful, child-friendly, digital art style.`;
     } else if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
-      enhancedPrompt = `Educational illustration of a carnivorous animal: ${originalPrompt}. Show predatory adaptations like teeth and claws, in natural habitat, colorful, detailed, child-friendly.`;
+      enhancedPrompt = `Educational illustration of a carnivorous animal: ${originalPrompt.substring(0, 200)}. Show predatory adaptations like teeth and claws, in natural habitat, colorful, detailed, child-friendly.`;
     } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space")) {
-      enhancedPrompt = `Educational illustration of space/planetary science: ${originalPrompt}. Detailed, colorful, scientifically accurate, child-friendly.`;
+      enhancedPrompt = `Educational illustration of space/planetary science: ${originalPrompt.substring(0, 200)}. Detailed, colorful, scientifically accurate, child-friendly.`;
     } else if (lowerPrompt.includes("ancient") || lowerPrompt.includes("history")) {
-      enhancedPrompt = `Educational illustration of historical scene: ${originalPrompt}. Detailed, historically accurate, colorful, child-friendly.`;
+      enhancedPrompt = `Educational illustration of historical scene: ${originalPrompt.substring(0, 200)}. Detailed, historically accurate, colorful, child-friendly.`;
     } else {
       // Default enhancement for other topics
-      enhancedPrompt = `Educational illustration about: ${originalPrompt}. Detailed, colorful, child-friendly, educational style.`;
+      enhancedPrompt = `Educational illustration about: ${originalPrompt.substring(0, 200)}. Detailed, colorful, child-friendly, educational style.`;
     }
     
     console.log("Enhanced image prompt:", enhancedPrompt);
@@ -125,8 +124,14 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
   const preloadImage = (url: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error("Failed to load image"));
+      img.onload = () => {
+        console.log("Image loaded successfully:", url.substring(0, 30) + "...");
+        resolve();
+      };
+      img.onerror = (e) => {
+        console.error("Error loading image:", e);
+        reject(new Error("Failed to load image"));
+      };
       img.src = url;
       
       // Add timeout to prevent hanging on slow loads
@@ -160,6 +165,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) 
   };
 
   const handleRetry = () => {
+    console.log("Retrying image generation...");
     setRetryCount(prev => prev + 1);
   };
 
