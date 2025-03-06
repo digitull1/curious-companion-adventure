@@ -19,6 +19,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
     return text.replace(/\*\*/g, "");
   };
   
+  // Clean the message text
+  const cleanedMessage = cleanMessageText(message);
+  
   useEffect(() => {
     if (messageRef.current) {
       // Create a staggered animation for text appearing
@@ -81,7 +84,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
         )}
         
         <p className="whitespace-pre-line leading-relaxed text-base font-rounded">
-          {cleanMessageText(message)}
+          {cleanedMessage}
         </p>
         {children}
         

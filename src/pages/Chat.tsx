@@ -34,18 +34,10 @@ const Chat = () => {
   const navigate = useNavigate();
   const [ageRange, setAgeRange] = useState(localStorage.getItem("wonderwhiz_age_range") || "8-10");
   const [avatar, setAvatar] = useState(localStorage.getItem("wonderwhiz_avatar") || "explorer");
+  const [userName, setUserName] = useState(localStorage.getItem("wonderwhiz_username") || "Explorer");
   
   // Chat State
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      text: "Hi there! I'm your WonderWhiz assistant, created by leading IB educationalists and Cambridge University child psychologists. I'm here to help you learn fascinating topics in depth. What would you like to explore today?",
-      isUser: false,
-      blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
-      showBlocks: true,
-      isIntroduction: true
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -62,8 +54,10 @@ const Chat = () => {
   const [points, setPoints] = useState(0);
   const [learningProgress, setLearningProgress] = useState(0);
   const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(false);
+  const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
 
-  const suggestedPrompts = [
+  // Predefined suggested prompts (fallback if API fails)
+  const defaultSuggestedPrompts = [
     "Tell me about dinosaurs",
     "How do planets form?",
     "What are robots?",
@@ -71,18 +65,65 @@ const Chat = () => {
     "How do animals communicate?"
   ];
   
+  // Fetch user data and generate welcome message with suggested topics
   useEffect(() => {
     // If user hasn't completed onboarding, redirect them
     if (!ageRange || !avatar) {
       navigate("/");
+      return;
     }
     
-    // Simulate loading saved data from localStorage
+    // Initialize streak and points
     const savedStreak = Math.floor(Math.random() * 5) + 1; // Random 1-5 for demo
     const savedPoints = Math.floor(Math.random() * 500); // Random points for demo
     setStreakCount(savedStreak);
     setPoints(savedPoints);
-  }, [ageRange, avatar, navigate]);
+    
+    // Set initial loading state
+    setShowTypingIndicator(true);
+    
+    // Generate personalized topics based on age range
+    const generatePersonalizedTopics = async () => {
+      try {
+        // Generate age-appropriate topics
+        const topicsPrompt = `Generate 5 engaging, educational topics that would interest a ${ageRange} year old child. Format as a short comma-separated list. Topics should be interesting and appropriate for their age group.`;
+        const topicsResponse = await generateResponse(topicsPrompt, ageRange);
+        const topics = topicsResponse.split(",").map(topic => topic.trim());
+        setSuggestedTopics(topics);
+        
+        // Create personalized welcome message with name
+        const welcomeMessage: Message = {
+          id: "welcome",
+          text: `Hi ${userName}! I'm your WonderWhiz assistant, created by leading IB educationalists and Cambridge University child psychologists. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`,
+          isUser: false,
+          blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
+          showBlocks: true,
+          isIntroduction: true
+        };
+        
+        setMessages([welcomeMessage]);
+        setShowTypingIndicator(false);
+      } catch (error) {
+        console.error("Error generating personalized topics:", error);
+        setSuggestedTopics(defaultSuggestedPrompts);
+        
+        // Fallback welcome message
+        const welcomeMessage: Message = {
+          id: "welcome",
+          text: `Hi ${userName}! I'm your WonderWhiz assistant. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`,
+          isUser: false,
+          blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
+          showBlocks: true,
+          isIntroduction: true
+        };
+        
+        setMessages([welcomeMessage]);
+        setShowTypingIndicator(false);
+      }
+    };
+    
+    generatePersonalizedTopics();
+  }, [ageRange, avatar]);
 
   // Check if all sections are completed
   useEffect(() => {
@@ -435,7 +476,7 @@ const Chat = () => {
             inputValue={inputValue}
             isProcessing={isProcessing}
             selectedTopic={selectedTopic}
-            suggestedPrompts={suggestedPrompts}
+            suggestedPrompts={suggestedTopics.length > 0 ? suggestedTopics : defaultSuggestedPrompts}
             isListening={isListening}
             showSuggestedPrompts={showSuggestedPrompts}
             onInputChange={handleInputChange}

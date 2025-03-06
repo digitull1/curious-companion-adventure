@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { animate } from "@motionone/dom";
-import { ChevronLeft, ChevronRight, Book, Star, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Book, Star, Sparkles, Lightbulb, AtomIcon, MessageSquareText, Video, HelpCircle, Loader2 } from "lucide-react";
 import { BlockType } from "@/components/LearningBlock";
 
 interface ContentBoxProps {
@@ -26,6 +26,9 @@ const ContentBox: React.FC<ContentBoxProps> = ({
   const contentBoxRef = useRef<HTMLDivElement>(null);
   const exploreMoreRef = useRef<HTMLDivElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isContentLoading, setIsContentLoading] = useState(false);
+  const [activeBlock, setActiveBlock] = useState<BlockType | null>(null);
   
   // Clean text by removing asterisks
   const cleanText = (text: string) => {
@@ -36,6 +39,16 @@ const ContentBox: React.FC<ContentBoxProps> = ({
   const cleanedContent = cleanText(content);
   const cleanedPrevSection = prevSection ? cleanText(prevSection) : null;
   const cleanedNextSection = nextSection ? cleanText(nextSection) : null;
+  
+  // Simulate content loading when navigating between sections
+  useEffect(() => {
+    setIsContentLoading(true);
+    const timer = setTimeout(() => {
+      setIsContentLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, [title]);
   
   useEffect(() => {
     if (contentBoxRef.current) {
@@ -67,34 +80,56 @@ const ContentBox: React.FC<ContentBoxProps> = ({
         { duration: 0.4, delay: 0.5, easing: "ease-out" }
       );
     }
-  }, [title, content]); // Re-run animations when content changes
+    
+    if (contentRef.current && !isContentLoading) {
+      // Highlight keywords in the content with a subtle animation
+      const keywords = contentRef.current.querySelectorAll('strong');
+      keywords.forEach((keyword, index) => {
+        animate(
+          keyword,
+          { color: ["#8B5CF6", "#8B5CF6"] },
+          { duration: 0.5, delay: 0.5 + (index * 0.2), easing: "ease-out" }
+        );
+      });
+    }
+  }, [title, content, isContentLoading]); // Re-run animations when content changes or loading state changes
   
-  // Map BlockType to more descriptive titles and icons
+  // Map BlockType to more descriptive titles, icons, and descriptions
   const blockInfo = {
     "did-you-know": {
       title: "Did You Know?",
-      description: "Fascinating facts",
-      icon: <Star className="h-4 w-4 text-wonder-yellow" fill="currentColor" />
+      description: "Fascinating facts about this topic",
+      icon: <Lightbulb className="h-4 w-4 text-wonder-yellow" fill="currentColor" />,
+      color: "from-wonder-yellow to-wonder-yellow-light",
+      shadow: "shadow-[0_4px_12px_-2px_rgba(245,158,11,0.3)]"
     },
     "mind-blowing": {
       title: "Mind-Blowing Science",
-      description: "Amazing discoveries",
-      icon: <Sparkles className="h-4 w-4 text-wonder-blue" />
+      description: "Amazing scientific discoveries",
+      icon: <AtomIcon className="h-4 w-4 text-wonder-blue" />,
+      color: "from-wonder-blue to-wonder-blue-light",
+      shadow: "shadow-[0_4px_12px_-2px_rgba(14,165,233,0.3)]"
     },
     "amazing-stories": {
       title: "Amazing Stories",
-      description: "Incredible tales",
-      icon: <Book className="h-4 w-4 text-wonder-purple" />
+      description: "Incredible tales and legends",
+      icon: <MessageSquareText className="h-4 w-4 text-wonder-purple" />,
+      color: "from-wonder-purple to-wonder-purple-light",
+      shadow: "shadow-[0_4px_12px_-2px_rgba(139,92,246,0.3)]"
     },
     "see-it": {
       title: "See It in Action",
-      description: "Visual exploration",
-      icon: <ChevronRight className="h-4 w-4 text-wonder-green" />
+      description: "Visual exploration of the topic",
+      icon: <Video className="h-4 w-4 text-wonder-green" />,
+      color: "from-wonder-green to-wonder-green-light",
+      shadow: "shadow-[0_4px_12px_-2px_rgba(16,185,129,0.3)]"
     },
     "quiz": {
       title: "Test Your Knowledge",
-      description: "Fun quiz",
-      icon: <Star className="h-4 w-4 text-wonder-coral" />
+      description: "Fun quiz to test what you've learned",
+      icon: <HelpCircle className="h-4 w-4 text-wonder-coral" />,
+      color: "from-wonder-coral to-wonder-coral-light",
+      shadow: "shadow-[0_4px_12px_-2px_rgba(244,63,94,0.3)]"
     }
   };
   
@@ -115,35 +150,70 @@ const ContentBox: React.FC<ContentBoxProps> = ({
       </div>
       
       {/* Main content */}
-      <div className="p-5 md:p-6 space-y-4">
-        <div className="prose prose-sm sm:prose max-w-none">
-          <p className="whitespace-pre-line leading-relaxed text-base font-rounded">
-            {cleanedContent}
-          </p>
-        </div>
-        
-        {/* Explore More section */}
-        <div ref={exploreMoreRef} className="mt-8 pt-4 border-t border-wonder-purple/10">
-          <h3 className="text-sm font-medium text-wonder-purple mb-3">Explore More</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
-            {blocks.map((block) => (
-              <button
-                key={block}
-                onClick={() => onBlockClick(block)}
-                className="explore-link group relative p-3 bg-white rounded-lg border border-wonder-purple/10 hover:border-wonder-purple/30 
-                         shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 
-                         flex flex-col items-center text-center opacity-0"
-                aria-label={`Explore ${blockInfo[block].title}`}
-              >
-                <div className="w-8 h-8 rounded-full bg-wonder-purple/5 flex items-center justify-center mb-1">
-                  {blockInfo[block].icon}
-                </div>
-                <span className="font-medium text-xs text-foreground">{blockInfo[block].title}</span>
-                <span className="text-[10px] text-muted-foreground mt-0.5 hidden sm:block">{blockInfo[block].description}</span>
-              </button>
-            ))}
+      <div className="p-5 md:p-6 space-y-4 min-h-[300px] relative">
+        {isContentLoading ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex flex-col items-center">
+              <Loader2 className="h-8 w-8 text-wonder-purple animate-spin" />
+              <p className="mt-2 text-sm text-wonder-purple/70">Loading amazing content...</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="prose prose-sm sm:prose max-w-none">
+              <div 
+                ref={contentRef}
+                className="whitespace-pre-line leading-relaxed text-base font-rounded"
+                dangerouslySetInnerHTML={{ 
+                  __html: cleanedContent
+                    .replace(/\b(important|fascinating|amazing|incredible|exciting|surprising)\b/gi, '<strong>$1</strong>')
+                }} 
+              />
+            </div>
+            
+            {/* Explore More section */}
+            <div ref={exploreMoreRef} className="mt-8 pt-4 border-t border-wonder-purple/10">
+              <h3 className="text-sm font-medium text-wonder-purple mb-3">Explore More</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
+                {blocks.map((block) => (
+                  <button
+                    key={block}
+                    onClick={() => {
+                      setActiveBlock(block);
+                      onBlockClick(block);
+                    }}
+                    className={`explore-link group relative p-3 bg-gradient-to-br ${
+                      activeBlock === block ? blockInfo[block].color : 'from-white to-white/90'
+                    } rounded-lg border ${
+                      activeBlock === block ? 'border-transparent' : 'border-wonder-purple/10 hover:border-wonder-purple/30'
+                    } ${blockInfo[block].shadow} transition-all duration-300 transform hover:-translate-y-1 
+                    flex flex-col items-center text-center opacity-0`}
+                    aria-label={`Explore ${blockInfo[block].title}`}
+                  >
+                    <div className={`w-8 h-8 rounded-full ${
+                      activeBlock === block ? 'bg-white/20' : 'bg-wonder-purple/5'
+                    } flex items-center justify-center mb-1`}>
+                      {blockInfo[block].icon}
+                    </div>
+                    <span className={`font-medium text-xs ${
+                      activeBlock === block ? 'text-white' : 'text-foreground'
+                    }`}>{blockInfo[block].title}</span>
+                    <span className={`text-[10px] ${
+                      activeBlock === block ? 'text-white/80' : 'text-muted-foreground'
+                    } mt-0.5 hidden sm:block`}>{blockInfo[block].description}</span>
+                    
+                    {/* Magical sparkle effect for active blocks */}
+                    {activeBlock === block && (
+                      <div className="absolute top-0 right-0 h-6 w-6 pointer-events-none">
+                        <Sparkles className="h-5 w-5 text-white/60 animate-sparkle absolute" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
       
       {/* Navigation controls */}
@@ -151,7 +221,11 @@ const ContentBox: React.FC<ContentBoxProps> = ({
         <div className="flex items-center justify-between gap-3">
           {cleanedPrevSection ? (
             <button 
-              onClick={() => onNavigate(prevSection!)}
+              onClick={() => {
+                setIsContentLoading(true);
+                onNavigate(prevSection!);
+                setActiveBlock(null);
+              }}
               className="flex-1 p-3 bg-white hover:bg-wonder-purple/5 border border-wonder-purple/20 rounded-xl 
                        shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-left
                        focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 focus:ring-offset-2"
@@ -173,7 +247,11 @@ const ContentBox: React.FC<ContentBoxProps> = ({
           
           {cleanedNextSection ? (
             <button 
-              onClick={() => onNavigate(nextSection!)}
+              onClick={() => {
+                setIsContentLoading(true);
+                onNavigate(nextSection!);
+                setActiveBlock(null);
+              }}
               className="flex-1 p-3 bg-white hover:bg-wonder-purple/5 border border-wonder-purple/20 rounded-xl 
                        shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-right
                        focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 focus:ring-offset-2"
