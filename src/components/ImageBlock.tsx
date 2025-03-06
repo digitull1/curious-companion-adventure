@@ -1,4 +1,4 @@
-importtypescript
+
 import React, { useState, useEffect } from "react";
 import { useOpenAI } from "@/hooks/useOpenAI";
 import { Image as ImageIcon, ImageOff, RefreshCw } from "lucide-react";
