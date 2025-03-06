@@ -156,6 +156,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     }
   };
 
+  // Find the welcome message
+  const welcomeMessage = messages.find(m => !m.isUser && m.text.includes("Hi") && !m.tableOfContents);
+  
   // Find the introduction message that contains the table of contents
   const introMessage = messages.find(m => m.isIntroduction && m.tableOfContents);
   
@@ -172,6 +175,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     >
       {currentSection && renderTopicPill()}
       
+      {/* Display welcome message first */}
+      {welcomeMessage && (
+        <div className="fade-scale-in mb-6 px-4">
+          <ChatMessage message={welcomeMessage.text} isUser={welcomeMessage.isUser} />
+        </div>
+      )}
+      
       {/* Display the intro message with Table of Contents */}
       {introMessage && (
         <div className="fade-scale-in mb-6 px-4">
@@ -182,36 +192,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               currentSection={currentSection}
               onSectionClick={onTocSectionClick}
             />
-            
-            {/* Show related topics when learning is complete */}
-            {shouldShowRelatedTopics && (
-              <div className="mt-6" ref={relatedTopicsRef}>
-                <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
-                  <h3 className="text-sm font-medium mb-3 text-wonder-purple">🎉 Explore more topics:</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {relatedTopics.map((topic, index) => (
-                      <div 
-                        key={index}
-                        onClick={() => onRelatedTopicClick(topic)}
-                        className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
-                                  hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
-                                  hover:-translate-y-1 transform touch-manipulation"
-                        style={{ opacity: 0 }} // Initially invisible for animation
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
-                            <ChevronRight className="h-3 w-3" />
-                          </div>
-                          <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
-                        </div>
-                        <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
-                        <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
           </ChatMessage>
         </div>
       )}
@@ -241,20 +221,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         </div>
       )}
       
-      {/* Show a message if all sections are completed but no related topics are displayed */}
-      {learningComplete && !shouldShowRelatedTopics && (
-        <div className="px-4 mt-8 mb-6 max-w-3xl mx-auto">
-          <div className="p-4 bg-white/90 rounded-xl border border-wonder-purple/10 shadow-sm">
-            <div className="text-center">
-              <h3 className="text-wonder-purple font-medium mb-2">🎉 Congratulations!</h3>
-              <p className="text-muted-foreground text-sm">You've completed all sections of this topic.</p>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Show related topics at the bottom if learning is complete and not already shown */}
-      {shouldShowRelatedTopics && !introMessage && (
+      {/* Show related topics at the bottom if learning is complete */}
+      {shouldShowRelatedTopics && (
         <div className="mx-auto max-w-3xl px-4 mb-6" ref={relatedTopicsRef}>
           <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
             <h3 className="text-sm font-medium mb-3 text-wonder-purple">🎉 Explore more topics:</h3>
@@ -278,6 +246,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Show a message if all sections are completed but no related topics are displayed */}
+      {learningComplete && !shouldShowRelatedTopics && (
+        <div className="px-4 mt-8 mb-6 max-w-3xl mx-auto">
+          <div className="p-4 bg-white/90 rounded-xl border border-wonder-purple/10 shadow-sm">
+            <div className="text-center">
+              <h3 className="text-wonder-purple font-medium mb-2">🎉 Congratulations!</h3>
+              <p className="text-muted-foreground text-sm">You've completed all sections of this topic.</p>
             </div>
           </div>
         </div>

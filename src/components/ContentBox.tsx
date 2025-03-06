@@ -183,15 +183,15 @@ const ContentBox: React.FC<ContentBoxProps> = ({
               />
             </div>
             
-            {/* Display image if there's an image prompt */}
-            {imagePrompt && (
+            {/* Display image if there's an image prompt and active block is see-it */}
+            {imagePrompt && activeBlock === 'see-it' && (
               <div className="mt-6 mb-6">
                 <ImageBlock prompt={imagePrompt} />
               </div>
             )}
             
-            {/* Display quiz if there's quiz data */}
-            {quiz && (
+            {/* Display quiz if there's quiz data and active block is quiz */}
+            {quiz && activeBlock === 'quiz' && (
               <div className="mt-6 mb-6">
                 <QuizBlock 
                   question={quiz.question} 

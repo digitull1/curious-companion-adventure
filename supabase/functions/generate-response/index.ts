@@ -16,9 +16,10 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, ageRange, requestType } = await req.json();
+    const { prompt, ageRange, requestType, language = 'en' } = await req.json();
     
     if (!openAIApiKey) {
+      console.error('OPENAI_API_KEY is not set in environment variables');
       throw new Error('OPENAI_API_KEY is not set in environment variables');
     }
 
@@ -26,7 +27,7 @@ serve(async (req) => {
     
     if (requestType === 'text') {
       // Define a system message that guides the AI to respond appropriately for kids
-      const systemMessage = `You are WonderWhiz, an educational AI assistant designed for children aged ${ageRange}. 
+      let systemMessage = `You are WonderWhiz, an educational AI assistant designed for children aged ${ageRange}.
       Your responses should be:
       - Engaging, friendly, and encouraging
       - Age-appropriate in language and content (for ${ageRange} year olds)
@@ -39,6 +40,11 @@ serve(async (req) => {
       - Structured with paragraph breaks for readability
       - Include mind-blowing facts that will fascinate children
       - Occasionally use storytelling to explain complex concepts`;
+      
+      // Add language-specific instructions
+      if (language !== 'en') {
+        systemMessage += `\n\nIMPORTANT: Respond in ${language} language only. All your content must be in ${language}.`;
+      }
       
       response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -60,7 +66,17 @@ serve(async (req) => {
       const data = await response.json();
       
       // Add error logging and check for expected response structure
-      if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
+      if (!data) {
+        console.error("Empty response from OpenAI");
+        throw new Error("Empty response from OpenAI");
+      }
+      
+      if (data.error) {
+        console.error("OpenAI API error:", data.error);
+        throw new Error(`OpenAI API error: ${data.error.message || JSON.stringify(data.error)}`);
+      }
+      
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         console.error("Unexpected response from OpenAI:", JSON.stringify(data));
         throw new Error("Invalid response from OpenAI");
       }
@@ -74,6 +90,9 @@ serve(async (req) => {
       try {
         console.log("Generating image with prompt:", prompt);
         
+        // Simplify the prompt to avoid errors
+        const simplifiedPrompt = prompt.length > 500 ? prompt.substring(0, 500) + "..." : prompt;
+        
         response = await fetch('https://api.openai.com/v1/images/generations', {
           method: 'POST',
           headers: {
@@ -81,7 +100,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            prompt: `Create a child-friendly, educational illustration of: ${prompt}. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a Pixar-inspired art style. Include cute details and visual elements that would appeal to children.`,
+            prompt: `Create a child-friendly, educational illustration of: ${simplifiedPrompt}. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a Pixar-inspired art style.`,
             n: 1,
             size: "1024x1024",
             response_format: "url"
@@ -135,7 +154,7 @@ serve(async (req) => {
     } 
     
     else if (requestType === 'quiz') {
-      const systemMessage = `You are an educational quiz generator for children aged ${ageRange}. Create a single multiple-choice question about the topic provided that is educational, engaging, and appropriate for children of this age group. 
+      let systemMessage = `You are an educational quiz generator for children aged ${ageRange}. Create a single multiple-choice question about the topic provided that is educational, engaging, and appropriate for children of this age group. 
 
       The response must be in the following JSON format exactly, with no additional text:
       {
@@ -148,6 +167,11 @@ serve(async (req) => {
       Where "correctAnswer" is the index (0-3) of the correct option in the "options" array.
       Make sure the question is age-appropriate, factually accurate, and educational.
       The fun fact should be mind-blowing and memorable.`;
+      
+      // Add language-specific instructions
+      if (language !== 'en') {
+        systemMessage += `\n\nIMPORTANT: Generate the quiz in ${language} language only. All content including question, options, and fun fact must be in ${language}.`;
+      }
       
       try {
         response = await fetch('https://api.openai.com/v1/chat/completions', {

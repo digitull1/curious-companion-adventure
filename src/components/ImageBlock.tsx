@@ -1,19 +1,29 @@
 
 import React, { useState, useEffect } from "react";
 import { useOpenAI } from "@/hooks/useOpenAI";
-import { Image as ImageIcon, ImageOff } from "lucide-react";
+import { Image as ImageIcon, ImageOff, RefreshCw } from "lucide-react";
 
 interface ImageBlockProps {
   prompt: string;
+  containerClass?: string;
 }
 
-const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
+const ImageBlock: React.FC<ImageBlockProps> = ({ prompt, containerClass = "" }) => {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [retryCount, setRetryCount] = useState<number>(0);
+  const [promptTruncated, setPromptTruncated] = useState<string>("");
   const { generateImage } = useOpenAI();
 
+  // Truncate prompt for display
+  useEffect(() => {
+    const truncated = prompt.length > 60 ? prompt.substring(0, 60) + '...' : prompt;
+    setPromptTruncated(truncated);
+  }, [prompt]);
+
+  // Load image with retry logic
   useEffect(() => {
     const loadImage = async () => {
       setIsLoading(true);
@@ -21,8 +31,14 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
       setErrorMessage("");
       
       try {
-        console.log("Generating image with prompt:", prompt);
-        const url = await generateImage(prompt);
+        console.log(`Generating image (attempt ${retryCount + 1}) with prompt:`, promptTruncated);
+        
+        // Simplify prompt to reduce errors
+        const simplifiedPrompt = prompt.length > 300 
+          ? prompt.substring(0, 300) + "..." 
+          : prompt;
+          
+        const url = await generateImage(simplifiedPrompt);
         console.log("Image URL received:", url);
         
         if (!url || url.trim() === "") {
@@ -49,7 +65,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
     };
 
     loadImage();
-  }, [prompt, generateImage]);
+  }, [prompt, generateImage, retryCount]);
   
   // Helper function to preload image
   const preloadImage = (url: string): Promise<void> => {
@@ -84,8 +100,12 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
     }
   };
 
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+  };
+
   return (
-    <div className="mt-4 overflow-hidden rounded-lg">
+    <div className={`mt-4 overflow-hidden rounded-lg ${containerClass}`}>
       {isLoading ? (
         <div className="h-60 w-full bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse flex flex-col items-center justify-center p-4">
           <div className="w-12 h-12 rounded-full border-4 border-wonder-purple/30 border-t-wonder-purple animate-spin mb-4"></div>
@@ -96,7 +116,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
         <div className="relative w-full">
           <img
             src={imageUrl}
-            alt={prompt}
+            alt={promptTruncated}
             className="w-full h-auto rounded-lg shadow-wonder"
             style={{ maxHeight: "400px", objectFit: "cover" }}
             onError={(e) => {
@@ -122,9 +142,18 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
             }}
           />
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white text-sm rounded-b-lg">
-            <div className="flex items-center">
-              <ImageOff className="h-4 w-4 mr-2 text-red-300" />
-              <span>Using placeholder image for: "{prompt}"</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <ImageOff className="h-4 w-4 mr-2 text-red-300" />
+                <span>Using placeholder image</span>
+              </div>
+              <button 
+                onClick={handleRetry}
+                className="bg-wonder-purple/20 hover:bg-wonder-purple/30 text-white rounded-full p-1 transition-colors"
+                title="Try again"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -132,7 +161,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
         <div className="relative w-full">
           <img
             src={imageUrl}
-            alt={prompt}
+            alt={promptTruncated}
             className="w-full h-auto rounded-lg shadow-wonder animate-fade-in"
             style={{ maxHeight: "400px", objectFit: "cover" }}
             onError={(e) => {
@@ -149,7 +178,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ prompt }) => {
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white text-sm rounded-b-lg">
             <div className="flex items-center">
               <ImageIcon className="h-4 w-4 mr-2" />
-              <span>AI-generated image based on: "{prompt.length > 50 ? prompt.substring(0, 50) + '...' : prompt}"</span>
+              <span>AI-generated image based on: "{promptTruncated}"</span>
             </div>
           </div>
         </div>
