@@ -23,6 +23,9 @@ const UserMenu: React.FC<UserMenuProps> = ({
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  console.log("UserMenu rendering, isOpen:", isOpen);
+  console.log("UserMenu current styles:", menuRef.current?.style);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -31,16 +34,21 @@ const UserMenu: React.FC<UserMenuProps> = ({
         menuRef.current && 
         !menuRef.current.contains(event.target as Node)
       ) {
+        console.log("Click outside detected, closing menu");
         onClose();
       }
     };
 
     if (isOpen) {
+      console.log("Adding click outside listener");
       document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      console.log("Removed click outside listener");
     }
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      console.log("Cleanup: removed click outside listener");
     };
   }, [isOpen, onClose]);
 
@@ -68,15 +76,32 @@ const UserMenu: React.FC<UserMenuProps> = ({
     }
   };
 
-  if (!isOpen) return null;
+  // If menu is not open, don't render anything
+  if (!isOpen) {
+    console.log("Menu not open, returning null");
+    return null;
+  }
 
+  console.log("Rendering menu content");
+  
   return (
     <div 
-      ref={menuRef} 
+      ref={menuRef}
+      id="user-menu-container" 
       className="absolute right-0 top-12 z-50"
-      style={{ pointerEvents: 'auto' }}
+      style={{ 
+        pointerEvents: 'auto',
+      }}
     >
-      <div className="w-64 bg-white rounded-xl shadow-pixar py-3 border border-wonder-purple/10 animate-fade-in-up isolate">
+      <div 
+        id="user-menu-content"
+        className="w-64 bg-white rounded-xl shadow-pixar py-3 border border-wonder-purple/10 animate-fade-in-up isolate"
+        style={{
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+          backgroundColor: 'white'
+        }}
+      >
         <div className="px-4 py-3 border-b border-wonder-purple/10">
           <div className="flex items-center gap-3">
             <div className={`h-14 w-14 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical text-2xl`}>
@@ -101,6 +126,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
           <button 
             className="w-full text-left px-4 py-2.5 text-sm hover:bg-wonder-purple/5 flex items-center text-foreground font-rounded touch-manipulation"
             onClick={() => {
+              console.log("Settings button clicked");
               toast({
                 title: "Settings",
                 description: "Settings feature coming soon!",
@@ -115,6 +141,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
           <button 
             className="w-full text-left px-4 py-2.5 text-sm text-wonder-coral hover:bg-wonder-coral/5 flex items-center font-rounded touch-manipulation"
             onClick={() => {
+              console.log("Logout button clicked");
               handleLogout();
               onClose();
             }}

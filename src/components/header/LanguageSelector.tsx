@@ -24,10 +24,22 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     { code: "ko", name: "한국어" },
   ];
 
-  if (!onLanguageChange) return null;
+  console.log("LanguageSelector rendering, current language:", language);
+
+  if (!onLanguageChange) {
+    console.log("No onLanguageChange provided, returning null");
+    return null;
+  }
+
+  const handleLanguageClick = (lang: string) => {
+    console.log("Language selected:", lang);
+    if (onLanguageChange) {
+      onLanguageChange(lang);
+    }
+  };
 
   return (
-    <div className="px-4 py-2.5">
+    <div className="px-4 py-2.5 bg-white">
       <div className="text-sm mb-2 text-muted-foreground flex items-center gap-1.5">
         <Globe className="h-4 w-4" />
         <span>Language / भाषा</span>
@@ -41,12 +53,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                 ? "bg-wonder-purple/20 text-wonder-purple font-medium"
                 : "hover:bg-wonder-purple/5"
             }`}
-            onClick={() => {
-              console.log("Language selected:", lang.code);
-              if (onLanguageChange) {
-                onLanguageChange(lang.code);
-              }
-            }}
+            onClick={() => handleLanguageClick(lang.code)}
           >
             {lang.name}
           </button>

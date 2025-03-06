@@ -28,10 +28,16 @@ const AvatarButton: React.FC<AvatarButtonProps> = ({
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    console.log("Avatar button clicked");
+    e.stopPropagation(); // Prevent event bubbling
+    onClick();
+  };
+
   return (
     <div 
       className={`h-10 w-10 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical cursor-pointer transition-all duration-300 hover:shadow-magical-hover text-lg touch-manipulation z-20`}
-      onClick={onClick}
+      onClick={handleClick}
       aria-label="Open user menu"
     >
       {getAvatarEmoji()}
