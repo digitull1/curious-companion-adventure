@@ -116,9 +116,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         .find(m => !m.isUser && !m.tableOfContents && !m.imagePrompt && !m.quiz);
       
       if (sectionMessage) {
+        console.log("Setting current section message:", sectionMessage.id, sectionMessage.text.substring(0, 50) + "...");
         setCurrentSectionMessage(sectionMessage);
       }
     } else {
+      console.log("No current section selected, clearing section message and block message");
       setCurrentSectionMessage(null);
       setCurrentBlockMessage(null);
       setActiveBlock(null);
@@ -187,6 +189,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Handle specific block click within ContentBox
   const handleContentBoxBlockClick = (block: BlockType) => {
     if (currentSectionMessage) {
+      console.log("Content box block clicked:", block, "for message:", currentSectionMessage.id);
       setActiveBlock(block);
       onBlockClick(block, currentSectionMessage.id, currentSectionMessage.text);
     }
@@ -206,9 +209,33 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   
   // Filter user messages to display in the chat flow
   const userMessages = messages.filter(m => m.isUser);
+  console.log("Filtered user messages:", userMessages.length);
   
   // Filter AI messages that are not special (TOC, welcome, etc.)
-  const aiMessages = messages.filter(m => !m.isUser && !m.isIntroduction && !m.tableOfContents && !m.imagePrompt && !m.quiz);
+  // IMPORTANT CHANGE: Only include AI messages that should NOT be in the content box
+  const aiMessages = messages.filter(m => {
+    const isRegularAIMessage = !m.isUser && 
+                              !m.isIntroduction && 
+                              !m.tableOfContents && 
+                              !m.imagePrompt && 
+                              !m.quiz;
+    
+    // Exclude messages that are currently displayed in the content box
+    const isInContentBox = currentSectionMessage && 
+                          m.id === currentSectionMessage.id;
+    
+    return isRegularAIMessage && !isInContentBox;
+  });
+  
+  console.log("Filtered AI messages:", aiMessages.length);
+  console.log("Current section message ID:", currentSectionMessage?.id);
+  console.log("Messages in queue:", messages.map(m => ({
+    id: m.id,
+    isUser: m.isUser,
+    isIntro: m.isIntroduction,
+    hasTOC: !!m.tableOfContents,
+    text: m.text.substring(0, 30) + "..."
+  })));
 
   return (
     <div 

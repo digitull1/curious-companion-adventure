@@ -89,18 +89,19 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
   const { icon, title, description, className, gradient, shadowColor } = getBlockContent();
   
   const toggleExpand = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    console.log("Toggle expand clicked for block type:", type);
+    e.stopPropagation(); // Prevent the click from bubbling up to the block
     setExpanded(!expanded);
   };
 
   const handleExploreClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    console.log(`Explore clicked for ${type} block`);
-    onClick();
+    console.log("Explore button clicked for block type:", type);
+    e.stopPropagation(); // Prevent the click from bubbling up to the block
+    onClick(); // Call the parent-provided onClick handler
   };
 
   const handleBlockClick = () => {
-    console.log(`Block clicked: ${type}`);
+    console.log("Block clicked for block type:", type);
     if (!expanded) {
       setExpanded(true);
     }

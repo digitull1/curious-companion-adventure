@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -267,6 +268,7 @@ const Chat = () => {
   const processMessage = async (prompt: string, isUserMessage: boolean = true, skipUserMessage: boolean = false) => {
     if (isProcessing) return;
 
+    console.log("Processing message:", prompt, "isUserMessage:", isUserMessage, "skipUserMessage:", skipUserMessage);
     setIsProcessing(true);
     setShowTypingIndicator(true);
 
@@ -277,6 +279,7 @@ const Chat = () => {
         text: prompt,
         isUser: true
       };
+      console.log("Adding user message to chat:", userMessage);
       setMessages(prev => [...prev, userMessage]);
     }
 
@@ -285,6 +288,8 @@ const Chat = () => {
       const matchedSection = selectedTopic && messages.find(m => m.tableOfContents)?.tableOfContents?.find(
         section => prompt.toLowerCase().includes(section.toLowerCase())
       );
+
+      console.log("Matched section:", matchedSection);
 
       // Generate response based on the prompt
       const response = await generateResponse(prompt, ageRange, language);
@@ -305,11 +310,13 @@ const Chat = () => {
       
       if (matchedSection) {
         // Set as current section
+        console.log("Setting current section to:", matchedSection);
         setCurrentSection(matchedSection);
         
         // If not already completed, mark as completed
         if (!completedSections.includes(matchedSection)) {
           // Mark this section as completed
+          console.log("Marking section as completed:", matchedSection);
           setCompletedSections(prev => [...prev, matchedSection]);
           
           // Add more points for completing a section
@@ -334,6 +341,7 @@ const Chat = () => {
         }
       }
       
+      console.log("Adding AI message to chat:", aiMessage);
       setMessages(prev => [...prev, aiMessage]);
       
       // Increment points for each interaction
@@ -351,14 +359,19 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isProcessing) return;
 
+    console.log("Handling send message with input:", inputValue);
+    console.log("Current state - selectedTopic:", selectedTopic, "topicSectionsGenerated:", topicSectionsGenerated, "learningComplete:", learningComplete);
+
     // If starting a new topic after completing previous one
     if (learningComplete && topicSectionsGenerated) {
       // Save the previous topic before resetting
       if (selectedTopic) {
+        console.log("Saving previous topic before starting new one:", selectedTopic);
         setPreviousTopics(prev => [...prev, selectedTopic]);
       }
       
       // Reset topic-related states
+      console.log("Resetting topic states for new topic");
       setTopicSectionsGenerated(false);
       setCompletedSections([]);
       setCurrentSection(null);
@@ -376,11 +389,14 @@ const Chat = () => {
     
     // If it's a new topic, generate table of contents
     if (isNewTopicRequest) {
+      console.log("Handling new topic request");
       const userMessage: Message = {
         id: Date.now().toString(),
         text: inputValue,
         isUser: true
       };
+      
+      console.log("Adding user message for new topic:", userMessage);
       setMessages(prev => [...prev, userMessage]);
       setInputValue("");
       setIsProcessing(true);
@@ -409,6 +425,7 @@ const Chat = () => {
           isIntroduction: true
         };
         
+        console.log("Adding TOC message:", tocMessage);
         setMessages(prev => [...prev, tocMessage]);
         setSelectedTopic(inputValue);
         setTopicSectionsGenerated(true);
@@ -427,12 +444,14 @@ const Chat = () => {
       }
     } else {
       // Handle regular messages
+      console.log("Handling regular message (not a new topic)");
       await processMessage(inputValue);
     }
   };
 
   const handleBlockClick = async (type: BlockType, messageId: string, messageText: string) => {
     try {
+      console.log("Block clicked:", type, "for message:", messageId, "text:", messageText.substring(0, 30) + "...");
       setIsProcessing(true);
       setShowTypingIndicator(true);
       let blockResponse = "";
@@ -505,6 +524,7 @@ const Chat = () => {
   };
 
   const handleSuggestedPromptClick = (prompt: string) => {
+    console.log("Suggested prompt clicked:", prompt);
     setInputValue(prompt);
     // Auto-send the suggestion
     setTimeout(() => {
@@ -521,6 +541,7 @@ const Chat = () => {
   };
   
   const clearChat = () => {
+    console.log("Clearing chat");
     setMessages([
       {
         id: "welcome-new",
@@ -544,7 +565,10 @@ const Chat = () => {
 
   const handleTocSectionClick = (section: string) => {
     // If clicking on the same section that's already current, don't do anything
-    if (section === currentSection) return;
+    if (section === currentSection) {
+      console.log("Same section clicked, ignoring:", section);
+      return;
+    }
     
     console.log("Clicked TOC section:", section);
     
@@ -560,10 +584,12 @@ const Chat = () => {
     
     // Save the previous topic before clearing
     if (selectedTopic) {
+      console.log("Saving previous topic:", selectedTopic);
       setPreviousTopics(prev => [...prev, selectedTopic]);
     }
     
     // Reset states for the new topic
+    console.log("Resetting states for new related topic");
     setSelectedTopic(null);
     setTopicSectionsGenerated(false);
     setCompletedSections([]);
