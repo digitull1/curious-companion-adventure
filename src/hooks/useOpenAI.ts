@@ -132,6 +132,7 @@ export const useOpenAI = () => {
     
     try {
       toast.info("Text-to-speech is temporarily unavailable.");
+      // Return empty string for the audio content
       return "";
     } catch (error) {
       console.error("Text-to-speech error:", error);

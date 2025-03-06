@@ -21,7 +21,11 @@ const SpeechButton: React.FC<SpeechButtonProps> = ({ text, messageId }) => {
     try {
       const result = await textToSpeech(text);
       if (result) {
-        setAudioData(result);
+        // Fix: Create a proper audioData object instead of trying to set a string
+        setAudioData({ 
+          audioContent: result, 
+          contentType: "audio/mpeg" 
+        });
       }
     } catch (error) {
       console.error("Failed to generate speech:", error);
