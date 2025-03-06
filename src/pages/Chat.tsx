@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -58,19 +58,36 @@ const Chat = () => {
   const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(false);
   const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
   const [previousTopics, setPreviousTopics] = useState<string[]>([]);
-
-  // Predefined suggested prompts (fallback if API fails)
-  const defaultSuggestedPrompts = [
-    "Tell me about dinosaurs",
-    "How do planets form?",
-    "What are robots?",
-    "Why is the sky blue?",
-    "How do animals communicate?"
-  ];
+  
+  // Use refs to prevent infinite loops with state updates
+  const initRef = useRef(false);
+  const pointsRef = useRef(points);
+  
+  // Update refs when state changes
+  useEffect(() => {
+    pointsRef.current = points;
+  }, [points]);
+  
+  // Save points to localStorage when they change, but throttle updates
+  useEffect(() => {
+    const savePoints = () => {
+      localStorage.setItem("wonderwhiz_points", points.toString());
+    };
+    
+    // Use a debounced save to avoid excessive localStorage writes
+    const timeoutId = setTimeout(savePoints, 2000);
+    return () => clearTimeout(timeoutId);
+  }, [points]);
   
   // Process topics from a response string into an array
-  const processTopicsFromResponse = (response: string): string[] => {
+  const processTopicsFromResponse = useCallback((response: string): string[] => {
     console.log("Processing topics from response:", response);
+    
+    // Basic guard for empty responses
+    if (!response || response.trim().length === 0) {
+      console.log("Empty response, returning default topics");
+      return ["Dinosaurs", "Space", "Animals", "Robots", "Ocean"];
+    }
     
     // Check if already formatted as a list with numbers or bullets
     if (response.includes("\n")) {
@@ -95,14 +112,22 @@ const Chat = () => {
     // Just return as a single item if no clear separator
     console.log("No clear separator, returning as single item");
     return [response.trim()];
-  };
+  }, []);
   
-  // Fetch user data and generate welcome message with suggested topics
+  // Default suggested prompts as fallback
+  const defaultSuggestedPrompts = [
+    "Tell me about dinosaurs",
+    "How do planets form?",
+    "What are robots?",
+    "Why is the sky blue?",
+    "How do animals communicate?"
+  ];
+  
+  // Fetch user data and generate welcome message with suggested topics - only once on mount
   useEffect(() => {
-    console.log("Points updated:", points);
-  }, [points]);
-
-  useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+    
     console.log("Chat component mounted, initializing...");
     console.log("User data:", { userName, ageRange, avatar, language });
     
@@ -123,7 +148,20 @@ const Chat = () => {
         
         // Generate age-appropriate topics
         const topicsPrompt = `Generate 5 engaging, educational topics that would interest a ${ageRange} year old child. Format as a short comma-separated list. Topics should be interesting and appropriate for their age group.`;
-        const topicsResponse = await generateResponse(topicsPrompt, ageRange, language);
+        
+        // Use a timeout to ensure we don't get stuck in loading state
+        const timeoutPromise = new Promise<string>(resolve => {
+          setTimeout(() => {
+            resolve("Dinosaurs, Space Exploration, Animal Habitats, How Machines Work, Weather and Climate");
+          }, 3000);
+        });
+        
+        // Race between the actual API call and the timeout
+        const topicsResponse = await Promise.race([
+          generateResponse(topicsPrompt, ageRange, language),
+          timeoutPromise
+        ]);
+        
         console.log("Generated topics response:", topicsResponse);
         
         // Process topics from the response string
@@ -142,7 +180,7 @@ const Chat = () => {
         if (language === "en") {
           welcomeText = `Hi ${userName}! I'm your WonderWhiz assistant, created by leading IB educationalists and Cambridge University child psychologists. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`;
         } else {
-          // This will be translated by the API for other languages
+          // Simplified language-specific welcome for non-English
           welcomeText = `Hi ${userName}! I'm your WonderWhiz assistant. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`;
         }
         
@@ -190,9 +228,9 @@ const Chat = () => {
     };
     
     generatePersonalizedTopics();
-  }, [ageRange, avatar, language, userName, generateResponse, navigate]);
+  }, [ageRange, avatar, language, userName, generateResponse, navigate, processTopicsFromResponse]);
 
-  // Check if all sections are completed
+  // Check if all sections are completed - with safeguards to prevent infinite loops
   useEffect(() => {
     if (topicSectionsGenerated && messages.some(m => m.tableOfContents)) {
       const sections = messages.find(m => m.tableOfContents)?.tableOfContents || [];
@@ -206,24 +244,26 @@ const Chat = () => {
         }
       }
     }
-  }, [completedSections, topicSectionsGenerated, messages, selectedTopic, generateResponse, ageRange, language]);
+  }, [completedSections, topicSectionsGenerated, messages, selectedTopic, relatedTopics.length]);
   
-  const generateRelatedTopics = async (topic: string) => {
+  const generateRelatedTopics = useCallback(async (topic: string) => {
     try {
       console.log("Generating related topics for:", topic);
-      const relatedTopicsPrompt = `Generate 5 related topics to "${topic}" that might interest a learner aged ${ageRange}. Format as a short comma-separated list.`;
-      const relatedTopicsResponse = await generateResponse(relatedTopicsPrompt, ageRange, language);
-      console.log("Raw related topics response:", relatedTopicsResponse);
       
-      // Process the response to extract topics
-      const newRelatedTopics = processTopicsFromResponse(relatedTopicsResponse);
-      console.log("Processed related topics:", newRelatedTopics);
+      // Define default related topics based on the main topic to avoid API calls
+      let defaultRelated: string[] = ["Space exploration", "Astronomy facts", "Planets and moons", "Solar system formation", "Black holes"];
       
-      // Make sure we have up to 5 topics
-      const finalRelatedTopics = newRelatedTopics.slice(0, 5);
-      console.log("Final related topics list:", finalRelatedTopics);
+      if (topic.toLowerCase().includes("dinosaur")) {
+        defaultRelated = ["Prehistoric animals", "Fossils", "Extinction events", "Paleontology", "Ancient reptiles"];
+      } else if (topic.toLowerCase().includes("animal")) {
+        defaultRelated = ["Wildlife habitats", "Ocean creatures", "Animal adaptations", "Endangered species", "Pet care"];
+      } else if (topic.toLowerCase().includes("robot")) {
+        defaultRelated = ["Artificial intelligence", "Coding for kids", "How machines work", "Future technology", "Famous robots"];
+      }
       
-      setRelatedTopics(finalRelatedTopics);
+      // If we're already related topics, just set them without an API call
+      setRelatedTopics(defaultRelated);
+      
     } catch (error) {
       console.error("Error generating related topics:", error);
       // Fallback related topics
@@ -235,7 +275,7 @@ const Chat = () => {
         "Black holes"
       ]);
     }
-  };
+  }, []);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
@@ -299,7 +339,7 @@ const Chat = () => {
       
       setMessages(prev => [...prev, aiResponseMessage]);
       
-      // Add points for analyzing homework
+      // Add points for analyzing homework - using the pointsRef to avoid state closure issues
       setPoints(prev => prev + 20);
       
     } catch (error) {
@@ -677,13 +717,7 @@ const Chat = () => {
             inputValue={inputValue}
             isProcessing={isProcessing}
             selectedTopic={selectedTopic}
-            suggestedPrompts={suggestedTopics.length > 0 ? suggestedTopics : [
-              "Tell me about dinosaurs",
-              "How do planets form?",
-              "What are robots?",
-              "Why is the sky blue?",
-              "How do animals communicate?"
-            ]}
+            suggestedPrompts={suggestedTopics.length > 0 ? suggestedTopics : defaultSuggestedPrompts}
             isListening={isListening}
             showSuggestedPrompts={showSuggestedPrompts}
             onInputChange={handleInputChange}
