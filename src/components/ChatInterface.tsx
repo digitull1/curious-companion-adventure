@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowUpCircle } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
@@ -17,6 +19,7 @@ interface Message {
   blocks?: BlockType[];
   showBlocks?: boolean;
   imagePrompt?: string;
+  imageSource?: string; // For uploaded homework images
   quiz?: {
     question: string;
     options: string[];
@@ -58,6 +61,7 @@ interface ChatInterfaceProps {
   toggleListening: () => void;
   onSuggestedPromptClick: (prompt: string) => void;
   setShowSuggestedPrompts: (show: boolean) => void;
+  onImageCapture: (base64Image: string) => void; // Added the missing prop
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
@@ -87,7 +91,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onVoiceInput,
   toggleListening,
   onSuggestedPromptClick,
-  setShowSuggestedPrompts
+  setShowSuggestedPrompts,
+  onImageCapture // Added the missing prop in the destructuring
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
@@ -138,6 +143,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           toggleListening={toggleListening}
           onSuggestedPromptClick={onSuggestedPromptClick}
           setShowSuggestedPrompts={setShowSuggestedPrompts}
+          onImageCapture={onImageCapture} // Added the missing prop
         />
       </main>
     </div>
