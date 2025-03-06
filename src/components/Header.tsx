@@ -133,7 +133,7 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
         
-        <div className="flex items-center ml-3">
+        <div className="flex items-center ml-3 relative">
           <div 
             className={`h-10 w-10 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical cursor-pointer transition-all duration-300 hover:shadow-magical-hover text-lg touch-manipulation`}
             onClick={() => {
@@ -145,9 +145,10 @@ const Header: React.FC<HeaderProps> = ({
             {getAvatarEmoji()}
           </div>
           
-          <div className="relative z-50" ref={menuRef}>
+          {/* Fixed menu position and z-index */}
+          <div className="absolute right-0 top-12 z-50" ref={menuRef}>
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-pixar py-3 z-50 border border-wonder-purple/10 backdrop-blur-sm bg-white/95 animate-fade-in-up">
+              <div className="w-64 bg-white rounded-xl shadow-pixar py-3 border border-wonder-purple/10 backdrop-blur-0 bg-white/95 animate-fade-in-up">
                 <div className="px-4 py-3 border-b border-wonder-purple/10">
                   <div className="flex items-center gap-3">
                     <div className={`h-14 w-14 rounded-full ${getAvatarColor()} text-white flex items-center justify-center shadow-magical text-2xl`}>

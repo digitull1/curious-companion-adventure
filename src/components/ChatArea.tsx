@@ -217,9 +217,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     >
       {currentSection && renderTopicPill()}
       
-      {/* Display typing indicator at the appropriate position in the chat */}
+      {/* Main chat content */}
       <div className="relative">
-        {/* Main chat content */}
         <div className="space-y-6">
           {/* Display welcome message first */}
           {welcomeMessage && (
@@ -239,6 +238,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   onSectionClick={onTocSectionClick}
                 />
               </ChatMessage>
+            </div>
+          )}
+          
+          {/* Place typing indicator within the message flow, right after the last message */}
+          {showTypingIndicator && (
+            <div className="px-4 mb-2">
+              <TypingIndicator />
             </div>
           )}
           
@@ -286,8 +292,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                       onClick={() => onRelatedTopicClick(topic)}
                       className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
                                 hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
-                                hover:-translate-y-1 transform touch-manipulation"
-                      style={{ opacity: 0 }} // Initially invisible for animation
+                                hover:-translate-y-1 transform touch-manipulation opacity-100"
                     >
                       <div className="flex justify-between items-start mb-1">
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
@@ -313,13 +318,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   <p className="text-muted-foreground text-sm">You've completed all sections of this topic.</p>
                 </div>
               </div>
-            </div>
-          )}
-          
-          {/* Place typing indicator right after the last message */}
-          {showTypingIndicator && (
-            <div className="px-4 mb-2">
-              <TypingIndicator />
             </div>
           )}
           
