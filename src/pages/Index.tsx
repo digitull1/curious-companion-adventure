@@ -1,12 +1,33 @@
-import React, { useEffect, useRef } from "react";
+
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
-import { Award, BookOpen, Brain, CheckCircle, Lightbulb, Sparkles, Star, Trophy } from "lucide-react";
+import { 
+  ArrowRight, 
+  ArrowUp, 
+  Brain, 
+  CheckCircle, 
+  ChevronDown, 
+  ChevronRight, 
+  Lock, 
+  MessageCircle, 
+  Rocket, 
+  Sparkles, 
+  Star, 
+  Trophy,
+  X 
+} from "lucide-react";
+import { createStarryBackground, showWaitlistSuccess } from "@/utils/confetti";
+import { toast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
-  const featuresSectionRef = useRef<HTMLDivElement>(null);
+  const starBackgroundRef = useRef<HTMLDivElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const [email, setEmail] = useState("");
+  const [isEmailValid, setIsEmailValid] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Check if user has already completed onboarding
   useEffect(() => {
@@ -19,438 +40,765 @@ const Index = () => {
     }
   }, [navigate]);
   
-  // Add mouse movement effect for a subtle parallax on the hero section
+  // Create starry background effect
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!heroRef.current) return;
-      
-      const { clientX, clientY } = e;
-      const { innerWidth, innerHeight } = window;
-      
-      // Calculate the position of the mouse as a percentage of the window
-      const percentX = clientX / innerWidth;
-      const percentY = clientY / innerHeight;
-      
-      // Calculate the offset for different elements based on the mouse position
-      // This creates a subtle parallax effect
-      const orbs = heroRef.current.querySelectorAll('.magical-orb');
-      orbs.forEach((orb, index) => {
-        const speedFactor = 0.03 + (index * 0.01);
-        const xOffset = (percentX - 0.5) * 100 * speedFactor; 
-        const yOffset = (percentY - 0.5) * 100 * speedFactor;
-        (orb as HTMLElement).style.transform = `translate(${xOffset}px, ${yOffset}px)`;
-      });
-      
-      // Move the sparkles in the opposite direction for contrast
-      const sparkles = heroRef.current.querySelectorAll('.sparkle');
-      sparkles.forEach((sparkle, index) => {
-        const speedFactor = 0.02 + (index * 0.005);
-        const xOffset = (0.5 - percentX) * 100 * speedFactor; 
-        const yOffset = (0.5 - percentY) * 100 * speedFactor;
-        (sparkle as HTMLElement).style.transform = `translate(${xOffset}px, ${yOffset}px)`;
-      });
+    if (starBackgroundRef.current) {
+      createStarryBackground(starBackgroundRef.current);
+    }
+    
+    // Add scroll to top button visibility logic
+    const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+    const handleScroll = () => {
+      if (scrollToTopBtn) {
+        if (window.scrollY > 300) {
+          scrollToTopBtn.classList.remove('opacity-0');
+          scrollToTopBtn.classList.add('opacity-100');
+        } else {
+          scrollToTopBtn.classList.remove('opacity-100');
+          scrollToTopBtn.classList.add('opacity-0');
+        }
+      }
     };
     
-    window.addEventListener('mousemove', handleMouseMove);
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Add intersection observer for animation on scroll
+  // Email validation
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('animate-fade-in');
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setIsEmailValid(emailRegex.test(email));
+  }, [email]);
+  
+  // Submit email for waitlist
+  const handleWaitlistSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    const featureCards = document.querySelectorAll('.feature-card');
-    featureCards.forEach((card) => {
-      observer.observe(card);
-      // Initially hide the cards
-      card.classList.add('opacity-0');
-    });
-    
-    return () => {
-      featureCards.forEach((card) => {
-        observer.unobserve(card);
+    if (!isEmailValid) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive"
       });
-    };
-  }, []);
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsSubmitting(false);
+      
+      // Success message and confetti
+      showWaitlistSuccess();
+      
+      // Reset form
+      setEmail("");
+      
+      // Log for demo purposes
+      console.log("Added to waitlist:", email);
+    }, 1500);
+  };
+  
+  // Scroll to top function
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
   
   return (
-    <div className="index-container bg-gradient-to-b from-wonder-background via-white to-wonder-background">
-      {/* Hero Section with enhanced visual magic */}
-      <section 
-        ref={heroRef} 
-        className="relative min-h-screen flex items-center justify-center overflow-hidden py-20"
+    <div className="relative">
+      {/* Starry space background */}
+      <div 
+        ref={starBackgroundRef}
+        className="fixed inset-0 bg-gradient-to-b from-[#0B0B1A] via-[#1A1A3A] to-[#0B0B1A] overflow-hidden z-0"
       >
-        {/* Animated background decorative elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Large magical orbs with parallax effect */}
-          <div className="magical-orb w-[500px] h-[500px] top-[-200px] right-[-200px] bg-gradient-fun"></div>
-          <div className="magical-orb w-[400px] h-[400px] bottom-[-150px] left-[-150px] bg-gradient-rainbow" 
-               style={{animationDelay: '2s'}}></div>
-          
-          {/* Smaller floating particles */}
-          {[...Array(12)].map((_, i) => (
-            <div 
-              key={i}
-              className="absolute rounded-full bg-gradient-fun opacity-10 animate-float"
-              style={{
-                width: `${Math.random() * 60 + 20}px`,
-                height: `${Math.random() * 60 + 20}px`,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${Math.random() * 10 + 10}s`
-              }}
-            />
-          ))}
-          
-          {/* Sparkle elements */}
-          {[...Array(20)].map((_, i) => (
-            <div 
-              key={i}
-              className="sparkle absolute"
-              style={{
-                width: `${Math.random() * 6 + 2}px`,
-                height: `${Math.random() * 6 + 2}px`,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                opacity: 0
-              }}
-            />
-          ))}
-        </div>
-        
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-          {/* Enhanced logo with glowing effects */}
-          <div className="mb-8 inline-block relative">
-            <div className="animate-glow absolute inset-0 rounded-full blur-xl opacity-50"></div>
-            <WonderWhizLogo size="xl" />
-          </div>
-          
-          {/* Award badges */}
-          <div className="flex justify-center gap-4 mb-8">
-            <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full pl-1 pr-3 py-1 shadow-wonder">
-              <div className="award-badge w-6 h-6 mr-2">
-                <div className="award-badge-content text-wonder-purple">
-                  <Trophy className="h-3 w-3" />
-                </div>
-              </div>
-              <span className="text-xs font-medium">Educational Excellence Award</span>
+        {/* This div will be filled with stars via JS */}
+      </div>
+      
+      {/* Scroll to top button */}
+      <button
+        id="scrollToTopBtn"
+        onClick={scrollToTop}
+        className="fixed bottom-6 right-6 h-12 w-12 rounded-full bg-wonder-purple text-white flex items-center justify-center shadow-magical z-50 opacity-0 transition-opacity duration-300"
+        aria-label="Scroll to top"
+      >
+        <ArrowUp className="h-5 w-5" />
+      </button>
+      
+      {/* Header */}
+      <header className="fixed top-0 left-0 w-full bg-opacity-10 backdrop-blur-md bg-[#0B0B1A] border-b border-wonder-purple/20 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center">
+              <WonderWhizLogo size="sm" />
             </div>
             
-            <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full pl-1 pr-3 py-1 shadow-wonder">
-              <div className="award-badge w-6 h-6 mr-2">
-                <div className="award-badge-content text-wonder-teal">
-                  <Award className="h-3 w-3" />
-                </div>
-              </div>
-              <span className="text-xs font-medium">IB Curriculum Certified</span>
-            </div>
-          </div>
-          
-          {/* Headline with enhanced typography and animation */}
-          <h1 className="text-5xl sm:text-6xl font-bold mb-4 leading-tight tracking-tight relative">
-            <span className="text-gradient-purple">Where </span>
-            <span className="text-gradient-wonder relative inline-block">
-              Curiosity
-              <Sparkles className="absolute -top-6 -right-5 h-5 w-5 text-wonder-yellow animate-pulse-soft" />
-            </span>
-            <span className="text-gradient-purple"> Meets </span>
-            <span className="text-gradient-teal">AI</span>
-          </h1>
-          
-          {/* Subheading with refined copywriting */}
-          <p className="text-xl text-muted-foreground mb-6 mx-auto max-w-2xl leading-relaxed">
-            An award-winning AI learning companion developed by leading IB educationalists 
-            and child psychology PhDs from Cambridge University
-          </p>
-          
-          {/* Reinforcing educational credentials */}
-          <div className="flex flex-wrap justify-center gap-2 mb-10">
-            <div className="bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-wonder-purple flex items-center shadow-sm">
-              <CheckCircle className="h-3 w-3 mr-1" /> Age-appropriate
-            </div>
-            <div className="bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-wonder-teal flex items-center shadow-sm">
-              <CheckCircle className="h-3 w-3 mr-1" /> Gamified learning
-            </div>
-            <div className="bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-wonder-blue flex items-center shadow-sm">
-              <CheckCircle className="h-3 w-3 mr-1" /> Interactive quizzes
-            </div>
-            <div className="bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-wonder-orange flex items-center shadow-sm">
-              <CheckCircle className="h-3 w-3 mr-1" /> Visual explanations
-            </div>
-          </div>
-          
-          {/* Primary action button with enhanced styling */}
-          <div className="relative inline-block group mb-16">
-            {/* Button highlight/glow effect */}
-            <div className="absolute -inset-0.5 bg-gradient-rainbow opacity-75 blur-md group-hover:opacity-100 transition-opacity duration-300"></div>
+            <nav className="hidden md:flex space-x-8">
+              <a href="#home" className="text-gray-200 hover:text-white transition-colors">Home</a>
+              <a href="#features" className="text-gray-200 hover:text-white transition-colors">Features</a>
+              <a href="#how-it-works" className="text-gray-200 hover:text-white transition-colors">How It Works</a>
+              <a href="#testimonials" className="text-gray-200 hover:text-white transition-colors">Testimonials</a>
+              <a href="#faq" className="text-gray-200 hover:text-white transition-colors">FAQ</a>
+            </nav>
             
-            <button
-              onClick={() => navigate("/onboarding")}
-              className="relative btn-wonder group px-10 py-5 text-lg rounded-full bg-gradient-rainbow text-white font-medium"
+            <button 
+              onClick={() => {
+                const waitlistSection = document.getElementById('waitlist');
+                if (waitlistSection) {
+                  waitlistSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="hidden md:block bg-gradient-to-r from-[#FF5B7F] to-[#FC9C6C] hover:from-[#FF4670] hover:to-[#FC8C5C] text-white px-5 py-2 rounded-full font-medium transition-all transform hover:scale-105 shadow-lg"
             >
-              <span className="relative z-10 inline-flex items-center">
-                Begin Your Learning Adventure
-                <Star className="h-5 w-5 ml-2 transition-transform duration-300 group-hover:rotate-45" />
-              </span>
+              Join Waitlist
+            </button>
+            
+            {/* Mobile menu button */}
+            <button className="md:hidden text-white">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+              </svg>
             </button>
           </div>
-          
-          {/* Scroll indicator with animation */}
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 animate-bounce opacity-60">
-            <div className="w-6 h-10 rounded-full border-2 border-wonder-purple flex items-start justify-center p-1">
-              <div className="w-1.5 h-2.5 bg-wonder-purple rounded-full animate-levitate"></div>
+        </div>
+      </header>
+      
+      {/* Hero Section */}
+      <section 
+        id="home"
+        className="relative min-h-screen pt-24 pb-20 flex items-center z-10"
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row items-center">
+            <div className="lg:w-1/2 lg:pr-8 text-center lg:text-left mb-12 lg:mb-0">
+              <div className="inline-block mb-4 px-4 py-1 rounded-full bg-wonder-purple/10 border border-wonder-purple/20 text-wonder-purple text-sm font-medium">
+                <div className="flex items-center">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  <span>AI-Powered Learning for Kids</span>
+                </div>
+              </div>
+              
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-white">
+                The AI Learning
+                <br />
+                <span className="bg-gradient-to-r from-wonder-purple to-wonder-blue bg-clip-text text-transparent">Adventure Begins</span>
+                <span className="text-[#FF5B7F]">!</span>
+              </h1>
+              
+              <p className="text-xl text-gray-300 mb-8 max-w-xl mx-auto lg:mx-0">
+                Meet WonderWhiz: The AI-powered tutor that makes curiosity
+                <span className="font-bold text-white"> UNSTOPPABLE!</span>
+              </p>
+              
+              <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
+                <div className="flex-1 sm:flex-initial">
+                  <form onSubmit={handleWaitlistSubmit} className="flex">
+                    <input 
+                      ref={emailRef}
+                      type="email" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email" 
+                      className="flex-grow px-4 py-3 rounded-l-lg bg-gray-800 border border-wonder-purple/30 text-white focus:outline-none focus:ring-2 focus:ring-wonder-purple/50"
+                      required
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={isSubmitting || !isEmailValid}
+                      className={`px-5 py-3 rounded-r-lg font-medium flex items-center justify-center transition-all ${
+                        isEmailValid ? 'bg-gradient-to-r from-[#FF5B7F] to-[#FC9C6C] hover:from-[#FF4670] hover:to-[#FC8C5C] text-white' : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                      }`}
+                    >
+                      {isSubmitting ? (
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <>
+                          <span>Join Waitlist</span>
+                          <Sparkles className="ml-2 h-5 w-5" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </div>
+                
+                <button 
+                  onClick={() => navigate("/onboarding")}
+                  className="px-5 py-3 bg-wonder-purple hover:bg-wonder-purple-dark text-white rounded-lg font-medium flex items-center justify-center transition-all"
+                >
+                  <span>Try Demo</span>
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </button>
+              </div>
+              
+              <div className="mt-8 flex items-center justify-center lg:justify-start">
+                <div className="flex items-center text-gray-400 text-sm">
+                  <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                  <span className="font-medium text-white">2,500+</span>
+                  <span className="ml-1">parents & educators already signed up!</span>
+                </div>
+              </div>
             </div>
+            
+            <div className="lg:w-1/2 relative">
+              <div className="relative z-10">
+                <div className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 mx-auto bg-gradient-to-b from-wonder-blue to-wonder-purple rounded-full flex items-center justify-center p-1 shadow-[0_0_100px_rgba(155,135,245,0.3)]">
+                  <div className="w-full h-full rounded-full bg-gradient-to-b from-[#8A5CF6] to-[#0EA5E9] flex items-center justify-center overflow-hidden">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">Whizzy</div>
+                      <div className="text-sm text-white/80">Your AI Learning Buddy</div>
+                      <div className="mt-4 text-5xl">😊</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Topic bubbles */}
+                <div className="absolute top-0 -right-10 w-20 h-20 bg-[#FF5B7F]/80 rounded-full flex items-center justify-center transform rotate-6 shadow-lg">
+                  <span className="text-white font-medium">History</span>
+                </div>
+                
+                <div className="absolute bottom-10 -left-10 w-20 h-20 bg-wonder-teal/80 rounded-full flex items-center justify-center transform -rotate-6 shadow-lg">
+                  <span className="text-white font-medium">Space</span>
+                </div>
+                
+                <div className="absolute bottom-1/3 -right-5 w-16 h-16 bg-wonder-blue/80 rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-white font-medium">Math</span>
+                </div>
+                
+                <div className="absolute top-1/4 -left-16 w-24 h-24 bg-[#F59E0B]/80 rounded-full flex items-center justify-center transform rotate-12 shadow-lg">
+                  <span className="text-white font-medium">Dinosaurs</span>
+                </div>
+                
+                {/* Chat bubble */}
+                <div className="absolute -bottom-12 right-0 bg-white rounded-2xl rounded-br-none p-4 shadow-xl max-w-[220px]">
+                  <p className="text-gray-800 text-sm">Hi there! What would you like to learn today?</p>
+                  <div className="absolute w-4 h-4 bg-white transform rotate-45 right-0 -bottom-2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Scroll indicator */}
+          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce flex flex-col items-center">
+            <span className="text-white/60 text-sm mb-2">Scroll to explore</span>
+            <ChevronDown className="h-6 w-6 text-white/60" />
           </div>
         </div>
       </section>
       
-      {/* Feature section with premium card design */}
-      <section 
-        ref={featuresSectionRef}
-        className="relative py-24 px-6 bg-gradient-to-b from-white to-wonder-background overflow-hidden"
-      >
-        {/* Section heading with elegant design */}
-        <div className="max-w-6xl mx-auto">
-          {/* Section heading with elegant design */}
-          <div className="relative mb-16 text-center">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-rainbow bg-clip-text text-transparent inline-flex items-center">
-              <Lightbulb className="h-8 w-8 mr-3 text-wonder-yellow" />
-              Developed By Educational Experts
+      {/* Features Section */}
+      <section id="features" className="py-20 bg-[#0B0B1A]/70 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              A Learning Experience Like
+              <span className="text-wonder-purple"> Never Before!</span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Our team of IB educationalists and Cambridge University child psychologists have
-              created the ultimate learning tool for curious young minds
+            <p className="text-gray-300 text-lg max-w-3xl mx-auto">
+              See how WonderWhiz transforms education into an exciting adventure.
             </p>
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-20 h-1 bg-gradient-rainbow rounded-full"></div>
           </div>
           
-          {/* Feature cards with premium styling */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="feature-card opacity-0" style={{transitionDelay: '0.1s'}}>
-              <div className="flex flex-col items-center text-center h-full">
-                <div className="illustration-container mb-6">
-                  <div className="w-20 h-20 rounded-2xl bg-wonder-purple/10 flex items-center justify-center">
-                    <Brain className="h-10 w-10 text-wonder-purple" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6 transform transition-all hover:scale-105 hover:bg-white/10">
+              <div className="w-14 h-14 bg-wonder-purple/20 rounded-full flex items-center justify-center mb-6">
+                <MessageCircle className="h-7 w-7 text-wonder-purple" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Conversational AI That Feels Like Magic</h3>
+              <p className="text-gray-300">Learning feels like chatting with a super-smart friend! WonderWhiz responds naturally to questions, making complex topics simple and fun.</p>
+            </div>
+            
+            {/* Feature 2 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6 transform transition-all hover:scale-105 hover:bg-white/10">
+              <div className="w-14 h-14 bg-wonder-teal/20 rounded-full flex items-center justify-center mb-6">
+                <Sparkles className="h-7 w-7 text-wonder-teal" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Click-to-Explore Learning Paths</h3>
+              <p className="text-gray-300">Every answer unlocks 5 more paths to discover! Endless curiosity! Knowledge branches out like a tree - one question leads to countless explorations.</p>
+            </div>
+            
+            {/* Feature 3 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6 transform transition-all hover:scale-105 hover:bg-white/10">
+              <div className="w-14 h-14 bg-wonder-blue/20 rounded-full flex items-center justify-center mb-6">
+                <Star className="h-7 w-7 text-wonder-blue" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">AI-Powered Image Generation</h3>
+              <p className="text-gray-300">Ask about dinosaurs? AI creates a hyper-realistic dino on the spot! Visual learning comes to life with AI-generated images that aid understanding.</p>
+            </div>
+            
+            {/* Feature 4 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6 transform transition-all hover:scale-105 hover:bg-white/10">
+              <div className="w-14 h-14 bg-wonder-yellow/20 rounded-full flex items-center justify-center mb-6">
+                <Trophy className="h-7 w-7 text-wonder-yellow" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Gamified Learning – Points & Achievements!</h3>
+              <p className="text-gray-300">Complete challenges, earn rewards, and level up! Learning becomes a game with achievement badges, progress tracking, and exciting rewards.</p>
+            </div>
+            
+            {/* Feature 5 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6 transform transition-all hover:scale-105 hover:bg-white/10">
+              <div className="w-14 h-14 bg-[#FF5B7F]/20 rounded-full flex items-center justify-center mb-6">
+                <Brain className="h-7 w-7 text-[#FF5B7F]" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Personalized for Every Child</h3>
+              <p className="text-gray-300">WonderWhiz adapts to every child's age & learning level! AI technology tailors content to match each child's abilities and interests.</p>
+            </div>
+            
+            {/* Feature 6 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6 transform transition-all hover:scale-105 hover:bg-white/10">
+              <div className="w-14 h-14 bg-wonder-green/20 rounded-full flex items-center justify-center mb-6">
+                <Lock className="h-7 w-7 text-wonder-green" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Safe & Privacy-Focused</h3>
+              <p className="text-gray-300">COPPA compliant with strong data protection. Parents can monitor learning progress while maintaining their child's privacy and security.</p>
+            </div>
+          </div>
+          
+          {/* CTA Card */}
+          <div className="mt-16 bg-gradient-to-r from-wonder-purple to-wonder-blue rounded-2xl p-8 text-center">
+            <h3 className="text-2xl font-bold text-white mb-4">Ready to transform learning?</h3>
+            <p className="text-white/90 mb-6">Be among the first to experience the future of education with WonderWhiz!</p>
+            <button 
+              onClick={() => {
+                const waitlistSection = document.getElementById('waitlist');
+                if (waitlistSection) {
+                  waitlistSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="px-8 py-3 bg-white text-wonder-purple font-medium rounded-full transform transition-all hover:scale-105 hover:shadow-lg flex items-center justify-center mx-auto"
+            >
+              <Rocket className="mr-2 h-5 w-5" />
+              <span>Join the Waitlist – Be the First to Try It!</span>
+            </button>
+          </div>
+        </div>
+      </section>
+      
+      {/* How It Works */}
+      <section id="how-it-works" className="py-20 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">How WonderWhiz Works</h2>
+            <p className="text-gray-300 text-lg max-w-3xl mx-auto">
+              A simple 5-step journey to transform how your child learns
+            </p>
+          </div>
+          
+          {/* Steps timeline */}
+          <div className="relative max-w-4xl mx-auto">
+            {/* Timeline line */}
+            <div className="absolute top-10 left-4 md:left-1/2 md:-ml-1 w-2 md:w-full h-[calc(100%-4rem)] md:h-2 bg-gray-700"></div>
+            
+            <div className="space-y-16 md:space-y-0 md:grid md:grid-cols-5 mb-10">
+              {/* Step 1 */}
+              <div className="relative md:text-center">
+                <div className="flex md:block items-center">
+                  <div className="z-10 flex items-center justify-center w-8 h-8 bg-wonder-purple text-white rounded-full relative left-0 md:left-1/2 md:-ml-4 md:mb-4">
+                    1
                   </div>
-                  <div className="illustration-shadow"></div>
+                  <h3 className="text-xl font-bold text-white ml-6 md:ml-0">Ask Anything!</h3>
                 </div>
-                <h3 className="text-2xl font-bold mb-3 text-foreground">Age-Appropriate Content</h3>
-                <p className="text-muted-foreground leading-relaxed flex-grow">
-                  Every interaction is tailored to your child's age (5-16), ensuring content is challenging yet accessible
-                </p>
-                <div className="mt-4 h-12 flex items-center justify-center">
-                  <div className="point-counter">+25 Learning Points</div>
+                <div className="pl-14 md:pl-0 md:px-4 mt-2 text-gray-300">
+                  Type any question and get engaging, age-appropriate responses.
+                </div>
+              </div>
+              
+              {/* Step 2 */}
+              <div className="relative md:text-center">
+                <div className="flex md:block items-center">
+                  <div className="z-10 flex items-center justify-center w-8 h-8 bg-[#FF5B7F] text-white rounded-full relative left-0 md:left-1/2 md:-ml-4 md:mb-4">
+                    2
+                  </div>
+                  <h3 className="text-xl font-bold text-white ml-6 md:ml-0">Click & Explore</h3>
+                </div>
+                <div className="pl-14 md:pl-0 md:px-4 mt-2 text-gray-300">
+                  Dive deeper with interactive elements and discover related topics.
+                </div>
+              </div>
+              
+              {/* Step 3 */}
+              <div className="relative md:text-center">
+                <div className="flex md:block items-center">
+                  <div className="z-10 flex items-center justify-center w-8 h-8 bg-wonder-teal text-white rounded-full relative left-0 md:left-1/2 md:-ml-4 md:mb-4">
+                    3
+                  </div>
+                  <h3 className="text-xl font-bold text-white ml-6 md:ml-0">See It in Action!</h3>
+                </div>
+                <div className="pl-14 md:pl-0 md:px-4 mt-2 text-gray-300">
+                  Visualize concepts with AI-generated images and illustrations.
+                </div>
+              </div>
+              
+              {/* Step 4 */}
+              <div className="relative md:text-center">
+                <div className="flex md:block items-center">
+                  <div className="z-10 flex items-center justify-center w-8 h-8 bg-wonder-yellow text-white rounded-full relative left-0 md:left-1/2 md:-ml-4 md:mb-4">
+                    4
+                  </div>
+                  <h3 className="text-xl font-bold text-white ml-6 md:ml-0">Test Your Knowledge</h3>
+                </div>
+                <div className="pl-14 md:pl-0 md:px-4 mt-2 text-gray-300">
+                  Take interactive quizzes to reinforce learning with immediate feedback.
+                </div>
+              </div>
+              
+              {/* Step 5 */}
+              <div className="relative md:text-center">
+                <div className="flex md:block items-center">
+                  <div className="z-10 flex items-center justify-center w-8 h-8 bg-wonder-blue text-white rounded-full relative left-0 md:left-1/2 md:-ml-4 md:mb-4">
+                    5
+                  </div>
+                  <h3 className="text-xl font-bold text-white ml-6 md:ml-0">Earn Points & Rewards</h3>
+                </div>
+                <div className="pl-14 md:pl-0 md:px-4 mt-2 text-gray-300">
+                  Get certificates and achievements to celebrate learning milestones.
                 </div>
               </div>
             </div>
             
-            <div className="feature-card opacity-0" style={{transitionDelay: '0.2s'}}>
-              <div className="flex flex-col items-center text-center h-full">
-                <div className="illustration-container mb-6">
-                  <div className="w-20 h-20 rounded-2xl bg-wonder-blue/10 flex items-center justify-center">
-                    <BookOpen className="h-10 w-10 text-wonder-blue" />
-                  </div>
-                  <div className="illustration-shadow"></div>
+            {/* Demo example */}
+            <div className="mt-20 bg-[#0F0F2E] rounded-2xl border border-wonder-purple/20 overflow-hidden shadow-2xl max-w-3xl mx-auto">
+              <div className="px-6 py-4 bg-[#0D0D26] flex items-center justify-between">
+                <div className="flex space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 </div>
-                <h3 className="text-2xl font-bold mb-3 text-foreground">Encyclopedia Approach</h3>
-                <p className="text-muted-foreground leading-relaxed flex-grow">
-                  Topics are broken down into digestible sections with a table of contents for deeper, focused exploration
-                </p>
-                <div className="mt-4 h-12 flex items-center justify-center">
-                  <div className="achievement-unlock p-0.5">
-                    <div className="achievement-content flex items-center justify-center gap-2">
-                      <Trophy className="h-5 w-5 text-wonder-yellow" />
-                      <span className="text-xs font-medium">Knowledge Explorer</span>
+                <div className="text-gray-300 text-sm">WonderWhiz Chat</div>
+                <div></div>
+              </div>
+              
+              <div className="p-6">
+                <div className="flex items-start mb-6">
+                  <div className="flex-shrink-0 bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center text-lg">
+                    👧
+                  </div>
+                  <div className="ml-4 bg-gray-700 rounded-2xl rounded-tl-none px-4 py-3 text-white max-w-sm">
+                    <p>How do volcanoes work?</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start mb-6">
+                  <div className="flex-shrink-0 bg-wonder-purple rounded-full w-10 h-10 flex items-center justify-center">
+                    <Sparkles className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="ml-4 bg-wonder-purple/90 rounded-2xl rounded-tl-none px-4 py-3 text-white max-w-md">
+                    <p>Volcanoes are like Earth's pressure valves! Imagine hot liquid rock (magma) under the Earth's crust trying to escape. When it finds a weak spot—BOOM! The magma, now called lava, bursts through creating mountains that can explode dramatically! Want to see what's happening inside?</p>
+                    
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button className="bg-white/20 hover:bg-white/30 rounded-full px-3 py-1 text-sm transition-colors">
+                        See inside a volcano
+                      </button>
+                      <button className="bg-white/20 hover:bg-white/30 rounded-full px-3 py-1 text-sm transition-colors">
+                        Types of volcanoes
+                      </button>
+                      <button className="bg-white/20 hover:bg-white/30 rounded-full px-3 py-1 text-sm transition-colors">
+                        Famous eruptions
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Testimonials */}
+      <section id="testimonials" className="py-20 bg-[#0B0B1A]/70 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Parents & Educators Are Already Raving About WonderWhiz!
+            </h2>
+            <p className="text-gray-300 text-lg max-w-3xl mx-auto">
+              See what real people are saying about their experience with WonderWhiz.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Testimonial 1 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-wonder-purple/20 rounded-full flex items-center justify-center">
+                  <span className="text-xl">👩‍👦</span>
+                </div>
+                <div className="ml-4">
+                  <h4 className="text-white font-bold">Sarah T.</h4>
+                  <p className="text-gray-400 text-sm">Parent of 8-year-old</p>
+                </div>
+              </div>
+              <p className="text-gray-300">"My son used to dread learning, but now he can't wait to chat with WonderWhiz! He's asking questions I never thought he'd be interested in—from dinosaurs to outer space. It's amazing to see his curiosity explode!"</p>
+              <div className="mt-4 flex">
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+              </div>
+            </div>
             
-            <div className="feature-card opacity-0" style={{transitionDelay: '0.3s'}}>
-              <div className="flex flex-col items-center text-center h-full">
-                <div className="illustration-container mb-6">
-                  <div className="w-20 h-20 rounded-2xl bg-wonder-green/10 flex items-center justify-center">
-                    <Star className="h-10 w-10 text-wonder-green" />
-                  </div>
-                  <div className="illustration-shadow"></div>
+            {/* Testimonial 2 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-wonder-teal/20 rounded-full flex items-center justify-center">
+                  <span className="text-xl">👨‍🏫</span>
                 </div>
-                <h3 className="text-2xl font-bold mb-3 text-foreground">Interactive Quizzes</h3>
-                <p className="text-muted-foreground leading-relaxed flex-grow">
-                  Test understanding with engaging quizzes and earn certificates of completion that can be shared and printed
-                </p>
-                <div className="mt-4 h-12 flex items-center justify-center">
-                  <div className="progress-track w-32">
-                    <div className="progress-bar w-3/4"></div>
-                  </div>
+                <div className="ml-4">
+                  <h4 className="text-white font-bold">Michael R.</h4>
+                  <p className="text-gray-400 text-sm">Elementary Teacher</p>
                 </div>
+              </div>
+              <p className="text-gray-300">"As a teacher with 25 students, it's impossible to give everyone individual attention. WonderWhiz helps by providing personalized learning paths for each child. It's like having a teaching assistant who never gets tired!"</p>
+              <div className="mt-4 flex">
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+              </div>
+            </div>
+            
+            {/* Testimonial 3 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-wonder-blue/20 rounded-full flex items-center justify-center">
+                  <span className="text-xl">👩‍👧</span>
+                </div>
+                <div className="ml-4">
+                  <h4 className="text-white font-bold">Emily K.</h4>
+                  <p className="text-gray-400 text-sm">Parent of 10-year-old</p>
+                </div>
+              </div>
+              <p className="text-gray-300">"My daughter struggles with traditional textbooks, but WonderWhiz makes learning visual and interactive. The AI-generated images help her understand complex concepts, and she's improving rapidly in all subjects!"</p>
+              <div className="mt-4 flex">
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
               </div>
             </div>
           </div>
           
-          {/* Learning path visualization */}
-          <div className="mt-24 relative">
-            <h3 className="text-3xl font-bold mb-10 text-center">Your Child's Learning Journey</h3>
+          {/* Trust badges */}
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-indigo-900/30 border border-wonder-purple/20 rounded-2xl p-6">
+              <div className="flex items-center">
+                <div className="w-16 h-16 bg-wonder-purple/20 rounded-full flex items-center justify-center">
+                  <span className="text-3xl">🎓</span>
+                </div>
+                <div className="ml-6">
+                  <h3 className="text-white font-bold text-xl mb-2">Developed by leading IB educators & Cambridge University child psychologists</h3>
+                  <p className="text-gray-300">Our curriculum and interaction model has been designed by experts in childhood education and development.</p>
+                </div>
+              </div>
+            </div>
             
-            <div className="relative mx-auto max-w-3xl">
-              <div className="learning-path-connector w-[calc(100%-40px)]"></div>
+            <div className="bg-purple-900/30 border border-wonder-purple/20 rounded-2xl p-6">
+              <div className="flex items-center">
+                <div className="w-16 h-16 bg-[#FF5B7F]/20 rounded-full flex items-center justify-center">
+                  <Rocket className="h-8 w-8 text-[#FF5B7F]" />
+                </div>
+                <div className="ml-6">
+                  <h3 className="text-white font-bold text-xl mb-2">Backed by top educational experts & tech leaders</h3>
+                  <p className="text-gray-300">WonderWhiz is funded and supported by industry leaders who are committed to transforming how children interact with technology.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Education Credentials */}
+      <section className="py-20 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Trusted by Educational Experts
+            </h2>
+            <p className="text-gray-300 text-lg max-w-3xl mx-auto">
+              WonderWhiz is developed with the highest standards in childhood education and cognitive development.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Credential 1 */}
+            <div className="bg-[#0F0F2E] border border-wonder-purple/10 rounded-xl p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <span className="text-4xl">🎓</span>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Research-Backed</h3>
+              <p className="text-gray-300 text-sm">Based on proven learning methodologies</p>
+            </div>
+            
+            {/* Credential 2 */}
+            <div className="bg-[#0F0F2E] border border-wonder-purple/10 rounded-xl p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <span className="text-4xl">🔬</span>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Child-Safe</h3>
+              <p className="text-gray-300 text-sm">Secure, monitored learning environment</p>
+            </div>
+            
+            {/* Credential 3 */}
+            <div className="bg-[#0F0F2E] border border-wonder-purple/10 rounded-xl p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Lock className="h-10 w-10 text-yellow-500" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Privacy-First</h3>
+              <p className="text-gray-300 text-sm">COPPA compliant with strong data protection</p>
+            </div>
+            
+            {/* Credential 4 */}
+            <div className="bg-[#0F0F2E] border border-wonder-purple/10 rounded-xl p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Brain className="h-10 w-10 text-pink-500" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Expert-Designed</h3>
+              <p className="text-gray-300 text-sm">Created by leading educators</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 bg-[#0B0B1A]/70 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-gray-300 text-lg max-w-3xl mx-auto">
+              Everything you need to know about WonderWhiz
+            </p>
+          </div>
+          
+          <div className="max-w-3xl mx-auto">
+            {/* FAQ Items */}
+            <div className="space-y-6">
+              <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-2">What age range is WonderWhiz designed for?</h3>
+                <p className="text-gray-300">WonderWhiz is designed for children aged 5-16. The AI adapts its responses, complexity, and explanations based on the child's age and learning level to ensure an optimal learning experience.</p>
+              </div>
               
-              <div className="flex justify-between flex-wrap gap-y-8">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="learning-path-node">1</div>
-                  <div className="text-center">
-                    <h4 className="font-bold">Explore</h4>
-                    <p className="text-sm text-muted-foreground">Ask questions on any topic</p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center gap-3">
-                  <div className="learning-path-node">2</div>
-                  <div className="text-center">
-                    <h4 className="font-bold">Learn</h4>
-                    <p className="text-sm text-muted-foreground">Dive deep with detailed topics</p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center gap-3">
-                  <div className="learning-path-node">3</div>
-                  <div className="text-center">
-                    <h4 className="font-bold">Quiz</h4>
-                    <p className="text-sm text-muted-foreground">Test your knowledge</p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center gap-3">
-                  <div className="learning-path-node">4</div>
-                  <div className="text-center">
-                    <h4 className="font-bold">Achieve</h4>
-                    <p className="text-sm text-muted-foreground">Earn certificates & rewards</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* School endorsement section */}
-      <section className="relative bg-white py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm font-medium text-wonder-purple uppercase tracking-wider mb-4">Trusted by Top International Schools</p>
-          <h2 className="text-3xl font-bold mb-8">
-            "WonderWhiz transforms learning from a <span className="bg-gradient-rainbow bg-clip-text text-transparent">task</span> into an <span className="bg-gradient-rainbow bg-clip-text text-transparent">adventure</span>"
-          </h2>
-          
-          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 mt-12">
-            <div className="w-32 h-20 bg-muted/30 rounded-lg flex items-center justify-center">
-              <p className="font-bold text-muted-foreground">IB Schools</p>
-            </div>
-            <div className="w-32 h-20 bg-muted/30 rounded-lg flex items-center justify-center">
-              <p className="font-bold text-muted-foreground">Cambridge Ed</p>
-            </div>
-            <div className="w-32 h-20 bg-muted/30 rounded-lg flex items-center justify-center">
-              <p className="font-bold text-muted-foreground">EdTech Awards</p>
-            </div>
-            <div className="w-32 h-20 bg-muted/30 rounded-lg flex items-center justify-center">
-              <p className="font-bold text-muted-foreground">Learning Lab</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Sample certificate showcase */}
-      <section className="relative py-20 px-6 bg-gradient-to-b from-wonder-background to-white overflow-hidden">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Personalized Learning Achievements</h2>
-            <p className="text-lg text-muted-foreground">Children earn custom certificates after mastering topics</p>
-          </div>
-          
-          <div className="certificate max-w-2xl mx-auto">
-            <div className="mb-6 text-center">
-              <h3 className="text-2xl font-bold bg-gradient-rainbow bg-clip-text text-transparent uppercase">Certificate of Achievement</h3>
-              <p className="text-sm text-muted-foreground">Proudly presented to</p>
-            </div>
-            
-            <div className="my-8 text-center">
-              <p className="text-3xl font-bold text-wonder-purple">Emma Johnson</p>
-              <div className="h-px w-48 mx-auto bg-wonder-purple/20 my-2"></div>
-              <p className="text-sm text-muted-foreground">For successfully completing</p>
-              <p className="text-xl font-medium text-foreground mt-1">The Solar System Explorer Challenge</p>
-            </div>
-            
-            <div className="flex justify-between items-center mt-12">
-              <div className="flex items-center gap-2">
-                <div className="trophy">
-                  <Trophy className="h-5 w-5 text-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Achievement Points</p>
-                  <p className="font-bold">250 pts</p>
-                </div>
+              <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-2">Is WonderWhiz safe for my child to use?</h3>
+                <p className="text-gray-300">Absolutely! Safety is our top priority. WonderWhiz is built with multiple content filters, parental controls, and is COPPA compliant. All interactions are designed to be educational, age-appropriate, and free from harmful content.</p>
               </div>
               
-              <div>
-                <p className="text-xs text-right text-muted-foreground">Date Completed</p>
-                <p className="font-medium">June 15, 2023</p>
+              <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-2">How does WonderWhiz compare to traditional tutoring?</h3>
+                <p className="text-gray-300">WonderWhiz offers 24/7 availability, personalized learning paths, and interactive content at a fraction of the cost of traditional tutoring. While it doesn't replace human teachers, it complements traditional education by answering unlimited questions and sparking curiosity.</p>
+              </div>
+              
+              <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-2">What subjects does WonderWhiz cover?</h3>
+                <p className="text-gray-300">WonderWhiz covers all major school subjects including Math, Science, Language Arts, Social Studies, History, Geography, and more. It can also explore creative topics like art, music, and even answer questions about current events in an age-appropriate way.</p>
+              </div>
+              
+              <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-2">When will WonderWhiz be available?</h3>
+                <p className="text-gray-300">WonderWhiz is currently in final testing with our educational partners. Join our waitlist today to be among the first to get access when we launch in the coming months. Early waitlist members will receive special founding member benefits!</p>
               </div>
             </div>
           </div>
         </div>
       </section>
       
-      {/* Final CTA section with premium aesthetic */}
-      <section className="relative py-24 px-6 bg-gradient-to-b from-wonder-background to-white overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="magical-orb w-[600px] h-[600px] top-[-300px] left-1/2 -translate-x-1/2 bg-gradient-rainbow"></div>
-        </div>
-        
-        <div className="max-w-5xl mx-auto text-center relative">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
-            Ready to <span className="bg-gradient-rainbow bg-clip-text text-transparent">Wonder</span>?
-          </h2>
-          <p className="text-xl text-muted-foreground mb-10 max-w-xl mx-auto">
-            Join thousands of young explorers discovering the joy of learning with WonderWhiz
-          </p>
-          
-          <button
-            onClick={() => navigate("/onboarding")}
-            className="btn-wonder text-lg px-12 py-5 bg-gradient-rainbow text-white font-medium rounded-full"
-          >
-            Start Your Child's Journey
-          </button>
-          
-          <p className="mt-6 text-sm text-muted-foreground">Trusted by leading educators worldwide</p>
+      {/* Waitlist Section */}
+      <section id="waitlist" className="py-20 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto bg-gradient-to-r from-wonder-purple to-wonder-blue rounded-2xl p-8 text-center shadow-2xl relative overflow-hidden">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+            
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6 relative">Join the Future of Learning Today!</h2>
+            <p className="text-white text-lg mb-8 relative max-w-xl mx-auto">
+              Get early access to WonderWhiz and be among the first to experience how AI can transform your child's education journey
+            </p>
+            
+            <form onSubmit={handleWaitlistSubmit} className="relative max-w-md mx-auto">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email" 
+                  className="flex-grow px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  required
+                />
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting || !isEmailValid}
+                  className={`px-6 py-3 rounded-lg font-medium flex items-center justify-center transition-all ${
+                    isEmailValid ? 'bg-white text-wonder-purple hover:bg-gray-100' : 'bg-white/50 text-wonder-purple/50 cursor-not-allowed'
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <svg className="animate-spin h-5 w-5 text-wonder-purple" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <>
+                      <span>Join Waitlist</span>
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="mt-4 text-white/70 text-sm">
+                By joining, you agree to receive email updates about WonderWhiz. We respect your privacy and will never share your information.
+              </p>
+            </form>
+            
+            <div className="mt-8 flex items-center justify-center">
+              <div className="flex items-center text-white">
+                <CheckCircle className="h-5 w-5 mr-2 text-white" />
+                <span>Join 2,500+ parents & educators already on the waitlist</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
       
-      {/* Footer with minimal Apple-like design */}
-      <footer className="bg-white py-12 px-6 border-t">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-6 md:mb-0">
-            <WonderWhizLogo size="md" />
-            <p className="text-sm text-muted-foreground mt-2">© 2023 WonderWhiz. All rights reserved.</p>
+      {/* Footer */}
+      <footer className="py-10 bg-[#0A0A18] border-t border-wonder-purple/10 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-6 md:mb-0">
+              <WonderWhizLogo size="sm" />
+              <p className="mt-2 text-gray-400 text-sm max-w-md">
+                The AI-powered learning companion that makes curiosity unstoppable. Developed by leading educators and child psychologists.
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
+              <a href="#home" className="text-gray-300 hover:text-white transition-colors">Home</a>
+              <a href="#features" className="text-gray-300 hover:text-white transition-colors">Features</a>
+              <a href="#how-it-works" className="text-gray-300 hover:text-white transition-colors">How It Works</a>
+              <a href="#testimonials" className="text-gray-300 hover:text-white transition-colors">Testimonials</a>
+              <a href="#faq" className="text-gray-300 hover:text-white transition-colors">FAQ</a>
+              <a href="#waitlist" className="text-gray-300 hover:text-white transition-colors">Join Waitlist</a>
+            </div>
           </div>
           
-          <div className="flex gap-8">
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms</a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Support</a>
+          <div className="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-500 text-sm">© 2023 WonderWhiz. All rights reserved.</p>
+            
+            <div className="mt-4 md:mt-0 flex space-x-6">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Contact Us</a>
+            </div>
           </div>
         </div>
       </footer>
