@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect } from "react";
-import { MessageCircle, Send, Sparkles, Lightbulb, Search, X, MicrophoneIcon, ThumbsUp } from "lucide-react";
+import { MessageCircle, Send, Sparkles, Lightbulb, Search, X, Mic, MicOff, ThumbsUp } from "lucide-react";
 import VoiceInput from "@/components/VoiceInput";
 import SuggestedTopics from "@/components/SuggestedTopics";
 import { motion, AnimatePresence } from "framer-motion";
