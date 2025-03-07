@@ -64,31 +64,34 @@ export const useMessageHandling = (
       setShowTypingIndicator(false);
       
       // Improved error handling
-      let errorMessage = "Sorry, there was an error processing your request. Please try again.";
+      let errorMessageText = "Sorry, there was an error processing your request. Please try again.";
       let errorDetails = "";
       
       if (error instanceof Error) {
         console.error(`[MessageHandler] Error details:`, error.stack);
-        errorMessage = `Error: ${error.message}`;
+        errorMessageText = `Error: ${error.message}`;
         errorDetails = error.stack || "";
       }
       
-      toast.error(errorMessage);
+      toast.error(errorMessageText);
       
       // Add error message to the chat
-      const errorMessage: Message = {
+      const errorMessageObj: Message = {
         id: Date.now().toString(),
         text: "I encountered a problem processing your request. Let's try something else!",
         isUser: false,
         error: {
-          message: errorMessage,
+          message: errorMessageText,
           details: errorDetails
         }
       };
       
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, errorMessageObj]);
       
-      return { status: "error" as MessageProcessingStatus, error: errorMessage };
+      return { 
+        status: "error" as MessageProcessingStatus, 
+        error: errorMessageObj
+      };
     } finally {
       console.log(`[MessageHandler] Message processing completed`);
       setIsProcessing(false);
