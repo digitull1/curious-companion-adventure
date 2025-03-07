@@ -41,6 +41,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [sendButtonHover, setSendButtonHover] = useState(false);
+  const [inputLength, setInputLength] = useState(0);
   
   const placeholders = [
     "Ask me anything...",
@@ -52,6 +53,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
     "Wonder about something? Ask me!",
     "What's on your mind today?",
   ];
+  
+  // Track input length for visual feedback
+  useEffect(() => {
+    setInputLength(inputValue.length);
+  }, [inputValue]);
   
   // Rotate placeholders every 5 seconds
   useEffect(() => {
@@ -103,6 +109,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  // Determine if we should show the character count indicator
+  const showCharCount = inputLength > 80;
+
   return (
     <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-t from-white/95 via-white/90 to-white/70 backdrop-blur-lg pt-6 pb-4 px-4 md:px-8 z-20">
       {/* Suggested topics overlay with improved animation */}
@@ -145,31 +154,50 @@ const ChatInput: React.FC<ChatInputProps> = ({
               isFocused 
                 ? 'border-wonder-purple/50 focus:ring-wonder-purple/30 shadow-magical-hover' 
                 : 'border-wonder-purple/20 focus:ring-wonder-purple/30 shadow-wonder'
-            }`}
+            } ${isProcessing ? 'bg-wonder-purple/5' : ''}`}
+            maxLength={500}
           />
           
           {/* Animated icon */}
           <motion.div 
             className={`absolute left-4 top-1/2 -translate-y-1/2 ${isFocused ? 'text-wonder-purple' : 'text-wonder-purple/70'}`}
-            animate={isFocused ? { scale: 1.1 } : { scale: 1 }}
-            transition={{ duration: 0.2 }}
+            animate={isFocused ? { scale: 1.1, rotate: [0, -10, 10, -5, 5, 0] } : { scale: 1 }}
+            transition={{ duration: 0.4, type: "spring" }}
           >
-            {inputValue ? (
+            {isListening ? (
+              <Mic className="h-5 w-5 text-destructive animate-pulse" />
+            ) : inputValue ? (
               <Search className="h-5 w-5" />
             ) : (
               <MessageCircle className="h-5 w-5" />
             )}
           </motion.div>
           
-          {/* Clear input button */}
+          {/* Character count indicator */}
+          {showCharCount && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute -top-6 right-16 text-xs text-muted-foreground"
+            >
+              {500 - inputLength} characters left
+            </motion.div>
+          )}
+          
+          {/* Clear input button with improved animation */}
           {inputValue && !isProcessing && (
-            <button
+            <motion.button
               onClick={handleClearInput}
               className="absolute right-[4.5rem] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Clear input"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              whileHover={{ scale: 1.2, rotate: 90 }}
+              transition={{ duration: 0.2 }}
             >
               <X className="h-4 w-4" />
-            </button>
+            </motion.button>
           )}
           
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
