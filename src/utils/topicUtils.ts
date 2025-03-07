@@ -113,3 +113,64 @@ export const processTopicsFromResponse = (response: string): string[] => {
   console.log("Processed as line breaks:", lines);
   return lines.length > 0 ? lines : [response];
 };
+
+/**
+ * Returns an appropriate emoji for a given topic based on keyword matching
+ */
+export const getTopicEmoji = (topic: string): string => {
+  const lowerTopic = topic.toLowerCase();
+  
+  // Science topics
+  if (lowerTopic.includes('science') || lowerTopic.includes('experiment') || lowerTopic.includes('laboratory')) return '🔬';
+  if (lowerTopic.includes('astronomy') || lowerTopic.includes('space') || lowerTopic.includes('planet') || lowerTopic.includes('star') || lowerTopic.includes('galaxy')) return '🚀';
+  if (lowerTopic.includes('biology') || lowerTopic.includes('cell') || lowerTopic.includes('organism')) return '🧫';
+  if (lowerTopic.includes('chemistry') || lowerTopic.includes('chemical') || lowerTopic.includes('element') || lowerTopic.includes('compound')) return '⚗️';
+  if (lowerTopic.includes('physics') || lowerTopic.includes('force') || lowerTopic.includes('energy') || lowerTopic.includes('motion')) return '⚡';
+  
+  // Nature topics
+  if (lowerTopic.includes('animal') || lowerTopic.includes('mammal') || lowerTopic.includes('wildlife')) return '🦁';
+  if (lowerTopic.includes('plant') || lowerTopic.includes('flower') || lowerTopic.includes('tree')) return '🌱';
+  if (lowerTopic.includes('ocean') || lowerTopic.includes('sea') || lowerTopic.includes('marine')) return '🌊';
+  if (lowerTopic.includes('forest') || lowerTopic.includes('jungle') || lowerTopic.includes('ecosystem')) return '🌳';
+  if (lowerTopic.includes('weather') || lowerTopic.includes('climate') || lowerTopic.includes('meteorology')) return '🌦️';
+  
+  // History topics
+  if (lowerTopic.includes('history') || lowerTopic.includes('ancient') || lowerTopic.includes('past')) return '📜';
+  if (lowerTopic.includes('war') || lowerTopic.includes('battle') || lowerTopic.includes('conflict')) return '⚔️';
+  if (lowerTopic.includes('civilization') || lowerTopic.includes('culture') || lowerTopic.includes('society')) return '🏛️';
+  
+  // Geography topics
+  if (lowerTopic.includes('geography') || lowerTopic.includes('map') || lowerTopic.includes('terrain')) return '🗺️';
+  if (lowerTopic.includes('mountain') || lowerTopic.includes('volcano')) return '🏔️';
+  if (lowerTopic.includes('river') || lowerTopic.includes('lake')) return '🏞️';
+  if (lowerTopic.includes('desert')) return '🏜️';
+  
+  // Technology topics
+  if (lowerTopic.includes('computer') || lowerTopic.includes('technology') || lowerTopic.includes('digital')) return '💻';
+  if (lowerTopic.includes('internet') || lowerTopic.includes('web') || lowerTopic.includes('online')) return '🌐';
+  if (lowerTopic.includes('robot') || lowerTopic.includes('artificial intelligence') || lowerTopic.includes('ai')) return '🤖';
+  
+  // Math topics
+  if (lowerTopic.includes('math') || lowerTopic.includes('mathematics') || lowerTopic.includes('calculation')) return '🔢';
+  if (lowerTopic.includes('geometry') || lowerTopic.includes('shape')) return '📐';
+  
+  // Art topics
+  if (lowerTopic.includes('art') || lowerTopic.includes('painting') || lowerTopic.includes('drawing')) return '🎨';
+  if (lowerTopic.includes('music') || lowerTopic.includes('instrument') || lowerTopic.includes('song')) return '🎵';
+  if (lowerTopic.includes('literature') || lowerTopic.includes('book') || lowerTopic.includes('story')) return '📚';
+  
+  // Sports and activities
+  if (lowerTopic.includes('sport') || lowerTopic.includes('game') || lowerTopic.includes('play')) return '🏅';
+  if (lowerTopic.includes('exercise') || lowerTopic.includes('fitness') || lowerTopic.includes('health')) return '🏋️';
+  
+  // Human body topics
+  if (lowerTopic.includes('human body') || lowerTopic.includes('anatomy') || lowerTopic.includes('organ')) return '🫀';
+  if (lowerTopic.includes('brain') || lowerTopic.includes('mind') || lowerTopic.includes('neuron')) return '🧠';
+  
+  // Food topics
+  if (lowerTopic.includes('food') || lowerTopic.includes('nutrition') || lowerTopic.includes('diet')) return '🍎';
+  if (lowerTopic.includes('cooking') || lowerTopic.includes('recipe') || lowerTopic.includes('cuisine')) return '👨‍🍳';
+  
+  // Default emoji for topics that don't match any category
+  return '✨';
+};
