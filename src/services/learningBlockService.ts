@@ -1,5 +1,6 @@
 
 import { BlockType, Message } from "@/types/chat";
+import { toast } from "sonner";
 
 export const handleBlockClick = async (
   type: BlockType,
@@ -86,3 +87,4 @@ export const handleBlockClick = async (
     setIsProcessing(false);
   }
 };
+
