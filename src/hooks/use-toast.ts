@@ -38,6 +38,7 @@ export function toast({
   variant,
   ...props
 }: ToastProps) {
+  // Generate a unique ID if one isn't provided
   const toastId = id || crypto.randomUUID();
 
   const update = (props: ToasterToast) =>
@@ -59,7 +60,7 @@ export function toast({
   dispatch(newToast);
 
   // Also send to sonner toast
-  const options: any = { id: toastId }; // Use 'any' as a temporary solution to avoid type errors
+  const options = { id: toastId };
   
   if (variant === 'destructive') {
     sonnerToast.error(title, {

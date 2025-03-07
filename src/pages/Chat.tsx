@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 import { HelpCircle, X } from "lucide-react";
 import Header from "@/components/Header";
 import ChatArea from "@/components/ChatArea";
@@ -717,9 +716,6 @@ const Chat = () => {
           Need ideas?
         </button>
       </div>
-      
-      {/* Toast */}
-      <Toaster position="top-right" />
     </div>
   );
 };
