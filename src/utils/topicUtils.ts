@@ -6,11 +6,27 @@ export const processTopicsFromResponse = (response: string): string[] => {
   // Clean up the response first - remove any prefixes like "Here are 5 topics..."
   let cleanedResponse = response.replace(/^(here are|these are)\s+\d+\s+(engaging|educational|interesting)?.*(topics|ideas|subjects).*?:/i, "").trim();
   
+  // Filter out non-content lines that might be introductory
+  const filterIntroduction = (line: string): boolean => {
+    const lowerLine = line.toLowerCase();
+    return !(
+      lowerLine.includes("welcome") ||
+      lowerLine.includes("introduction") ||
+      lowerLine.includes("hey there") ||
+      lowerLine.includes("hello") ||
+      lowerLine.includes("let's") ||
+      lowerLine.includes("explore") ||
+      lowerLine.includes("get ready") ||
+      lowerLine.includes("in this journey") ||
+      lowerLine.length < 5
+    );
+  };
+  
   // Check if already formatted as a list with numbers or bullets
   if (cleanedResponse.includes("\n")) {
     const lines = cleanedResponse.split("\n").map(line => 
       line.replace(/^\d+[\.\)]?\s*|\*\s*|•\s*|-\s*|and\s+/i, "").trim()
-    ).filter(line => line.length > 0);
+    ).filter(line => line.length > 0 && filterIntroduction(line));
     
     console.log("Processed as numbered/bulleted list:", lines);
     return lines;
@@ -20,7 +36,7 @@ export const processTopicsFromResponse = (response: string): string[] => {
   if (cleanedResponse.includes(",")) {
     const topics = cleanedResponse.split(",").map(topic => 
       topic.replace(/^\d+[\.\)]?\s*|and\s+$/i, "").trim()
-    ).filter(topic => topic.length > 0);
+    ).filter(topic => topic.length > 0 && filterIntroduction(topic));
     
     console.log("Processed as comma-separated list:", topics);
     return topics;
@@ -28,7 +44,7 @@ export const processTopicsFromResponse = (response: string): string[] => {
   
   // Just return as a single item if no clear separator
   console.log("No clear separator, returning as single item");
-  return [cleanedResponse.trim()];
+  return [cleanedResponse.trim()].filter(filterIntroduction);
 };
 
 // Map topics to appropriate emoji icons based on keywords
@@ -54,6 +70,7 @@ export const getTopicEmoji = (topic: string): string => {
   if (lowercaseTopic.includes("music") || lowercaseTopic.includes("instrument")) return "🎵";
   if (lowercaseTopic.includes("art") || lowercaseTopic.includes("craft") || lowercaseTopic.includes("draw")) return "🎨";
   if (lowercaseTopic.includes("build") || lowercaseTopic.includes("bridge") || lowercaseTopic.includes("construct")) return "🏗️";
+  if (lowercaseTopic.includes("cycle")) return "🔄";
   
   // Default emoji for topics without specific matches
   return "✨";

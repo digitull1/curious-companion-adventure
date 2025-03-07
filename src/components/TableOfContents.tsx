@@ -1,7 +1,8 @@
 
 import React, { useRef, useEffect } from "react";
-import { CheckCircle, BookOpen, ArrowRight, ChevronRight } from "lucide-react";
+import { CheckCircle, BookOpen, ArrowRight, ChevronRight, Plus } from "lucide-react";
 import { animate } from "@motionone/dom";
+import { Button } from "@/components/ui/button";
 
 interface TableOfContentsProps {
   sections: string[];
@@ -28,7 +29,7 @@ const getTopicEmoji = (section: string): string => {
   if (lowerSection.includes("food") || lowerSection.includes("eat")) return "🍎";
   if (lowerSection.includes("art") || lowerSection.includes("draw") || lowerSection.includes("paint")) return "🎨";
   if (lowerSection.includes("music") || lowerSection.includes("song") || lowerSection.includes("sound")) return "🎵";
-  if (lowerSection.includes("chicken") || lowerSection.includes("butter") || lowerSection.includes("बटर चिकन")) return "🍗";
+  if (lowerSection.includes("water") || lowerSection.includes("cycle") || lowerSection.includes("rain")) return "💧";
   
   // Default emojis based on position in the list (for topics that don't match above)
   const defaultEmojis = ["📚", "✨", "💡", "🔍", "🧩"];
@@ -64,6 +65,22 @@ const processMultilingualSections = (sections: string[]): string[] => {
   return sections;
 };
 
+// Filter out introduction/welcome messages
+const filterIntroSections = (sections: string[]): string[] => {
+  return sections.filter(section => {
+    const lowerSection = section.toLowerCase();
+    return !(
+      lowerSection.includes("welcome") ||
+      lowerSection.includes("introduction") ||
+      lowerSection.includes("hey there") ||
+      lowerSection.includes("hello") ||
+      lowerSection.includes("let's dive") ||
+      lowerSection.includes("explore") ||
+      lowerSection.includes("get ready")
+    );
+  });
+};
+
 const TableOfContents: React.FC<TableOfContentsProps> = ({ 
   sections,
   completedSections,
@@ -73,9 +90,17 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   const tocRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const celebrationRef = useRef<HTMLDivElement>(null);
+  const [showAllSections, setShowAllSections] = React.useState(false);
   
   // Process sections to handle multilingual content properly
-  const processedSections = processMultilingualSections(sections);
+  let processedSections = processMultilingualSections(sections);
+  
+  // Filter out introduction sections
+  processedSections = filterIntroSections(processedSections);
+  
+  // Now limit to 5 sections initially
+  const limitedSections = showAllSections ? processedSections : processedSections.slice(0, 5);
+  const hasMoreSections = processedSections.length > 5;
   
   useEffect(() => {
     if (tocRef.current) {
@@ -97,7 +122,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         }
       });
     }
-  }, [processedSections]);
+  }, [limitedSections]);
   
   // Add celebration animation when all sections are completed
   useEffect(() => {
@@ -159,7 +184,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-gradient-radial from-wonder-purple/10 to-transparent rounded-full"></div>
         
         <div className="space-y-3 relative">
-          {processedSections.map((section, index) => {
+          {limitedSections.map((section, index) => {
             const isCompleted = completedSections.includes(section);
             const isCurrent = section === currentSection;
             const topicEmoji = getTopicEmoji(section);
@@ -180,8 +205,8 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                   }`}
                 style={{ opacity: 0 }} // Start invisible for animation
               >
-                <div className="flex items-center max-w-[85%]">
-                  <div className={`flex items-center justify-center min-w-8 h-8 rounded-full mr-3 transition-all 
+                <div className="flex items-center w-[85%]">
+                  <div className={`flex-shrink-0 flex items-center justify-center min-w-8 h-8 rounded-full mr-3 transition-all 
                                  ${isCompleted 
                                   ? "bg-wonder-purple text-white shadow-magical" 
                                   : isCurrent
@@ -192,14 +217,14 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                       : <span className="text-sm font-medium">{index + 1}</span>
                     }
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col w-full">
                     <span className={`transition-colors ${
                       isCompleted 
                         ? "text-wonder-purple font-medium" 
                         : isCurrent
                           ? "text-wonder-blue font-medium"
                           : "group-hover:text-wonder-purple"
-                    } truncate`}>
+                    } line-clamp-2`}>
                       {cleanedSection} <span className="ml-1">{topicEmoji}</span>
                     </span>
                     {isCurrent && (
@@ -208,7 +233,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                   </div>
                 </div>
                 
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center transform transition-all duration-300 
+                <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transform transition-all duration-300 
                                ${isCompleted 
                                   ? "bg-wonder-purple/10" 
                                   : isCurrent
@@ -224,6 +249,19 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
               </button>
             );
           })}
+          
+          {/* Show more sections button */}
+          {hasMoreSections && (
+            <button
+              onClick={() => setShowAllSections(!showAllSections)}
+              className="w-full mt-3 py-2 px-4 bg-white/80 backdrop-blur-sm border border-wonder-purple/10 
+                       rounded-lg flex items-center justify-center gap-2 text-wonder-purple hover:bg-wonder-purple/5 
+                       hover:border-wonder-purple/20 transition-all duration-300 hover:shadow-sm"
+            >
+              <Plus className="h-4 w-4" />
+              <span>{showAllSections ? "Show fewer sections" : `Show ${processedSections.length - 5} more sections`}</span>
+            </button>
+          )}
         </div>
         
         {completedSections.length === processedSections.length && processedSections.length > 0 && (
@@ -239,6 +277,26 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
             <div className="h-12 w-12 bg-white rounded-full shadow-magical flex items-center justify-center">
               <span className="text-2xl">🏆</span>
             </div>
+          </div>
+        )}
+        
+        {/* Call to action after completing sections */}
+        {completedSections.length === processedSections.length && processedSections.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <Button 
+              variant="outline"
+              className="bg-white shadow-sm hover:shadow-magical border border-wonder-purple/10 hover:border-wonder-purple/20"
+              onClick={() => onSectionClick("Generate more content")}
+            >
+              Generate more content
+            </Button>
+            <Button 
+              variant="outline"
+              className="bg-white shadow-sm hover:shadow-magical border border-wonder-purple/10 hover:border-wonder-purple/20"
+              onClick={() => onSectionClick("Explore other topics")}
+            >
+              Try a new topic
+            </Button>
           </div>
         )}
       </div>

@@ -1,7 +1,24 @@
+
 import { useCallback, useEffect } from "react";
 import { Message } from "@/types/chat";
 import { toast } from "sonner";
 import { processTopicsFromResponse } from "@/utils/topicUtils";
+
+// Function to filter out introductory/welcome sections
+const filterIntroSections = (sections: string[]): string[] => {
+  return sections.filter(section => {
+    const lowerSection = section.toLowerCase();
+    return !(
+      lowerSection.includes("welcome") ||
+      lowerSection.includes("introduction") ||
+      lowerSection.includes("hey there") ||
+      lowerSection.includes("hello") ||
+      lowerSection.includes("let's dive") ||
+      lowerSection.includes("explore") ||
+      lowerSection.includes("get ready")
+    );
+  });
+};
 
 export const useTopicManagement = (
   selectedTopic: string | null,
@@ -102,14 +119,20 @@ export const useTopicManagement = (
       await new Promise(resolve => setTimeout(resolve, 1000));
       setShowTypingIndicator(false);
       
-      // Generate table of contents for encyclopedia-style approach
-      const tocPrompt = `Generate a concise table of contents with 4-5 sections for learning about: ${inputValue}. Format as a numbered list.`;
+      // Generate table of contents for encyclopedia-style approach - limit to 5 focused sections
+      const tocPrompt = `Generate a concise table of contents with exactly 5 short, focused sections for learning about: ${inputValue}. Format as a simple numbered list. No welcome or introduction sections, focus only on educational content.`;
       const tocResponse = await generateResponse(tocPrompt, ageRange, language);
       console.log("Generated TOC response:", tocResponse);
       
       // Parse the TOC into sections
-      const sections = processTopicsFromResponse(tocResponse);
+      let sections = processTopicsFromResponse(tocResponse);
       console.log("Parsed TOC sections:", sections);
+      
+      // Filter out any introduction sections and limit to 5
+      sections = filterIntroSections(sections);
+      if (sections.length > 5) {
+        sections = sections.slice(0, 5);
+      }
       
       // Create introduction message with TOC
       const tocMessage: Message = {
