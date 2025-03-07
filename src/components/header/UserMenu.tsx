@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Settings, Moon, Sun, Sparkles } from "lucide-react";
@@ -36,7 +35,12 @@ const UserMenu: React.FC<UserMenuProps> = ({
         menuRef.current,
         { opacity: [0, 1], y: [-10, 0], scale: [0.95, 1] },
         { duration: 0.3, easing: [0.16, 1, 0.3, 1] }
-      ).then(() => setIsAnimating(false));
+      );
+      
+      // Set isAnimating to false after animation duration
+      const animationTimeout = setTimeout(() => {
+        setIsAnimating(false);
+      }, 300); // Same as the duration of the animation (0.3s)
       
       // Animate menu items with staggered delay
       const menuItems = menuRef.current.querySelectorAll('.menu-item');
@@ -47,6 +51,9 @@ const UserMenu: React.FC<UserMenuProps> = ({
           { duration: 0.2, delay: 0.05 * index + 0.1, easing: "ease-out" }
         );
       });
+      
+      // Clean up timeout on unmount
+      return () => clearTimeout(animationTimeout);
     }
   }, [isOpen]);
 
