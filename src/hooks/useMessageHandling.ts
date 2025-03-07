@@ -13,7 +13,9 @@ export const useMessageHandling = (
   setPoints: (pointsSetter: (prev: number) => number) => void
 ) => {
   const processMessage = async (prompt: string, isUserMessage: boolean = true, skipUserMessage: boolean = false) => {
-    console.log("Processing message:", prompt, "isUserMessage:", isUserMessage, "skipUserMessage:", skipUserMessage);
+    console.log(`[MessageHandler] Processing message: "${prompt.substring(0, 30)}..."`, 
+      `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`);
+    
     setIsProcessing(true);
     setShowTypingIndicator(true);
 
@@ -24,14 +26,15 @@ export const useMessageHandling = (
         text: prompt,
         isUser: true
       };
-      console.log("Adding user message to chat:", userMessage);
+      console.log(`[MessageHandler] Adding user message to chat: ${userMessage.id}`);
       setMessages(prev => [...prev, userMessage]);
     }
 
     try {
       // Generate response based on the prompt
+      console.log(`[MessageHandler] Generating response for age: ${ageRange}, language: ${language}`);
       const response = await generateResponse(prompt, ageRange, language);
-      console.log("Generated response:", response);
+      console.log(`[MessageHandler] Response generated successfully: ${response.length} chars`);
       
       // Simulate a delay for typing effect
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -46,16 +49,28 @@ export const useMessageHandling = (
         showBlocks: true
       };
       
-      console.log("Adding AI message to chat:", aiMessage);
+      console.log(`[MessageHandler] Adding AI message to chat: ${aiMessage.id}`);
       setMessages(prev => [...prev, aiMessage]);
       
       // Increment points for each interaction
-      setPoints(prev => prev + 10);
+      setPoints(prev => {
+        console.log(`[MessageHandler] Awarding points: +10 (current: ${prev})`);
+        return prev + 10;
+      });
     } catch (error) {
-      console.error("Error processing message:", error);
+      console.error(`[MessageHandler] Error processing message:`, error);
       setShowTypingIndicator(false);
-      toast.error("Sorry, there was an error processing your request. Please try again.");
+      
+      // Improved error handling
+      let errorMessage = "Sorry, there was an error processing your request. Please try again.";
+      if (error instanceof Error) {
+        console.error(`[MessageHandler] Error details:`, error.stack);
+        errorMessage = `Error: ${error.message}`;
+      }
+      
+      toast.error(errorMessage);
     } finally {
+      console.log(`[MessageHandler] Message processing completed`);
       setIsProcessing(false);
       setInputValue("");
     }
