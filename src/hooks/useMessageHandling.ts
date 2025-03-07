@@ -15,29 +15,55 @@ export const useMessageHandling = (
   const processMessage = async (
     prompt: string, 
     isUserMessage: boolean = true, 
-    skipUserMessage: boolean = false
+    skipUserMessage: boolean = false,
+    imageFile?: File
   ): Promise<MessageProcessingResult> => {
     console.log(`[MessageHandler] Processing message: "${prompt.substring(0, 30)}..."`, 
-      `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`);
+      `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`, 
+      `imageFile: ${imageFile ? 'present' : 'none'}`);
     
     setIsProcessing(true);
     setShowTypingIndicator(true);
 
     // If it's a user message and we're not skipping user message display
     if (isUserMessage && !skipUserMessage) {
-      const userMessage: Message = {
+      let userMessage: Message = {
         id: Date.now().toString(),
         text: prompt,
         isUser: true
       };
-      console.log(`[MessageHandler] Adding user message to chat: ${userMessage.id}`);
+      
+      // If there's an image, include it in the message
+      if (imageFile) {
+        const imageUrl = URL.createObjectURL(imageFile);
+        userMessage = {
+          ...userMessage,
+          image: {
+            url: imageUrl,
+            alt: 'Uploaded homework image',
+            isUserUploaded: true
+          }
+        };
+        
+        console.log(`[MessageHandler] Adding user message with image: ${userMessage.id}`);
+      } else {
+        console.log(`[MessageHandler] Adding text-only user message: ${userMessage.id}`);
+      }
+      
       setMessages(prev => [...prev, userMessage]);
     }
 
     try {
-      // Generate response based on the prompt
+      // Generate response based on the prompt and/or image
       console.log(`[MessageHandler] Generating response for age: ${ageRange}, language: ${language}`);
-      const response = await generateResponse(prompt, ageRange, language);
+      
+      // If there's an image file, we'll modify the prompt to indicate homework help
+      let enhancedPrompt = prompt;
+      if (imageFile) {
+        enhancedPrompt = `[HOMEWORK HELP] ${prompt || 'Please help me with this homework problem.'}`;
+      }
+      
+      const response = await generateResponse(enhancedPrompt, ageRange, language);
       console.log(`[MessageHandler] Response generated successfully: ${response.length} chars`);
       
       // Simulate a delay for typing effect

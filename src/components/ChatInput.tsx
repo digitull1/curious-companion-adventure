@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect } from "react";
-import { MessageCircle, Send, Sparkles, Lightbulb, Search } from "lucide-react";
+import { MessageCircle, Send, Sparkles, Lightbulb, Search, Image } from "lucide-react";
 import VoiceInput from "@/components/VoiceInput";
 import SuggestedTopics from "@/components/SuggestedTopics";
 
@@ -18,6 +18,7 @@ interface ChatInputProps {
   toggleListening: () => void;
   onSuggestedPromptClick: (prompt: string) => void;
   setShowSuggestedPrompts: (show: boolean) => void;
+  onImageUpload?: (file: File) => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -33,9 +34,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onVoiceInput,
   toggleListening,
   onSuggestedPromptClick,
-  setShowSuggestedPrompts
+  setShowSuggestedPrompts,
+  onImageUpload
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   
@@ -48,6 +51,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     "Ask me about animals, space, or science!",
     "Wonder about something? Ask me!",
     "What's on your mind today?",
+    "Need help with homework? Upload it!",
   ];
   
   // Rotate placeholders every 5 seconds
@@ -73,6 +77,20 @@ const ChatInput: React.FC<ChatInputProps> = ({
       return `Ask me about ${selectedTopic} or explore a section...`;
     }
     return placeholders[placeholderIndex];
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && onImageUpload) {
+      onImageUpload(e.target.files[0]);
+      // Reset file input
+      if (e.target.value) e.target.value = '';
+    }
+  };
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   return (
@@ -115,6 +133,26 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </div>
           
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            {/* Hidden file input */}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handleImageUpload} 
+              disabled={isProcessing}
+            />
+            
+            {/* Image upload button */}
+            <button
+              onClick={triggerFileInput}
+              disabled={isProcessing}
+              className="w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 bg-wonder-purple/10 text-wonder-purple hover:bg-wonder-purple/20 transform hover:-translate-y-0.5"
+              title="Upload homework image"
+            >
+              <Image className="h-4 w-4" />
+            </button>
+            
             <VoiceInput 
               onTranscript={onVoiceInput}
               isListening={isListening}

@@ -17,9 +17,10 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, ageRange, requestType, language = 'en' } = await req.json();
+    const { prompt, ageRange, requestType, language = 'en', isHomeworkHelp = false } = await req.json();
     console.log(`[DEBUG] Request received - Type: ${requestType}, Age: ${ageRange}, Language: ${language}`);
     console.log(`[DEBUG] Prompt: ${prompt?.substring(0, 100)}...`);
+    console.log(`[DEBUG] Is homework help: ${isHomeworkHelp}`);
     
     // Check API keys
     if (!groqApiKey && requestType !== 'image') {
@@ -52,6 +53,23 @@ serve(async (req) => {
       - IMPORTANT: Limit your content to 5 main points or less
       - IMPORTANT: Stay 100% on topic and directly address the specific question or topic`;
       
+      // Add special instructions for homework help
+      if (prompt && prompt.includes("[HOMEWORK HELP]")) {
+        systemMessage = `You are WonderWhiz, a helpful homework assistant for children aged ${ageRange}.
+        A child has uploaded their homework and needs your guidance. Your responses should be:
+        - Patient, encouraging, and supportive
+        - Educational without just giving away answers
+        - Focused on teaching the process to solve the problem
+        - Include step-by-step explanations where relevant
+        - Use a scaffolding approach to guide understanding
+        - Age-appropriate in language and explanations
+        - Show multiple methods to solve the problem when possible
+        - Highlight key concepts being tested by the homework
+        - IMPORTANT: Don't simply give the answer, but guide the student to find it themselves
+        - IMPORTANT: Encourage critical thinking and understanding
+        - IMPORTANT: Be extra encouraging and supportive`;
+      }
+      
       // Add language-specific instructions
       if (language !== 'en') {
         systemMessage += `\n\nIMPORTANT: Respond in ${language} language only. All your content must be in ${language}.`;
@@ -69,7 +87,7 @@ serve(async (req) => {
             model: 'llama3-8b-8192',  // Using Llama3 model
             messages: [
               { role: 'system', content: systemMessage },
-              { role: 'user', content: prompt }
+              { role: 'user', content: prompt.replace("[HOMEWORK HELP]", "Help me with this homework: ") }
             ],
             temperature: 0.7,
             max_tokens: 600
