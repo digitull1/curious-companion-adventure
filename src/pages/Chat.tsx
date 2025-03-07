@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -390,6 +389,21 @@ const Chat = () => {
     // If it's a new topic, generate table of contents
     if (isNewTopicRequest) {
       console.log("Handling new topic request");
+      
+      // Record previous topic if exists
+      if (selectedTopic) {
+        console.log("Saving previous topic:", selectedTopic);
+        setPreviousTopics(prev => [...prev, selectedTopic]);
+      }
+      
+      // IMPORTANT: Reset states for new topic before adding new messages
+      console.log("RESET: Clearing state for new topic request");
+      setTopicSectionsGenerated(false);
+      setCompletedSections([]);
+      setCurrentSection(null);
+      setLearningComplete(false);
+      setRelatedTopics([]);
+      
       const userMessage: Message = {
         id: Date.now().toString(),
         text: inputValue,
@@ -397,7 +411,12 @@ const Chat = () => {
       };
       
       console.log("Adding user message for new topic:", userMessage);
-      setMessages(prev => [...prev, userMessage]);
+      setMessages(prev => {
+        // Keep only the welcome message, remove all topic-specific messages
+        const welcomeMsg = prev.find(m => m.isIntroduction && !m.tableOfContents);
+        return welcomeMsg ? [welcomeMsg, userMessage] : [userMessage];
+      });
+      
       setInputValue("");
       setIsProcessing(true);
       setShowTypingIndicator(true);
@@ -426,7 +445,18 @@ const Chat = () => {
         };
         
         console.log("Adding TOC message:", tocMessage);
-        setMessages(prev => [...prev, tocMessage]);
+        setMessages(prev => {
+          // Find and keep the welcome message and user message
+          const welcomeMsg = prev.find(m => m.isIntroduction && !m.tableOfContents);
+          const userMsg = prev.find(m => m.isUser && m.text === inputValue);
+          
+          const baseMessages = [];
+          if (welcomeMsg) baseMessages.push(welcomeMsg);
+          if (userMsg) baseMessages.push(userMsg);
+          
+          return [...baseMessages, tocMessage];
+        });
+        
         setSelectedTopic(inputValue);
         setTopicSectionsGenerated(true);
         
@@ -590,6 +620,12 @@ const Chat = () => {
     
     // Reset states for the new topic
     console.log("Resetting states for new related topic");
+    // IMPORTANT: Keep the welcome message
+    setMessages(prev => {
+      const welcomeMsg = prev.find(m => m.isIntroduction && !m.tableOfContents);
+      return welcomeMsg ? [welcomeMsg] : [];
+    });
+    
     setSelectedTopic(null);
     setTopicSectionsGenerated(false);
     setCompletedSections([]);

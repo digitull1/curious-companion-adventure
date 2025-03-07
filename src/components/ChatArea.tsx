@@ -212,7 +212,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   console.log("Filtered user messages:", userMessages.length);
   
   // Filter AI messages that are not special (TOC, welcome, etc.)
-  // IMPORTANT CHANGE: Only include AI messages that should NOT be in the content box
+  // FIXED: Properly exclude messages that are currently displayed in the content box
   const aiMessages = messages.filter(m => {
     const isRegularAIMessage = !m.isUser && 
                               !m.isIntroduction && 
@@ -223,6 +223,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     // Exclude messages that are currently displayed in the content box
     const isInContentBox = currentSectionMessage && 
                           m.id === currentSectionMessage.id;
+    
+    // Debug logging
+    if (isRegularAIMessage && currentSectionMessage && m.id === currentSectionMessage.id) {
+      console.log("Excluding message from chat flow - will be shown in content box:", m.id);
+    }
     
     return isRegularAIMessage && !isInContentBox;
   });
