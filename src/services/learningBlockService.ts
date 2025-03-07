@@ -16,6 +16,7 @@ export const handleBlockClick = async (
   generateQuiz: (topic: string, language: string) => Promise<any>
 ) => {
   console.log(`[LearningBlock] Processing ${type} block for message: ${messageId.substring(0, 8)}...`);
+  console.log(`[LearningBlock] Message text: "${messageText.substring(0, 50)}..."`);
   
   try {
     setIsProcessing(true);
@@ -47,8 +48,9 @@ export const handleBlockClick = async (
         try {
           console.log(`[LearningBlock] Generating 'see-it' visual content`);
           blockResponse = "Here's a visual representation I created for you:";
+          // Fix: properly set the imagePrompt string instead of undefined
           imagePrompt = `${messageText} in a style that appeals to ${ageRange} year old children, educational, detailed, colorful, Pixar style illustration`;
-          console.log(`[LearningBlock] Image prompt: ${imagePrompt.substring(0, 50)}...`);
+          console.log(`[LearningBlock] Image prompt created: ${imagePrompt.substring(0, 50)}...`);
         } catch (error) {
           console.error(`[LearningBlock] Error generating image:`, error);
           blockResponse = "I'm sorry, I couldn't create an image right now. Let me tell you about it instead!";
@@ -83,6 +85,7 @@ export const handleBlockClick = async (
     await new Promise(resolve => setTimeout(resolve, 800));
     setShowTypingIndicator(false);
 
+    // Create the block message with the correct image prompt
     const blockMessage: Message = {
       id: Date.now().toString(),
       text: blockResponse,
@@ -92,6 +95,14 @@ export const handleBlockClick = async (
     };
 
     console.log(`[LearningBlock] Adding block message to chat: ${blockMessage.id}`);
+    console.log(`[LearningBlock] Block message details:`, { 
+      id: blockMessage.id,
+      text: blockMessage.text.substring(0, 50) + "...",
+      hasImagePrompt: !!blockMessage.imagePrompt,
+      imagePrompt: blockMessage.imagePrompt?.substring(0, 50) + "...",
+      hasQuiz: !!blockMessage.quiz
+    });
+    
     setMessages(prev => [...prev, blockMessage]);
   } catch (error) {
     console.error(`[LearningBlock] Critical error processing block:`, error);

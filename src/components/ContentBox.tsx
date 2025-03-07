@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { animate } from "@motionone/dom";
 import { ChevronLeft, ChevronRight, Book, Star, Sparkles, Lightbulb, AtomIcon, MessageSquareText, Video, HelpCircle, Loader2 } from "lucide-react";
@@ -175,8 +174,28 @@ const ContentBox: React.FC<ContentBoxProps> = ({
   // Handler for clicking on interactive blocks
   const handleBlockButtonClick = (blockType: BlockType, e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log(`[ContentBox] Block button clicked: ${blockType}`); 
     onBlockClick(blockType);
   };
+  
+  // Debug logs for tracking state
+  useEffect(() => {
+    if (activeBlock) {
+      console.log(`[ContentBox] Active block changed to: ${activeBlock}`);
+    }
+    
+    if (imagePrompt && activeBlock === 'see-it') {
+      console.log(`[ContentBox] Image prompt for See-It block: ${imagePrompt.substring(0, 50)}...`);
+    }
+    
+    if (quiz && activeBlock === 'quiz') {
+      console.log(`[ContentBox] Quiz data for Quiz block: ${JSON.stringify({
+        question: quiz.question.substring(0, 30) + "...",
+        options: quiz.options.length,
+        correctAnswer: quiz.correctAnswer
+      })}`);
+    }
+  }, [activeBlock, imagePrompt, quiz]);
   
   return (
     <div 

@@ -104,13 +104,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   // When a new message with image or quiz is added, update the current block message
   useEffect(() => {
-    const blockMessage = messages.find(m => (m.imagePrompt || m.quiz) && !m.isUser);
+    const lastMessages = messages.slice(-5); // Look at the last 5 messages for efficiency
+    const blockMessage = lastMessages.find(m => (m.imagePrompt || m.quiz) && !m.isUser);
+    
     if (blockMessage) {
+      console.log(`[ChatArea] Found block message with id: ${blockMessage.id}`);
+      if (blockMessage.imagePrompt) {
+        console.log(`[ChatArea] Image prompt found: ${blockMessage.imagePrompt.substring(0, 50)}...`);
+      }
+      if (blockMessage.quiz) {
+        console.log(`[ChatArea] Quiz found: ${JSON.stringify({
+          question: blockMessage.quiz.question.substring(0, 30) + "...",
+          options: blockMessage.quiz.options.length
+        })}`);
+      }
       setCurrentBlockMessage(blockMessage);
     }
   }, [messages]);
 
-  // Keep track of section changes to avoid flickering
   useEffect(() => {
     if (currentSection !== processedCurrentSection) {
       console.log(`Section changing from "${processedCurrentSection}" to "${currentSection}"`);
@@ -221,9 +232,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Handle specific block click within ContentBox
   const handleContentBoxBlockClick = (block: BlockType) => {
     if (currentSectionMessage) {
-      console.log("Content box block clicked:", block, "for message:", currentSectionMessage.id);
+      console.log(`[ChatArea] Content box block clicked: ${block} for message: ${currentSectionMessage.id}`);
+      console.log(`[ChatArea] Current section message text: ${currentSectionMessage.text.substring(0, 50)}...`);
       setActiveBlock(block);
       onBlockClick(block, currentSectionMessage.id, currentSectionMessage.text);
+    } else {
+      console.warn("[ChatArea] Block clicked but no current section message found!");
     }
   };
 
