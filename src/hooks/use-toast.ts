@@ -1,7 +1,7 @@
 
 // This file contains the toast hook implementation
 import { useEffect, useState } from 'react';
-import { toast as sonnerToast, ToastT, ToastOptions as SonnerToastOptions } from 'sonner';
+import { toast as sonnerToast } from 'sonner';
 
 type ToastProps = {
   id?: string;
@@ -59,7 +59,7 @@ export function toast({
   dispatch(newToast);
 
   // Also send to sonner toast
-  const options: SonnerToastOptions = { id: toastId };
+  const options: any = { id: toastId }; // Use 'any' as a temporary solution to avoid type errors
   
   if (variant === 'destructive') {
     sonnerToast.error(title, {
