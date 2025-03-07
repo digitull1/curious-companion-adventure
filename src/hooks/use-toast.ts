@@ -1,10 +1,10 @@
 
 // This file contains the toast hook implementation
 import { useEffect, useState } from 'react';
-import { toast as sonnerToast, Toast, ToastOptions } from 'sonner';
+import { toast as sonnerToast, ToastT, ToastOptions as SonnerToastOptions } from 'sonner';
 
 type ToastProps = {
-  id: string;
+  id?: string;
   title?: string;
   description?: string;
   action?: React.ReactNode;
@@ -14,7 +14,6 @@ type ToastProps = {
 export type ToasterToast = ToastProps;
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000;
 
 type State = {
   toasts: ToasterToast[];
@@ -33,23 +32,24 @@ const emit = () => {
 };
 
 export function toast({
+  id,
   title,
   description,
   variant,
   ...props
-}: ToasterToast) {
-  const id = crypto.randomUUID();
+}: ToastProps) {
+  const toastId = id || crypto.randomUUID();
 
   const update = (props: ToasterToast) =>
     dispatch({
       ...props,
-      id,
+      id: toastId,
     });
 
-  const dismiss = () => remove(id);
+  const dismiss = () => remove(toastId);
 
   const newToast: ToasterToast = {
-    id,
+    id: toastId,
     title,
     description,
     variant,
@@ -59,7 +59,7 @@ export function toast({
   dispatch(newToast);
 
   // Also send to sonner toast
-  const options: ToastOptions = { id };
+  const options: SonnerToastOptions = { id: toastId };
   
   if (variant === 'destructive') {
     sonnerToast.error(title, {
@@ -74,7 +74,7 @@ export function toast({
   }
 
   return {
-    id,
+    id: toastId,
     dismiss,
     update,
   };
