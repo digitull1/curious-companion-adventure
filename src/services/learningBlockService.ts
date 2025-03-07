@@ -15,10 +15,19 @@ export const handleBlockClick = async (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
   generateQuiz: (topic: string, language: string) => Promise<any>
 ) => {
-  console.log(`[LearningBlock] Processing ${type} block for message: ${messageId.substring(0, 8)}...`);
+  console.log(`[LearningBlock][START] Processing ${type} block for message: ${messageId.substring(0, 8)}...`);
   console.log(`[LearningBlock] Message text: "${messageText.substring(0, 50)}..."`);
   
   try {
+    // Prevent multiple concurrent processing
+    if (window._isBlockProcessing) {
+      console.log(`[LearningBlock] Already processing another block, ignoring this request`);
+      return;
+    }
+    
+    // Set a global flag to prevent concurrent processing
+    window._isBlockProcessing = true;
+    
     setIsProcessing(true);
     setShowTypingIndicator(true);
     let blockResponse = "";
@@ -48,7 +57,7 @@ export const handleBlockClick = async (
         try {
           console.log(`[LearningBlock] Generating 'see-it' visual content`);
           blockResponse = "Here's a visual representation I created for you:";
-          // Fix: properly set the imagePrompt string instead of undefined
+          // Explicitly set the imagePrompt string
           imagePrompt = `${messageText} in a style that appeals to ${ageRange} year old children, educational, detailed, colorful, Pixar style illustration`;
           console.log(`[LearningBlock] Image prompt created: ${imagePrompt.substring(0, 50)}...`);
         } catch (error) {
@@ -87,16 +96,18 @@ export const handleBlockClick = async (
 
     // Create the block message with the correct image prompt
     const blockMessage: Message = {
-      id: Date.now().toString(),
+      id: `block-${Date.now()}-${type}`,
       text: blockResponse,
       isUser: false,
       imagePrompt: imagePrompt || undefined,
-      quiz: quiz || undefined
+      quiz: quiz || undefined,
+      blockType: type
     };
 
     console.log(`[LearningBlock] Adding block message to chat: ${blockMessage.id}`);
     console.log(`[LearningBlock] Block message details:`, { 
       id: blockMessage.id,
+      blockType: blockMessage.blockType,
       text: blockMessage.text.substring(0, 50) + "...",
       hasImagePrompt: !!blockMessage.imagePrompt,
       imagePrompt: blockMessage.imagePrompt?.substring(0, 50) + "...",
@@ -117,7 +128,18 @@ export const handleBlockClick = async (
     
     toast.error(errorMessage);
   } finally {
-    console.log(`[LearningBlock] Finished processing ${type} block`);
+    console.log(`[LearningBlock][END] Finished processing ${type} block`);
     setIsProcessing(false);
+    // Clear the processing flag after a short delay to prevent immediate re-clicks
+    setTimeout(() => {
+      window._isBlockProcessing = false;
+    }, 300);
   }
 };
+
+// Declare global flag for TypeScript
+declare global {
+  interface Window {
+    _isBlockProcessing?: boolean;
+  }
+}

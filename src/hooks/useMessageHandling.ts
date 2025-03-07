@@ -12,13 +12,24 @@ export const useMessageHandling = (
   setInputValue: (value: string) => void,
   setPoints: (pointsSetter: (prev: number) => number) => void
 ) => {
+  // Use this flag to prevent multiple messages from being processed simultaneously
+  let isMessageBeingProcessed = false;
+  
   const processMessage = async (
     prompt: string, 
     isUserMessage: boolean = true, 
     skipUserMessage: boolean = false
   ): Promise<MessageProcessingResult> => {
-    console.log(`[MessageHandler] Processing message: "${prompt.substring(0, 30)}..."`, 
+    console.log(`[MessageHandler][START] Processing message: "${prompt.substring(0, 30)}..."`, 
       `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`);
+    
+    // Prevent multiple concurrent message processing
+    if (isMessageBeingProcessed) {
+      console.log(`[MessageHandler] Already processing another message, ignoring this request`);
+      return { status: "error", error: { message: "Another message is already being processed" } };
+    }
+    
+    isMessageBeingProcessed = true;
     
     // Generate unique IDs for user and AI messages to prevent collisions
     const userMessageId = `user-${Date.now()}`;
@@ -66,6 +77,7 @@ export const useMessageHandling = (
         return prev + 10;
       });
       
+      console.log(`[MessageHandler][END] Message processing completed successfully`);
       return { status: "completed", messageId: aiMessage.id };
     } catch (error) {
       console.error(`[MessageHandler] Error processing message:`, error);
@@ -96,14 +108,19 @@ export const useMessageHandling = (
       
       setMessages(prev => [...prev, errorMessageObj]);
       
+      console.log(`[MessageHandler][END] Message processing failed`);
       return { 
         status: "error", 
         error: errorMessageObj
       };
     } finally {
-      console.log(`[MessageHandler] Message processing completed`);
+      console.log(`[MessageHandler] Cleaning up after processing message`);
       setIsProcessing(false);
       setInputValue("");
+      // Release the processing lock after a short delay to prevent immediate re-submissions
+      setTimeout(() => {
+        isMessageBeingProcessed = false;
+      }, 300);
     }
   };
 

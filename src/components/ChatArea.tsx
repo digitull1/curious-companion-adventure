@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState } from "react";
+
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
@@ -27,6 +28,7 @@ interface Message {
   };
   tableOfContents?: string[];
   isIntroduction?: boolean;
+  blockType?: BlockType;
 }
 
 interface ChatAreaProps {
@@ -93,65 +95,96 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [activeBlock, setActiveBlock] = useState<BlockType | null>(null);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [processedCurrentSection, setProcessedCurrentSection] = useState<string | null>(null);
+  const [renderId, setRenderId] = useState(0); // Add a render ID to help with memoization
+
+  // Store previous section to detect changes
+  const prevSectionRef = useRef<string | null>(null);
   
   // Process related topics
   const processedRelatedTopics = processRelatedTopics(relatedTopics);
-  console.log("Processed related topics:", processedRelatedTopics);
+  console.log(`[ChatArea][render:${renderId}] Processed related topics:`, processedRelatedTopics);
 
+  // Stable reference to scrollToBottom
+  const scrollToBottom = useCallback(() => {
+    console.log(`[ChatArea] Scrolling to bottom of chat`);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  // Scroll to bottom when messages or typing indicator changes
   useEffect(() => {
+    console.log(`[ChatArea][render:${renderId}] Messages updated, scrolling to bottom`);
     scrollToBottom();
-  }, [messages, showTypingIndicator]);
+  }, [messages, showTypingIndicator, scrollToBottom, renderId]);
 
-  // When a new message with image or quiz is added, update the current block message
+  // Find block message (with image or quiz) in a stable way to prevent unnecessary re-renders
   useEffect(() => {
-    const lastMessages = messages.slice(-5); // Look at the last 5 messages for efficiency
-    const blockMessage = lastMessages.find(m => (m.imagePrompt || m.quiz) && !m.isUser);
+    console.log(`[ChatArea][render:${renderId}] Checking for block messages (image or quiz)`);
     
-    if (blockMessage) {
-      console.log(`[ChatArea] Found block message with id: ${blockMessage.id}`);
-      if (blockMessage.imagePrompt) {
-        console.log(`[ChatArea] Image prompt found: ${blockMessage.imagePrompt.substring(0, 50)}...`);
+    // Look for messages with the specific blockType, focusing on most recent ones first
+    const blockTypeMessage = [...messages]
+      .reverse()
+      .find(m => m.blockType && !m.isUser);
+    
+    if (blockTypeMessage) {
+      console.log(`[ChatArea] Found block type message with id: ${blockTypeMessage.id}, type: ${blockTypeMessage.blockType}`);
+      
+      // Only update if the message is different to avoid unnecessary re-renders
+      if (!currentBlockMessage || currentBlockMessage.id !== blockTypeMessage.id) {
+        console.log(`[ChatArea] Updating block message - previous: ${currentBlockMessage?.id}, new: ${blockTypeMessage.id}`);
+        setCurrentBlockMessage(blockTypeMessage);
+        setActiveBlock(blockTypeMessage.blockType || null);
       }
-      if (blockMessage.quiz) {
-        console.log(`[ChatArea] Quiz found: ${JSON.stringify({
-          question: blockMessage.quiz.question.substring(0, 30) + "...",
-          options: blockMessage.quiz.options.length
-        })}`);
-      }
-      setCurrentBlockMessage(blockMessage);
     }
-  }, [messages]);
+  }, [messages, renderId]);
 
+  // Track section changes without triggering re-renders
   useEffect(() => {
-    if (currentSection !== processedCurrentSection) {
-      console.log(`Section changing from "${processedCurrentSection}" to "${currentSection}"`);
+    if (currentSection !== prevSectionRef.current) {
+      console.log(`[ChatArea] Section changing from "${prevSectionRef.current}" to "${currentSection}"`);
+      prevSectionRef.current = currentSection;
       setProcessedCurrentSection(currentSection);
+      
+      // Reset block-related state when changing sections
+      setActiveBlock(null);
+      // Increment render ID to help with memoization
+      setRenderId(prev => prev + 1);
     }
-  }, [currentSection, processedCurrentSection]);
+  }, [currentSection]);
 
+  // Find the appropriate content message for the current section
   useEffect(() => {
     // Find the most recent non-user message about the current section that isn't a block-related message
     if (currentSection) {
+      console.log(`[ChatArea][render:${renderId}] Finding content for section: "${currentSection}"`);
+      
       const sectionMessage = [...messages]
         .reverse()
-        .find(m => !m.isUser && !m.tableOfContents && !m.imagePrompt && !m.quiz);
+        .find(m => !m.isUser && 
+               !m.tableOfContents && 
+               !m.blockType && // Skip block-specific messages
+               !m.imagePrompt && 
+               !m.quiz);
       
       if (sectionMessage) {
-        console.log("Setting current section message:", sectionMessage.id, sectionMessage.text.substring(0, 50) + "...");
-        setCurrentSectionMessage(sectionMessage);
+        console.log(`[ChatArea] Found content message for section: ${sectionMessage.id}, text: ${sectionMessage.text.substring(0, 50)}...`);
+        
+        // Only update if different to avoid unnecessary re-renders
+        if (!currentSectionMessage || currentSectionMessage.id !== sectionMessage.id) {
+          setCurrentSectionMessage(sectionMessage);
+        }
       }
     } else {
-      console.log("No current section selected, clearing section message and block message");
-      setCurrentSectionMessage(null);
-      setCurrentBlockMessage(null);
-      setActiveBlock(null);
+      console.log(`[ChatArea][render:${renderId}] No current section selected, clearing section message`);
+      if (currentSectionMessage !== null) {
+        setCurrentSectionMessage(null);
+      }
     }
-  }, [processedCurrentSection, messages]);
+  }, [processedCurrentSection, messages, renderId, currentSection]);
 
+  // Apply animations to related topics when they appear
   useEffect(() => {
-    // Apply animations to related topics when they appear
-    if (relatedTopicsRef.current && learningComplete) {
-      console.log("Animating related topics:", processedRelatedTopics);
+    if (relatedTopicsRef.current && learningComplete && processedRelatedTopics.length > 0) {
+      console.log(`[ChatArea][render:${renderId}] Animating related topics:`, processedRelatedTopics);
       const topics = relatedTopicsRef.current.querySelectorAll('.related-topic');
       topics.forEach((topic, index) => {
         animate(
@@ -161,14 +194,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         );
       });
     }
-  }, [learningComplete, processedRelatedTopics]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [learningComplete, processedRelatedTopics, renderId]);
 
   // Toggle message expansion
-  const toggleMessageExpansion = (messageId: string) => {
+  const toggleMessageExpansion = useCallback((messageId: string) => {
+    console.log(`[ChatArea] Toggling expansion for message: ${messageId}`);
     setExpandedMessages(prev => {
       const newSet = new Set(prev);
       if (newSet.has(messageId)) {
@@ -178,10 +208,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       }
       return newSet;
     });
-  };
+  }, []);
 
   // Function to get previous and next section based on current section
-  const getAdjacentSections = () => {
+  const getAdjacentSections = useCallback(() => {
     if (!currentSection) return { prev: null, next: null };
     
     const toc = messages.find(m => m.tableOfContents)?.tableOfContents || [];
@@ -194,10 +224,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     const next = currentIndex < toc.length - 1 ? toc[currentIndex + 1] : null;
     
     return { prev, next };
-  };
+  }, [currentSection, messages]);
 
   // Topic pill instead of a sticky header
-  const renderTopicPill = () => {
+  const renderTopicPill = useCallback(() => {
     if (!currentSection) return null;
     
     // Remove asterisks from current section
@@ -227,19 +257,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         </div>
       </div>
     );
-  };
+  }, [currentSection, learningProgress]);
 
   // Handle specific block click within ContentBox
-  const handleContentBoxBlockClick = (block: BlockType) => {
+  const handleContentBoxBlockClick = useCallback((block: BlockType) => {
+    console.log(`[ChatArea] Content box block clicked: ${block}`);
+    
     if (currentSectionMessage) {
-      console.log(`[ChatArea] Content box block clicked: ${block} for message: ${currentSectionMessage.id}`);
+      console.log(`[ChatArea] Using current section message: ${currentSectionMessage.id}`);
       console.log(`[ChatArea] Current section message text: ${currentSectionMessage.text.substring(0, 50)}...`);
+      
       setActiveBlock(block);
       onBlockClick(block, currentSectionMessage.id, currentSectionMessage.text);
     } else {
       console.warn("[ChatArea] Block clicked but no current section message found!");
     }
-  };
+  }, [currentSectionMessage, onBlockClick]);
 
   // Find the welcome message
   const welcomeMessage = messages.find(m => !m.isUser && m.isIntroduction && !m.tableOfContents);
@@ -255,7 +288,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   
   // Filter user messages to display in the chat flow
   const userMessages = messages.filter(m => m.isUser);
-  console.log("Filtered user messages:", userMessages.length);
+  console.log(`[ChatArea][render:${renderId}] Filtered user messages: ${userMessages.length}`);
   
   // Filter AI messages that are not special (TOC, welcome, etc.)
   // FIXED: Properly exclude messages that are currently displayed in the content box
@@ -263,6 +296,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     const isRegularAIMessage = !m.isUser && 
                               !m.isIntroduction && 
                               !m.tableOfContents && 
+                              !m.blockType && // Exclude block-specific messages
                               !m.imagePrompt && 
                               !m.quiz;
     
@@ -270,25 +304,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     const isInContentBox = currentSectionMessage && 
                           m.id === currentSectionMessage.id;
     
-    // Debug logging
-    if (isRegularAIMessage && currentSectionMessage && m.id === currentSectionMessage.id) {
-      console.log("Excluding message from chat flow - will be shown in content box:", m.id);
-    }
-    
     return isRegularAIMessage && !isInContentBox;
   });
   
-  console.log("Filtered AI messages:", aiMessages.length);
+  console.log(`[ChatArea][render:${renderId}] Filtered AI messages: ${aiMessages.length}`);
 
   // Check if a message should be truncated
-  const shouldTruncate = (text: string) => text.length > 300;
+  const shouldTruncate = useCallback((text: string) => text.length > 300, []);
   
   // Truncate message text
-  const truncateText = (text: string) => {
+  const truncateText = useCallback((text: string) => {
     if (text.length <= 300) return text;
     return text.substring(0, 300) + "...";
-  };
+  }, []);
 
+  console.log(`[ChatArea][RENDER:${renderId}] Current block message ID: ${currentBlockMessage?.id}, active block: ${activeBlock}`);
+  
   return (
     <div 
       className="flex-1 overflow-y-auto py-6 scrollbar-thin relative" 
@@ -369,6 +400,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           {currentSection && currentSectionMessage && (
             <div className="px-4 max-w-4xl mx-auto">
               <ContentBox
+                key={`content-${currentSection}-${currentBlockMessage?.id || 'none'}-${activeBlock || 'none'}`}
                 title={currentSection}
                 content={currentSectionMessage.text}
                 prevSection={prev}
@@ -393,7 +425,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {processedRelatedTopics.map((topic, index) => (
                     <div 
-                      key={index}
+                      key={`related-topic-${index}`}
                       onClick={() => onRelatedTopicClick(topic)}
                       className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
                                 hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
