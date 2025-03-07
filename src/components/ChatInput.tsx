@@ -1,8 +1,10 @@
 
 import React, { useRef, useState, useEffect } from "react";
-import { MessageCircle, Send, Sparkles, Lightbulb, Search } from "lucide-react";
+import { MessageCircle, Send, Sparkles, Lightbulb, Search, X, MicrophoneIcon, ThumbsUp } from "lucide-react";
 import VoiceInput from "@/components/VoiceInput";
 import SuggestedTopics from "@/components/SuggestedTopics";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 interface ChatInputProps {
   inputValue: string;
@@ -38,6 +40,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [sendButtonHover, setSendButtonHover] = useState(false);
   
   const placeholders = [
     "Ask me anything...",
@@ -74,21 +77,59 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
     return placeholders[placeholderIndex];
   };
+  
+  const handleClearInput = () => {
+    setIsFocused(true);
+    if (inputRef.current) {
+      inputRef.current.value = "";
+      onInputChange({ target: { value: "" } } as React.ChangeEvent<HTMLInputElement>);
+      inputRef.current.focus();
+    }
+  };
+
+  const handleSend = () => {
+    if (inputValue.trim() && !isProcessing) {
+      onSendMessage();
+      // Haptic feedback for mobile devices
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    } else if (!inputValue.trim()) {
+      inputRef.current?.focus();
+      toast.info("Please type a question first", {
+        duration: 2000,
+        position: "bottom-center"
+      });
+    }
+  };
 
   return (
     <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-t from-white/95 via-white/90 to-white/70 backdrop-blur-lg pt-6 pb-4 px-4 md:px-8 z-20">
-      {/* Suggested topics overlay */}
-      {showSuggestedPrompts && (
-        <SuggestedTopics
-          topics={suggestedPrompts}
-          onTopicClick={onSuggestedPromptClick}
-          onClose={() => setShowSuggestedPrompts(false)}
-        />
-      )}
+      {/* Suggested topics overlay with improved animation */}
+      <AnimatePresence>
+        {showSuggestedPrompts && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <SuggestedTopics
+              topics={suggestedPrompts}
+              onTopicClick={onSuggestedPromptClick}
+              onClose={() => setShowSuggestedPrompts(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       
-      {/* Chat Input */}
+      {/* Chat Input with enhanced visual feedback */}
       <div className="relative max-w-3xl mx-auto">
-        <div className={`relative flex transition-all duration-300 ${isFocused ? 'transform scale-[1.02]' : ''}`}>
+        <motion.div 
+          className="relative flex"
+          animate={isFocused ? { scale: 1.02 } : { scale: 1 }}
+          transition={{ duration: 0.2 }}
+        >
           <input
             ref={inputRef}
             type="text"
@@ -99,6 +140,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onBlur={() => setIsFocused(false)}
             placeholder={getPlaceholder()}
             disabled={isProcessing}
+            aria-label="Chat input"
             className={`w-full pl-12 pr-16 py-4 rounded-full border focus:outline-none focus:ring-2 shadow-magical bg-white/90 backdrop-blur-sm placeholder:text-slate-400 text-foreground font-comic text-base transition-all duration-300 ${
               isFocused 
                 ? 'border-wonder-purple/50 focus:ring-wonder-purple/30 shadow-magical-hover' 
@@ -106,13 +148,29 @@ const ChatInput: React.FC<ChatInputProps> = ({
             }`}
           />
           
-          <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${isFocused ? 'text-wonder-purple scale-110' : 'text-wonder-purple/70'}`}>
+          {/* Animated icon */}
+          <motion.div 
+            className={`absolute left-4 top-1/2 -translate-y-1/2 ${isFocused ? 'text-wonder-purple' : 'text-wonder-purple/70'}`}
+            animate={isFocused ? { scale: 1.1 } : { scale: 1 }}
+            transition={{ duration: 0.2 }}
+          >
             {inputValue ? (
               <Search className="h-5 w-5" />
             ) : (
               <MessageCircle className="h-5 w-5" />
             )}
-          </div>
+          </motion.div>
+          
+          {/* Clear input button */}
+          {inputValue && !isProcessing && (
+            <button
+              onClick={handleClearInput}
+              className="absolute right-[4.5rem] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Clear input"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
           
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <VoiceInput 
@@ -121,32 +179,45 @@ const ChatInput: React.FC<ChatInputProps> = ({
               toggleListening={toggleListening}
             />
             
-            <button
-              onClick={onSendMessage}
+            <motion.button
+              onClick={handleSend}
               disabled={!inputValue.trim() || isProcessing}
               className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 ${
                 inputValue.trim() && !isProcessing
-                  ? "bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white shadow-magical hover:shadow-magical-hover transform hover:-translate-y-0.5 hover:scale-105"
+                  ? "bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white shadow-magical hover:shadow-magical-hover"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
               }`}
+              animate={sendButtonHover && inputValue.trim() && !isProcessing ? 
+                { scale: 1.05, y: -2 } : 
+                { scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              onHoverStart={() => setSendButtonHover(true)}
+              onHoverEnd={() => setSendButtonHover(false)}
+              aria-label="Send message"
+              whileTap={{ scale: 0.95 }}
             >
               {isProcessing ? (
                 <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <Send className="h-4 w-4" />
               )}
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
         
-        {/* Ideas button */}
-        <button
+        {/* Ideas button with enhanced design */}
+        <motion.button
           onClick={() => setShowSuggestedPrompts(true)}
-          className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs flex items-center gap-1 px-3 py-1.5 rounded-full bg-wonder-purple/10 text-wonder-purple hover:bg-wonder-purple/20 transition-colors"
+          className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-wonder-purple/10 text-wonder-purple hover:bg-wonder-purple/20 transition-colors shadow-sm hover:shadow-magical"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
         >
           <Lightbulb className="h-3 w-3" />
           <span>Need ideas?</span>
-        </button>
+        </motion.button>
       </div>
     </div>
   );
