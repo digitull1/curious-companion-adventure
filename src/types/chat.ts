@@ -1,3 +1,4 @@
+
 export type BlockType =
   | "did-you-know"
   | "mind-blowing"
@@ -21,6 +22,13 @@ export interface Message {
     url: string;
     alt: string;
     isUserUploaded?: boolean;
+  };
+  imagePrompt?: string;
+  quiz?: {
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    funFact?: string;
   };
 }
 
