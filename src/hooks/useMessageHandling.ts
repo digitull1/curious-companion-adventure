@@ -1,5 +1,5 @@
 
-import { Message, MessageProcessingStatus } from "@/types/chat";
+import { Message, MessageProcessingStatus, MessageProcessingResult } from "@/types/chat";
 import { toast } from "sonner";
 
 export const useMessageHandling = (
@@ -12,7 +12,11 @@ export const useMessageHandling = (
   setInputValue: (value: string) => void,
   setPoints: (pointsSetter: (prev: number) => number) => void
 ) => {
-  const processMessage = async (prompt: string, isUserMessage: boolean = true, skipUserMessage: boolean = false) => {
+  const processMessage = async (
+    prompt: string, 
+    isUserMessage: boolean = true, 
+    skipUserMessage: boolean = false
+  ): Promise<MessageProcessingResult> => {
     console.log(`[MessageHandler] Processing message: "${prompt.substring(0, 30)}..."`, 
       `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`);
     
@@ -58,7 +62,7 @@ export const useMessageHandling = (
         return prev + 10;
       });
       
-      return { status: "completed" as MessageProcessingStatus, messageId: aiMessage.id };
+      return { status: "completed", messageId: aiMessage.id };
     } catch (error) {
       console.error(`[MessageHandler] Error processing message:`, error);
       setShowTypingIndicator(false);
@@ -89,7 +93,7 @@ export const useMessageHandling = (
       setMessages(prev => [...prev, errorMessageObj]);
       
       return { 
-        status: "error" as MessageProcessingStatus, 
+        status: "error", 
         error: errorMessageObj
       };
     } finally {

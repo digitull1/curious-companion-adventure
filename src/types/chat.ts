@@ -37,3 +37,8 @@ export type BlockType = "did-you-know" | "mind-blowing" | "amazing-stories" | "s
 
 export type MessageProcessingStatus = "idle" | "processing" | "completed" | "error";
 
+export interface MessageProcessingResult {
+  status: MessageProcessingStatus;
+  messageId?: string;
+  error?: Message;
+}

@@ -1,4 +1,5 @@
-import { Message } from "@/types/chat";
+
+import { Message, MessageProcessingResult } from "@/types/chat";
 
 interface SectionHandlingProps {
   handleTocSectionClick: (section: string) => void;
@@ -9,7 +10,7 @@ export const useSectionHandling = (
   messages: Message[],
   selectedTopic: string | null,
   completedSections: string[],
-  processMessage: (prompt: string, isUserMessage?: boolean, skipUserMessage?: boolean) => Promise<any>,
+  processMessage: (prompt: string, isUserMessage?: boolean, skipUserMessage?: boolean) => Promise<MessageProcessingResult>,
   setCurrentSection: (section: string | null) => void,
   setCompletedSections: (sectionsSetter: (prev: string[]) => string[]) => void,
   setPoints: (pointsSetter: (prev: number) => number) => void,
@@ -34,26 +35,30 @@ export const useSectionHandling = (
 
     const sectionPrompt = `Explain the section "${section}" from the topic "${selectedTopic}" in detail.`;
     processMessage(sectionPrompt, false)
-      .then(() => {
-        // Update completed sections and learning progress
-        setCompletedSections(prevSections => {
-          if (!prevSections.includes(section)) {
-            console.log(`[SectionHandling] Marking section "${section}" as completed.`);
-            return [...prevSections, section];
-          }
-          return prevSections;
-        });
+      .then((result) => {
+        if (result.status === "completed") {
+          // Update completed sections and learning progress
+          setCompletedSections(prevSections => {
+            if (!prevSections.includes(section)) {
+              console.log(`[SectionHandling] Marking section "${section}" as completed.`);
+              return [...prevSections, section];
+            }
+            return prevSections;
+          });
 
-        setLearningProgress(prevProgress => {
-          const newProgress = Math.min(100, prevProgress + (100 / (messages.length + 1)));
-          console.log(`[SectionHandling] Updating learning progress: ${newProgress}%`);
-          return newProgress;
-        });
+          setLearningProgress(prevProgress => {
+            const newProgress = Math.min(100, prevProgress + (100 / (messages.length + 1)));
+            console.log(`[SectionHandling] Updating learning progress: ${newProgress}%`);
+            return newProgress;
+          });
 
-        setPoints(prevPoints => {
-          console.log(`[SectionHandling] Awarding points for completing section: +5 (current: ${prevPoints})`);
-          return prevPoints + 5;
-        });
+          setPoints(prevPoints => {
+            console.log(`[SectionHandling] Awarding points for completing section: +5 (current: ${prevPoints})`);
+            return prevPoints + 5;
+          });
+        } else {
+          console.error("[SectionHandling] Error processing section message:", result.error);
+        }
       })
       .catch(error => {
         console.error("[SectionHandling] Error processing section message:", error);
