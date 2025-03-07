@@ -75,6 +75,9 @@ const processRelatedTopics = (topics: string[]): string[] => {
   return topics.filter(t => t && typeof t === 'string' && t.trim().length > 0);
 };
 
+// Default blocks to use if none are provided
+const DEFAULT_BLOCKS: BlockType[] = ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
+
 const ChatArea: React.FC<ChatAreaProps> = ({
   messages,
   showTypingIndicator,
@@ -96,7 +99,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [processedCurrentSection, setProcessedCurrentSection] = useState<string | null>(null);
   const [renderId, setRenderId] = useState(0); // Add a render ID to help with memoization
-  const [contentBoxBlocks, setContentBoxBlocks] = useState<BlockType[]>([]); // Track blocks for ContentBox
+  const [contentBoxBlocks, setContentBoxBlocks] = useState<BlockType[]>(DEFAULT_BLOCKS); // Track blocks for ContentBox
 
   // Store previous section to detect changes
   const prevSectionRef = useRef<string | null>(null);
@@ -168,29 +171,33 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       
       if (sectionMessage) {
         console.log(`[ChatArea] Found content message for section: ${sectionMessage.id}, text: ${sectionMessage.text.substring(0, 50)}...`);
+        console.log(`[ChatArea] Section message blocks:`, sectionMessage.blocks || "none");
         
         // Only update if different to avoid unnecessary re-renders
         if (!currentSectionMessage || currentSectionMessage.id !== sectionMessage.id) {
           setCurrentSectionMessage(sectionMessage);
           
           // Extract blocks from this message or use defaults
-          const messageBlocks = sectionMessage.blocks || ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
-          console.log(`[ChatArea] Extracted blocks for ContentBox:`, messageBlocks);
-          setContentBoxBlocks(messageBlocks);
+          if (sectionMessage.blocks && sectionMessage.blocks.length > 0) {
+            console.log(`[ChatArea] Using blocks from section message:`, sectionMessage.blocks);
+            setContentBoxBlocks(sectionMessage.blocks);
+          } else {
+            console.log(`[ChatArea] No blocks found in message, using defaults:`, DEFAULT_BLOCKS);
+            setContentBoxBlocks(DEFAULT_BLOCKS);
+          }
         }
       } else {
         // If we can't find a section message, set default blocks
-        const defaultBlocks: BlockType[] = ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
-        console.log(`[ChatArea] No section message found, using default blocks:`, defaultBlocks);
-        setContentBoxBlocks(defaultBlocks);
+        console.log(`[ChatArea] No section message found, using default blocks:`, DEFAULT_BLOCKS);
+        setContentBoxBlocks(DEFAULT_BLOCKS);
       }
     } else {
       console.log(`[ChatArea][render:${renderId}] No current section selected, clearing section message`);
       if (currentSectionMessage !== null) {
         setCurrentSectionMessage(null);
       }
-      // Reset blocks when no section is selected
-      setContentBoxBlocks([]);
+      // Reset to default blocks when no section is selected
+      setContentBoxBlocks(DEFAULT_BLOCKS);
     }
   }, [processedCurrentSection, messages, renderId, currentSection]);
 
@@ -419,7 +426,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 content={currentSectionMessage.text}
                 prevSection={prev}
                 nextSection={next}
-                blocks={contentBoxBlocks.length > 0 ? contentBoxBlocks : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"]}
+                blocks={contentBoxBlocks}
                 onBlockClick={handleContentBoxBlockClick}
                 onNavigate={onTocSectionClick}
                 activeBlock={activeBlock}

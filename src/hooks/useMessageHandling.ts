@@ -2,6 +2,9 @@
 import { Message, MessageProcessingStatus, MessageProcessingResult } from "@/types/chat";
 import { toast } from "sonner";
 
+// Default block types to include in messages
+const DEFAULT_BLOCKS = ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
+
 export const useMessageHandling = (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
   ageRange: string,
@@ -64,11 +67,11 @@ export const useMessageHandling = (
         id: aiMessageId,
         text: response,
         isUser: false,
-        blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
+        blocks: DEFAULT_BLOCKS, // Always include the default blocks
         showBlocks: true
       };
       
-      console.log(`[MessageHandler] Adding AI message to chat: ${aiMessage.id}`);
+      console.log(`[MessageHandler] Adding AI message to chat with blocks:`, aiMessage.blocks);
       setMessages(prev => [...prev, aiMessage]);
       
       // Increment points for each interaction
@@ -83,17 +86,17 @@ export const useMessageHandling = (
       console.error(`[MessageHandler] Error processing message:`, error);
       setShowTypingIndicator(false);
       
-      // Improved error handling
-      let errorMessageText = "Sorry, there was an error processing your request. Please try again.";
+      // Improved error handling with proper types
+      let errorMessage = "Sorry, there was an error processing your request. Please try again.";
       let errorDetails = "";
       
       if (error instanceof Error) {
         console.error(`[MessageHandler] Error details:`, error.stack);
-        errorMessageText = `Error: ${error.message}`;
+        errorMessage = `Error: ${error.message}`;
         errorDetails = error.stack || "";
       }
       
-      toast.error(errorMessageText);
+      toast.error(errorMessage);
       
       // Add error message to the chat
       const errorMessageObj: Message = {
@@ -101,7 +104,7 @@ export const useMessageHandling = (
         text: "I encountered a problem processing your request. Let's try something else!",
         isUser: false,
         error: {
-          message: errorMessageText,
+          message: errorMessage,
           details: errorDetails
         }
       };
@@ -112,7 +115,7 @@ export const useMessageHandling = (
       return { 
         status: "error", 
         error: { 
-          message: errorMessageText, 
+          message: errorMessage, 
           details: errorDetails 
         }
       };
@@ -129,4 +132,3 @@ export const useMessageHandling = (
 
   return { processMessage };
 };
-

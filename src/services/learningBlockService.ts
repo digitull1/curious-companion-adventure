@@ -100,6 +100,7 @@ export const handleBlockClick = async (
       text: blockResponse,
       isUser: false,
       blockType: type, // Set the block type to identify this message
+      blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"] // Always include blocks
     };
 
     // Add specific properties based on block type
@@ -119,6 +120,7 @@ export const handleBlockClick = async (
       blockType: blockMessage.blockType,
       text: blockMessage.text.substring(0, 50) + "...",
       hasImagePrompt: !!blockMessage.imagePrompt,
+      blocks: blockMessage.blocks,
       imagePrompt: blockMessage.imagePrompt?.substring(0, 50) + "...",
       hasQuiz: !!blockMessage.quiz
     });
