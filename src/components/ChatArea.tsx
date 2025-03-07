@@ -92,6 +92,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [currentSectionMessage, setCurrentSectionMessage] = useState<Message | null>(null);
   const [currentBlockMessage, setCurrentBlockMessage] = useState<Message | null>(null);
   const [activeBlock, setActiveBlock] = useState<BlockType | null>(null);
+  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   
   // Process related topics
   const processedRelatedTopics = processRelatedTopics(relatedTopics);
@@ -147,6 +148,19 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Toggle message expansion
+  const toggleMessageExpansion = (messageId: string) => {
+    setExpandedMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
+
   // Function to get previous and next section based on current section
   const getAdjacentSections = () => {
     if (!currentSection) return { prev: null, next: null };
@@ -172,15 +186,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     
     return (
       <div className="mx-auto max-w-3xl px-4 my-3">
-        <div className="flex items-center justify-between bg-white/80 backdrop-blur-md p-2 rounded-full border border-wonder-purple/10 shadow-sm">
+        <div className="flex items-center justify-between bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 backdrop-blur-md p-2 px-4 rounded-full border border-wonder-purple/10 shadow-sm">
           <div className="flex items-center gap-1.5 ml-1">
-            <div className="w-6 h-6 flex-shrink-0 rounded-full bg-wonder-purple/10 flex items-center justify-center">
+            <div className="w-6 h-6 flex-shrink-0 rounded-full bg-wonder-purple/20 flex items-center justify-center">
               <BookOpen className="h-3 w-3 text-wonder-purple" />
             </div>
             <span className="text-xs text-wonder-purple/70">Learning about:</span>
             <span className="text-sm font-medium text-wonder-purple truncate max-w-[150px] sm:max-w-[300px]">
               {cleanedSection}
             </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-20 h-1.5 bg-white/70 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-wonder-purple/50 rounded-full"
+                style={{ width: `${learningProgress}%` }}
+              ></div>
+            </div>
+            <span className="text-xs text-wonder-purple/70">{Math.round(learningProgress)}%</span>
           </div>
         </div>
       </div>
@@ -234,14 +257,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   });
   
   console.log("Filtered AI messages:", aiMessages.length);
-  console.log("Current section message ID:", currentSectionMessage?.id);
-  console.log("Messages in queue:", messages.map(m => ({
-    id: m.id,
-    isUser: m.isUser,
-    isIntro: m.isIntroduction,
-    hasTOC: !!m.tableOfContents,
-    text: m.text.substring(0, 30) + "..."
-  })));
+
+  // Check if a message should be truncated
+  const shouldTruncate = (text: string) => text.length > 300;
+  
+  // Truncate message text
+  const truncateText = (text: string) => {
+    if (text.length <= 300) return text;
+    return text.substring(0, 300) + "...";
+  };
 
   return (
     <div 
@@ -289,7 +313,31 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               </div>
               {aiMessages[index] && (
                 <div className="fade-scale-in px-4">
-                  <ChatMessage message={aiMessages[index].text} isUser={false} />
+                  <div className="relative">
+                    <ChatMessage 
+                      message={expandedMessages.has(aiMessages[index].id) ? 
+                        aiMessages[index].text : 
+                        shouldTruncate(aiMessages[index].text) ? 
+                          truncateText(aiMessages[index].text) : 
+                          aiMessages[index].text
+                      } 
+                      isUser={false} 
+                    />
+                    
+                    {/* Show expand/collapse button for long messages */}
+                    {shouldTruncate(aiMessages[index].text) && (
+                      <button 
+                        onClick={() => toggleMessageExpansion(aiMessages[index].id)}
+                        className="mt-2 flex items-center text-xs text-wonder-purple/70 hover:text-wonder-purple transition-colors"
+                      >
+                        {expandedMessages.has(aiMessages[index].id) ? (
+                          <>Show less <ChevronDown className="h-3 w-3 ml-1 transform rotate-180" /></>
+                        ) : (
+                          <>Read more <ChevronDown className="h-3 w-3 ml-1" /></>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </React.Fragment>
@@ -316,9 +364,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           {/* Show related topics at the bottom if learning is complete */}
           {shouldShowRelatedTopics && (
             <div className="mx-auto max-w-3xl px-4 mb-6" ref={relatedTopicsRef}>
-              <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
-                <h3 className="text-sm font-medium mb-3 text-wonder-purple">🎉 Explore more topics:</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="p-4 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
+                <h3 className="text-sm font-medium mb-3 text-wonder-purple flex items-center">
+                  <span className="text-lg mr-2">🎉</span> Continue your learning journey with:
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {processedRelatedTopics.map((topic, index) => (
                     <div 
                       key={index}
@@ -327,14 +377,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                                 hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
                                 hover:-translate-y-1 transform touch-manipulation opacity-100"
                     >
-                      <div className="flex justify-between items-start mb-1">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
-                          <ChevronRight className="h-3 w-3" />
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
+                          <ChevronRight className="h-3.5 w-3.5" />
                         </div>
-                        <ChevronRight className="h-3 w-3 text-wonder-purple/60" />
+                        <h3 className="font-medium text-sm text-foreground font-rounded leading-tight">{topic}</h3>
                       </div>
-                      <h3 className="font-medium text-xs text-foreground font-rounded leading-tight">{topic}</h3>
-                      <p className="text-[10px] text-muted-foreground mt-1 font-rounded">Click to explore</p>
+                      <p className="text-xs text-muted-foreground font-rounded">Tap to explore this fascinating topic</p>
                     </div>
                   ))}
                 </div>
@@ -349,6 +398,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 <div className="text-center">
                   <h3 className="text-wonder-purple font-medium mb-2">🎉 Congratulations!</h3>
                   <p className="text-muted-foreground text-sm">You've completed all sections of this topic.</p>
+                  <button 
+                    className="mt-3 px-4 py-2 bg-wonder-purple/10 hover:bg-wonder-purple/20 text-wonder-purple rounded-full text-sm font-medium transition-colors"
+                    onClick={() => {
+                      onRelatedTopicClick("Give me a new interesting topic to learn about");
+                    }}
+                  >
+                    Explore a new topic
+                  </button>
                 </div>
               </div>
             </div>
