@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -123,23 +122,29 @@ const Chat = () => {
   };
 
   const handleImageUpload = (file: File) => {
+    console.log(`[Chat] Image upload initiated - Name: ${file.name}, Type: ${file.type}, Size: ${file.size} bytes`);
+    
     // Check file type
     if (!file.type.startsWith('image/')) {
+      console.error(`[Chat] Invalid file type: ${file.type}`);
       toast.error('Please upload an image file');
       return;
     }
     
     // Check file size (limit to 5MB)
     if (file.size > 5 * 1024 * 1024) {
+      console.error(`[Chat] File too large: ${file.size} bytes`);
       toast.error('Image is too large. Please upload an image smaller than 5MB');
       return;
     }
     
     // Store the file for sending
     setCurrentImageFile(file);
+    console.log(`[Chat] Image file set for upload: ${file.name}`);
     
     // If no input text, suggest a homework help message
     if (!chatState.inputValue.trim()) {
+      console.log('[Chat] Setting default homework help prompt');
       chatState.setInputValue("Can you help me with this homework problem?");
     }
     
@@ -153,12 +158,14 @@ const Chat = () => {
     console.log("Current state - selectedTopic:", chatState.selectedTopic, 
                 "topicSectionsGenerated:", chatState.topicSectionsGenerated, 
                 "learningComplete:", chatState.learningComplete,
-                "imageFile:", currentImageFile ? 'present' : 'none');
+                "imageFile:", currentImageFile ? `${currentImageFile.name} (${currentImageFile.size} bytes)` : 'none');
 
     // If we have an image file, we'll process it as a homework help request
     if (currentImageFile) {
+      console.log(`[Chat] Processing homework help request with image: ${currentImageFile.name}`);
       // Process as homework help request
-      await processMessage(chatState.inputValue, true, false, currentImageFile);
+      const result = await processMessage(chatState.inputValue, true, false, currentImageFile);
+      console.log(`[Chat] Homework help request processed with result status: ${result.status}`);
       // Clear the current image file after sending
       setCurrentImageFile(null);
       return;
