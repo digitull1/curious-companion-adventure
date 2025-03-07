@@ -1,5 +1,5 @@
 
-import { Message } from "@/types/chat";
+import { Message, MessageProcessingStatus } from "@/types/chat";
 import { toast } from "sonner";
 
 export const useMessageHandling = (
@@ -57,18 +57,38 @@ export const useMessageHandling = (
         console.log(`[MessageHandler] Awarding points: +10 (current: ${prev})`);
         return prev + 10;
       });
+      
+      return { status: "completed" as MessageProcessingStatus, messageId: aiMessage.id };
     } catch (error) {
       console.error(`[MessageHandler] Error processing message:`, error);
       setShowTypingIndicator(false);
       
       // Improved error handling
       let errorMessage = "Sorry, there was an error processing your request. Please try again.";
+      let errorDetails = "";
+      
       if (error instanceof Error) {
         console.error(`[MessageHandler] Error details:`, error.stack);
         errorMessage = `Error: ${error.message}`;
+        errorDetails = error.stack || "";
       }
       
       toast.error(errorMessage);
+      
+      // Add error message to the chat
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: "I encountered a problem processing your request. Let's try something else!",
+        isUser: false,
+        error: {
+          message: errorMessage,
+          details: errorDetails
+        }
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      
+      return { status: "error" as MessageProcessingStatus, error: errorMessage };
     } finally {
       console.log(`[MessageHandler] Message processing completed`);
       setIsProcessing(false);
