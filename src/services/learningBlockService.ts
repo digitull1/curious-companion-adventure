@@ -2,6 +2,9 @@
 import { BlockType, Message } from "@/types/chat";
 import { toast } from "sonner";
 
+// Define default blocks to ensure consistency across the app
+const DEFAULT_BLOCKS: BlockType[] = ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
+
 export const handleBlockClick = async (
   type: BlockType,
   messageId: string,
@@ -100,7 +103,8 @@ export const handleBlockClick = async (
       text: blockResponse,
       isUser: false,
       blockType: type, // Set the block type to identify this message
-      blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"] // Always include blocks
+      blocks: DEFAULT_BLOCKS, // Always include default blocks for consistency
+      showBlocks: true // Explicitly set showBlocks to true
     };
 
     // Add specific properties based on block type
@@ -121,6 +125,7 @@ export const handleBlockClick = async (
       text: blockMessage.text.substring(0, 50) + "...",
       hasImagePrompt: !!blockMessage.imagePrompt,
       blocks: blockMessage.blocks,
+      showBlocks: blockMessage.showBlocks,
       imagePrompt: blockMessage.imagePrompt?.substring(0, 50) + "...",
       hasQuiz: !!blockMessage.quiz
     });

@@ -63,12 +63,14 @@ export const useMessageHandling = (
       
       setShowTypingIndicator(false);
       
+      console.log(`[MessageHandler] Creating AI message with blocks:`, DEFAULT_BLOCKS);
+      
       const aiMessage: Message = {
         id: aiMessageId,
         text: response,
         isUser: false,
         blocks: DEFAULT_BLOCKS, // Always include the default blocks
-        showBlocks: true
+        showBlocks: true // Explicitly set showBlocks to true
       };
       
       console.log(`[MessageHandler] Adding AI message to chat with blocks:`, aiMessage.blocks);
