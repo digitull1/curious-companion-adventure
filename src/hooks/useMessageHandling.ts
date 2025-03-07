@@ -1,9 +1,9 @@
 
-import { Message, MessageProcessingStatus, MessageProcessingResult } from "@/types/chat";
+import { Message, MessageProcessingStatus, MessageProcessingResult, BlockType } from "@/types/chat";
 import { toast } from "sonner";
 
 // Default block types to include in messages
-const DEFAULT_BLOCKS = ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
+const DEFAULT_BLOCKS: BlockType[] = ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
 
 export const useMessageHandling = (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
