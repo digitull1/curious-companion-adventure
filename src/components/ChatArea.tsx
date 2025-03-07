@@ -96,6 +96,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [processedCurrentSection, setProcessedCurrentSection] = useState<string | null>(null);
   const [renderId, setRenderId] = useState(0); // Add a render ID to help with memoization
+  const [contentBoxBlocks, setContentBoxBlocks] = useState<BlockType[]>([]); // Track blocks for ContentBox
 
   // Store previous section to detect changes
   const prevSectionRef = useRef<string | null>(null);
@@ -151,7 +152,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     }
   }, [currentSection]);
 
-  // Find the appropriate content message for the current section
+  // Find the appropriate content message for the current section and extract blocks
   useEffect(() => {
     // Find the most recent non-user message about the current section that isn't a block-related message
     if (currentSection) {
@@ -171,13 +172,25 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         // Only update if different to avoid unnecessary re-renders
         if (!currentSectionMessage || currentSectionMessage.id !== sectionMessage.id) {
           setCurrentSectionMessage(sectionMessage);
+          
+          // Extract blocks from this message or use defaults
+          const messageBlocks = sectionMessage.blocks || ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
+          console.log(`[ChatArea] Extracted blocks for ContentBox:`, messageBlocks);
+          setContentBoxBlocks(messageBlocks);
         }
+      } else {
+        // If we can't find a section message, set default blocks
+        const defaultBlocks: BlockType[] = ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
+        console.log(`[ChatArea] No section message found, using default blocks:`, defaultBlocks);
+        setContentBoxBlocks(defaultBlocks);
       }
     } else {
       console.log(`[ChatArea][render:${renderId}] No current section selected, clearing section message`);
       if (currentSectionMessage !== null) {
         setCurrentSectionMessage(null);
       }
+      // Reset blocks when no section is selected
+      setContentBoxBlocks([]);
     }
   }, [processedCurrentSection, messages, renderId, currentSection]);
 
@@ -308,6 +321,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   });
   
   console.log(`[ChatArea][render:${renderId}] Filtered AI messages: ${aiMessages.length}`);
+  console.log(`[ChatArea][render:${renderId}] Current content box blocks:`, contentBoxBlocks);
 
   // Check if a message should be truncated
   const shouldTruncate = useCallback((text: string) => text.length > 300, []);
@@ -400,12 +414,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           {currentSection && currentSectionMessage && (
             <div className="px-4 max-w-4xl mx-auto">
               <ContentBox
-                key={`content-${currentSection}-${currentBlockMessage?.id || 'none'}-${activeBlock || 'none'}`}
+                key={`content-${currentSection}-${currentBlockMessage?.id || 'none'}-${activeBlock || 'none'}-${renderId}`}
                 title={currentSection}
                 content={currentSectionMessage.text}
                 prevSection={prev}
                 nextSection={next}
-                blocks={currentSectionMessage.blocks || ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"]}
+                blocks={contentBoxBlocks.length > 0 ? contentBoxBlocks : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"]}
                 onBlockClick={handleContentBoxBlockClick}
                 onNavigate={onTocSectionClick}
                 activeBlock={activeBlock}

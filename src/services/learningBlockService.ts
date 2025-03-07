@@ -57,7 +57,7 @@ export const handleBlockClick = async (
         try {
           console.log(`[LearningBlock] Generating 'see-it' visual content`);
           blockResponse = "Here's a visual representation I created for you:";
-          // Explicitly set the imagePrompt string
+          // Create a specific image prompt string
           imagePrompt = `${messageText} in a style that appeals to ${ageRange} year old children, educational, detailed, colorful, Pixar style illustration`;
           console.log(`[LearningBlock] Image prompt created: ${imagePrompt.substring(0, 50)}...`);
         } catch (error) {
@@ -94,15 +94,24 @@ export const handleBlockClick = async (
     await new Promise(resolve => setTimeout(resolve, 800));
     setShowTypingIndicator(false);
 
-    // Create the block message with the correct image prompt
+    // Create the block message with the correct structure
     const blockMessage: Message = {
       id: `block-${Date.now()}-${type}`,
       text: blockResponse,
       isUser: false,
-      imagePrompt: imagePrompt || undefined,
-      quiz: quiz || undefined,
-      blockType: type
+      blockType: type, // Set the block type to identify this message
     };
+
+    // Add specific properties based on block type
+    if (imagePrompt) {
+      blockMessage.imagePrompt = imagePrompt;
+      console.log(`[LearningBlock] Added image prompt to message: ${imagePrompt.substring(0, 50)}...`);
+    }
+    
+    if (quiz) {
+      blockMessage.quiz = quiz;
+      console.log(`[LearningBlock] Added quiz to message with question: ${quiz.question.substring(0, 50)}...`);
+    }
 
     console.log(`[LearningBlock] Adding block message to chat: ${blockMessage.id}`);
     console.log(`[LearningBlock] Block message details:`, { 
@@ -114,6 +123,7 @@ export const handleBlockClick = async (
       hasQuiz: !!blockMessage.quiz
     });
     
+    // Add the message to the chat
     setMessages(prev => [...prev, blockMessage]);
   } catch (error) {
     console.error(`[LearningBlock] Critical error processing block:`, error);

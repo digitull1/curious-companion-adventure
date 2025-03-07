@@ -103,6 +103,7 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
   const [isContentLoading, setIsContentLoading] = useState(false);
   const [expandedContent, setExpandedContent] = useState(true);
   const [internalRenderKey, setInternalRenderKey] = useState(Date.now());
+  const [isExploreVisible, setIsExploreVisible] = useState(true); // Added state to track visibility
   
   // Track state for logging
   const prevActiveBlockRef = useRef<BlockType | null | undefined>(null);
@@ -120,6 +121,7 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
   useEffect(() => {
     console.log(`[ContentBox][${internalRenderKey}] Mounted/Updated with title: "${cleanedTitle.substring(0, 30)}..."`);
     console.log(`[ContentBox][${internalRenderKey}] activeBlock: ${activeBlock}, imagePrompt: ${imagePrompt ? "present" : "none"}, quiz: ${quiz ? "present" : "none"}`);
+    console.log(`[ContentBox][${internalRenderKey}] blocks provided:`, blocks);
     
     // Compare with previous state
     if (prevActiveBlockRef.current !== activeBlock) {
@@ -137,10 +139,16 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
       prevQuizRef.current = quiz;
     }
     
+    // Force explore section visibility if blocks are provided
+    if (blocks && blocks.length > 0) {
+      console.log(`[ContentBox][${internalRenderKey}] Setting explore section visible due to blocks being provided:`, blocks);
+      setIsExploreVisible(true);
+    }
+    
     return () => {
       console.log(`[ContentBox][${internalRenderKey}] Unmounting component`);
     };
-  }, [cleanedTitle, activeBlock, imagePrompt, quiz, internalRenderKey]);
+  }, [cleanedTitle, activeBlock, imagePrompt, quiz, internalRenderKey, blocks]);
   
   // Simulate content loading when navigating between sections
   useEffect(() => {
@@ -174,6 +182,8 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
     if (exploreMoreRef.current) {
       // Staggered animation for explore more links
       const links = exploreMoreRef.current.querySelectorAll('.explore-link');
+      console.log(`[ContentBox][${internalRenderKey}] Found ${links.length} explore links to animate`);
+      
       links.forEach((link, index) => {
         animate(
           link,
@@ -269,6 +279,13 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
     }
   }, [activeBlock, imagePrompt, quiz, internalRenderKey]);
   
+  // Ensure blocks is an array with default values if not provided
+  const safeBlocks = Array.isArray(blocks) && blocks.length > 0 
+    ? blocks 
+    : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"] as BlockType[];
+
+  console.log(`[ContentBox][${internalRenderKey}] Using safe blocks:`, safeBlocks);
+  
   return (
     <div 
       ref={contentBoxRef} 
@@ -342,52 +359,61 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
                 </div>
               )}
               
-              {/* Explore More section with improved interactive grid */}
-              <div ref={exploreMoreRef} className="mt-8 pt-4 border-t border-wonder-purple/10">
-                <h3 className="text-sm font-medium text-wonder-purple mb-3 flex items-center">
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-wonder-yellow" />
-                  Explore More
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
-                  {blocks.map((block) => {
-                    const BlockIcon = blockInfo[block].icon;
-                    return (
-                      <button
-                        key={`${block}-${internalRenderKey}`}
-                        onClick={(e) => handleBlockButtonClick(block, e)}
-                        className={`explore-link group relative p-3 bg-gradient-to-br ${
-                          activeBlock === block ? blockInfo[block].color : 'from-white to-white/90'
-                        } rounded-lg border ${
-                          activeBlock === block ? 'border-transparent' : 'border-wonder-purple/10 hover:border-wonder-purple/30'
-                        } ${blockInfo[block].shadow} transition-all duration-300 transform hover:-translate-y-1 
-                        flex flex-col items-center text-center opacity-0`}
-                        aria-label={`Explore ${blockInfo[block].title}`}
-                      >
-                        <div className={`w-8 h-8 rounded-full ${
-                          activeBlock === block ? 'bg-white/20' : 'bg-wonder-purple/5'
-                        } flex items-center justify-center mb-1`}>
-                          <BlockIcon className={`h-4 w-4 ${
-                            activeBlock === block ? 'text-white' : blockInfo[block].icon({}).props.className
-                          }`} />
-                        </div>
-                        <span className={`font-medium text-xs ${
-                          activeBlock === block ? 'text-white' : 'text-foreground'
-                        }`}>{blockInfo[block].title}</span>
-                        <span className={`text-[10px] ${
-                          activeBlock === block ? 'text-white/80' : 'text-muted-foreground'
-                        } mt-0.5 hidden sm:block`}>{blockInfo[block].description}</span>
-                        
-                        {/* Magical sparkle effect for active blocks */}
-                        {activeBlock === block && (
-                          <div className="absolute top-0 right-0 h-6 w-6 pointer-events-none">
-                            <Sparkles className="h-5 w-5 text-white/60 animate-sparkle absolute" />
+              {/* Explore More section with improved interactive grid - only hide when explicitly set */}
+              {isExploreVisible && (
+                <div ref={exploreMoreRef} className="mt-8 pt-4 border-t border-wonder-purple/10">
+                  <h3 className="text-sm font-medium text-wonder-purple mb-3 flex items-center">
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5 text-wonder-yellow" />
+                    Explore More
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
+                    {safeBlocks.map((block) => {
+                      const info = blockInfo[block];
+                      if (!info) {
+                        console.error(`[ContentBox] Unknown block type: ${block}`);
+                        return null;
+                      }
+                      
+                      const BlockIcon = info.icon;
+                      return (
+                        <button
+                          key={`${block}-${internalRenderKey}`}
+                          onClick={(e) => handleBlockButtonClick(block, e)}
+                          data-block-type={block} // Add data attribute for debugging
+                          className={`explore-link group relative p-3 bg-gradient-to-br ${
+                            activeBlock === block ? info.color : 'from-white to-white/90'
+                          } rounded-lg border ${
+                            activeBlock === block ? 'border-transparent' : 'border-wonder-purple/10 hover:border-wonder-purple/30'
+                          } ${info.shadow} transition-all duration-300 transform hover:-translate-y-1 
+                          flex flex-col items-center text-center opacity-0`}
+                          aria-label={`Explore ${info.title}`}
+                        >
+                          <div className={`w-8 h-8 rounded-full ${
+                            activeBlock === block ? 'bg-white/20' : 'bg-wonder-purple/5'
+                          } flex items-center justify-center mb-1`}>
+                            <BlockIcon className={`h-4 w-4 ${
+                              activeBlock === block ? 'text-white' : BlockIcon({}).props.className
+                            }`} />
                           </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                          <span className={`font-medium text-xs ${
+                            activeBlock === block ? 'text-white' : 'text-foreground'
+                          }`}>{info.title}</span>
+                          <span className={`text-[10px] ${
+                            activeBlock === block ? 'text-white/80' : 'text-muted-foreground'
+                          } mt-0.5 hidden sm:block`}>{info.description}</span>
+                          
+                          {/* Magical sparkle effect for active blocks */}
+                          {activeBlock === block && (
+                            <div className="absolute top-0 right-0 h-6 w-6 pointer-events-none">
+                              <Sparkles className="h-5 w-5 text-white/60 animate-sparkle absolute" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>
