@@ -36,8 +36,12 @@ export const useChatInitialization = (
       try {
         console.log("Generating personalized topics for age range:", ageRange);
         
-        // Generate age-appropriate topics
-        const topicsPrompt = `Generate 5 engaging, educational topics that would interest a ${ageRange} year old child. Format as a short comma-separated list. Topics should be interesting and appropriate for their age group.`;
+        // Generate age-appropriate topics with better prompt
+        const topicsPrompt = `Generate 6 fascinating, educational topics specifically for a ${ageRange} year old child. 
+        Include a mix of science, history, and hands-on activities they could explore. 
+        Topics should be engaging, age-appropriate, and spark curiosity.
+        Format as a simple comma-separated list without numbers or explanations.`;
+        
         const topicsResponse = await generateResponse(topicsPrompt, ageRange, language);
         console.log("Generated topics response:", topicsResponse);
         
@@ -45,8 +49,8 @@ export const useChatInitialization = (
         const topics = processTopicsFromResponse(topicsResponse);
         console.log("Processed topics:", topics);
         
-        // Make sure we have exactly 5 topics
-        const finalTopics = topics.length >= 5 ? topics.slice(0, 5) : [...topics, ...defaultSuggestedPrompts.slice(0, 5 - topics.length)];
+        // Make sure we have exactly 6 topics
+        const finalTopics = topics.length >= 6 ? topics.slice(0, 6) : [...topics, ...defaultSuggestedPrompts.slice(0, 6 - topics.length)];
         console.log("Final topics list:", finalTopics);
         
         setSuggestedTopics(finalTopics);
@@ -77,7 +81,7 @@ export const useChatInitialization = (
         // Auto-show suggested prompts after welcome
         setTimeout(() => {
           setShowSuggestedPrompts(true);
-        }, 1000);
+        }, 800);
         
       } catch (error) {
         console.error("Error generating personalized topics:", error);
@@ -100,7 +104,7 @@ export const useChatInitialization = (
         // Auto-show suggested prompts after welcome
         setTimeout(() => {
           setShowSuggestedPrompts(true);
-        }, 1000);
+        }, 800);
       }
     };
     

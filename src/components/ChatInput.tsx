@@ -1,7 +1,8 @@
 
 import React, { useRef } from "react";
-import { MessageCircle, Send, X, Sparkles } from "lucide-react";
+import { MessageCircle, Send, Sparkles } from "lucide-react";
 import VoiceInput from "@/components/VoiceInput";
+import SuggestedTopics from "@/components/SuggestedTopics";
 
 interface ChatInputProps {
   inputValue: string;
@@ -38,35 +39,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-t from-white/95 via-white/90 to-white/70 backdrop-blur-lg pt-6 pb-4 px-4 md:px-8 z-20">
-      {/* Suggested prompts overlay */}
+      {/* Suggested topics overlay */}
       {showSuggestedPrompts && (
-        <div className="mb-3 bg-gradient-to-br from-white/95 to-white/90 rounded-xl p-4 shadow-magical border border-wonder-purple/20 relative backdrop-blur-md">
-          <button 
-            onClick={() => setShowSuggestedPrompts(false)}
-            className="absolute top-2 right-2 h-6 w-6 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-          >
-            <X className="h-3 w-3" />
-          </button>
-          
-          <h3 className="text-sm font-medium text-wonder-purple mb-3 flex items-center">
-            <Sparkles className="h-3 w-3 mr-1.5 text-wonder-yellow" />
-            Try asking about...
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {suggestedPrompts.map((prompt, index) => (
-              <button
-                key={index}
-                className="text-xs bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/15 hover:from-wonder-purple/15 hover:to-wonder-purple/20 text-wonder-purple px-4 py-2 rounded-full transition-colors shadow-sm hover:shadow-md"
-                onClick={() => {
-                  onSuggestedPromptClick(prompt);
-                  setShowSuggestedPrompts(false);
-                }}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-        </div>
+        <SuggestedTopics
+          topics={suggestedPrompts}
+          onTopicClick={onSuggestedPromptClick}
+          onClose={() => setShowSuggestedPrompts(false)}
+        />
       )}
       
       {/* Chat Input */}
