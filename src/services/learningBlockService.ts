@@ -43,6 +43,7 @@ export const handleBlockClick = async (
       return prev + 15;
     });
     
+    // Make sure to await all async operations properly
     switch (type) {
       case "did-you-know":
         console.log(`[LearningBlock] Generating 'did-you-know' content for age: ${ageRange}, language: ${language}`);
@@ -77,13 +78,25 @@ export const handleBlockClick = async (
         try {
           quiz = await generateQuiz(messageText, language);
           console.log(`[LearningBlock] Quiz generated successfully with ${quiz?.options?.length || 0} options`);
+          
+          // Ensure the quiz object has all required properties
+          if (!quiz || !quiz.question || !quiz.options || !quiz.correctAnswer) {
+            console.error(`[LearningBlock] Invalid quiz data:`, quiz);
+            throw new Error("Invalid quiz data");
+          }
+          
         } catch (error) {
           console.error(`[LearningBlock] Error generating quiz:`, error);
           toast.error("There was an issue creating your quiz. Using a simple one instead!");
+          
+          // Fallback quiz with content related to the message
+          const defaultQuestion = await generateResponse(`Create a simple multiple choice question about ${messageText} for a ${ageRange} year old with 4 options. Just return the question.`, ageRange, language);
+          
           quiz = {
-            question: "Which of these is a fact about this topic?",
+            question: defaultQuestion || "Which of these is a fact about this topic?",
             options: ["Option 1", "Option 2", "Option 3", "Option 4"],
-            correctAnswer: 0
+            correctAnswer: 0,
+            funFact: "Learning is fun! Keep exploring to discover more amazing facts."
           };
         }
         break;
@@ -132,6 +145,10 @@ export const handleBlockClick = async (
     
     // Add the message to the chat
     setMessages(prev => [...prev, blockMessage]);
+    
+    // Mark processing as complete
+    setIsProcessing(false);
+    
   } catch (error) {
     console.error(`[LearningBlock] Critical error processing block:`, error);
     setShowTypingIndicator(false);

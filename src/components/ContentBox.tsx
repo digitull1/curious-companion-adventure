@@ -116,12 +116,17 @@ const ContentBox: React.FC<ContentBoxProps> = ({
         
         {/* Show image if active block is "see-it" and we have an image prompt */}
         {activeBlock === "see-it" && imagePrompt && (
-          <ImageBlock imagePrompt={imagePrompt} />
+          <ImageBlock prompt={imagePrompt} />
         )}
         
         {/* Show quiz if active block is "quiz" and we have quiz data */}
         {activeBlock === "quiz" && quiz && (
-          <QuizBlock quiz={quiz} />
+          <QuizBlock 
+            question={quiz.question} 
+            options={quiz.options} 
+            correctAnswer={quiz.correctAnswer}
+            funFact={quiz.funFact}
+          />
         )}
         
         {/* Show text for other blocks */}
