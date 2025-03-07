@@ -20,13 +20,17 @@ export const useMessageHandling = (
     console.log(`[MessageHandler] Processing message: "${prompt.substring(0, 30)}..."`, 
       `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`);
     
+    // Generate unique IDs for user and AI messages to prevent collisions
+    const userMessageId = `user-${Date.now()}`;
+    const aiMessageId = `ai-${Date.now() + 1}`;
+    
     setIsProcessing(true);
     setShowTypingIndicator(true);
 
     // If it's a user message and we're not skipping user message display
     if (isUserMessage && !skipUserMessage) {
       const userMessage: Message = {
-        id: Date.now().toString(),
+        id: userMessageId,
         text: prompt,
         isUser: true
       };
@@ -46,7 +50,7 @@ export const useMessageHandling = (
       setShowTypingIndicator(false);
       
       const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: aiMessageId,
         text: response,
         isUser: false,
         blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],

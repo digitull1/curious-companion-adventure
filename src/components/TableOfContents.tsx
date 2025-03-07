@@ -39,6 +39,7 @@ const getTopicEmoji = (section: string): string => {
 
 // Process and separate multilingual sections
 const processMultilingualSections = (sections: string[]): string[] => {
+  console.log("Processing multilingual sections:", sections);
   if (sections.length === 0) return [];
   
   // If we only have one section but it contains multiple lines or separators
@@ -65,10 +66,12 @@ const processMultilingualSections = (sections: string[]): string[] => {
   return sections;
 };
 
-// Filter out introduction/welcome messages
+// Filter out introduction/welcome messages and table of contents headers
 const filterIntroSections = (sections: string[]): string[] => {
+  console.log("Filtering intro sections from:", sections);
   return sections.filter(section => {
     const lowerSection = section.toLowerCase();
+    // Enhanced filtering to remove more introductory phrases
     return !(
       lowerSection.includes("welcome") ||
       lowerSection.includes("introduction") ||
@@ -76,7 +79,17 @@ const filterIntroSections = (sections: string[]): string[] => {
       lowerSection.includes("hello") ||
       lowerSection.includes("let's dive") ||
       lowerSection.includes("explore") ||
-      lowerSection.includes("get ready")
+      lowerSection.includes("get ready") ||
+      lowerSection.includes("here's") ||
+      lowerSection.includes("here is") ||
+      lowerSection.includes("table of content") ||
+      lowerSection.includes("table of contents") ||
+      lowerSection.includes("contents") ||
+      lowerSection.includes("topics") ||
+      lowerSection.includes("what we'll") ||
+      lowerSection.includes("what we will") ||
+      lowerSection.includes("let me teach") ||
+      lowerSection.includes("learn about")
     );
   });
 };
@@ -93,10 +106,13 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   const [showAllSections, setShowAllSections] = React.useState(false);
   
   // Process sections to handle multilingual content properly
+  console.log("Original TOC sections:", sections);
   let processedSections = processMultilingualSections(sections);
+  console.log("After multilingual processing:", processedSections);
   
   // Filter out introduction sections
   processedSections = filterIntroSections(processedSections);
+  console.log("After filtering intros:", processedSections);
   
   // Now limit to 5 sections initially
   const limitedSections = showAllSections ? processedSections : processedSections.slice(0, 5);

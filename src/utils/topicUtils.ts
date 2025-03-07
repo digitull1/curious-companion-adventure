@@ -1,77 +1,115 @@
 
-// Process topics from a response string into an array
+/**
+ * Processes a response string containing topics/sections and returns an array of topics
+ */
 export const processTopicsFromResponse = (response: string): string[] => {
   console.log("Processing topics from response:", response);
   
-  // Clean up the response first - remove any prefixes like "Here are 5 topics..."
-  let cleanedResponse = response.replace(/^(here are|these are)\s+\d+\s+(engaging|educational|interesting)?.*(topics|ideas|subjects).*?:/i, "").trim();
-  
-  // Filter out non-content lines that might be introductory
-  const filterIntroduction = (line: string): boolean => {
-    const lowerLine = line.toLowerCase();
-    return !(
-      lowerLine.includes("welcome") ||
-      lowerLine.includes("introduction") ||
-      lowerLine.includes("hey there") ||
-      lowerLine.includes("hello") ||
-      lowerLine.includes("let's") ||
-      lowerLine.includes("explore") ||
-      lowerLine.includes("get ready") ||
-      lowerLine.includes("in this journey") ||
-      lowerLine.length < 5
-    );
-  };
-  
-  // Check if already formatted as a list with numbers or bullets
-  if (cleanedResponse.includes("\n")) {
-    const lines = cleanedResponse.split("\n").map(line => 
-      line.replace(/^\d+[\.\)]?\s*|\*\s*|•\s*|-\s*|and\s+/i, "").trim()
-    ).filter(line => line.length > 0 && filterIntroduction(line));
+  // Check if it's a numbered list (most common format)
+  // e.g., "1. First topic\n2. Second topic\n3. ..."
+  if (/\d+\./.test(response)) {
+    // Split by line breaks and extract topics
+    const lines = response.split('\n').filter(line => line.trim());
     
-    console.log("Processed as numbered/bulleted list:", lines);
-    return lines;
+    // Extract topics and remove any "table of contents" or intro headers
+    const topics = lines
+      .filter(line => /\d+\./.test(line))
+      .map(line => line.replace(/^\d+\.\s*/, '').trim())
+      .filter(topic => {
+        const lowerTopic = topic.toLowerCase();
+        return !(
+          lowerTopic.includes("table of content") ||
+          lowerTopic.includes("table of contents") ||
+          lowerTopic.includes("welcome") ||
+          lowerTopic.includes("introduction") ||
+          lowerTopic.includes("here's what") ||
+          lowerTopic.includes("let's explore") ||
+          lowerTopic.includes("let's learn")
+        );
+      });
+      
+    console.log("Processed as numbered list:", topics);
+    return topics;
   }
-  
-  // Check if it's a comma-separated list
-  if (cleanedResponse.includes(",")) {
-    const topics = cleanedResponse.split(",").map(topic => 
-      topic.replace(/^\d+[\.\)]?\s*|and\s+$/i, "").trim()
-    ).filter(topic => topic.length > 0 && filterIntroduction(topic));
+
+  // Check if it's a bullet list
+  // e.g., "• First topic\n• Second topic\n• ..."
+  if (/[•*-]/.test(response)) {
+    const lines = response.split('\n').filter(line => line.trim());
     
+    // Extract topics
+    const topics = lines
+      .filter(line => /[•*-]/.test(line))
+      .map(line => line.replace(/^[•*-]\s*/, '').trim())
+      .filter(topic => {
+        const lowerTopic = topic.toLowerCase();
+        return !(
+          lowerTopic.includes("table of content") ||
+          lowerTopic.includes("welcome") ||
+          lowerTopic.includes("introduction")
+        );
+      });
+      
+    console.log("Processed as bullet list:", topics);
+    return topics;
+  }
+
+  // Check if it's a comma-separated list
+  // e.g., "First topic, Second topic, Third topic"
+  if (response.includes(',')) {
+    const topics = response
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0)
+      .filter(topic => {
+        const lowerTopic = topic.toLowerCase();
+        return !(
+          lowerTopic.includes("table of content") ||
+          lowerTopic.includes("welcome") ||
+          lowerTopic.includes("introduction")
+        );
+      });
+      
     console.log("Processed as comma-separated list:", topics);
     return topics;
   }
-  
-  // Just return as a single item if no clear separator
-  console.log("No clear separator, returning as single item");
-  return [cleanedResponse.trim()].filter(filterIntroduction);
-};
 
-// Map topics to appropriate emoji icons based on keywords
-export const getTopicEmoji = (topic: string): string => {
-  const lowercaseTopic = topic.toLowerCase();
-  
-  if (lowercaseTopic.includes("dinosaur")) return "🦖";
-  if (lowercaseTopic.includes("planet") || lowercaseTopic.includes("space") || lowercaseTopic.includes("solar")) return "🪐";
-  if (lowercaseTopic.includes("robot") || lowercaseTopic.includes("tech")) return "🤖";
-  if (lowercaseTopic.includes("animal") || lowercaseTopic.includes("wildlife")) return "🦁";
-  if (lowercaseTopic.includes("ocean") || lowercaseTopic.includes("sea") || lowercaseTopic.includes("marine")) return "🌊";
-  if (lowercaseTopic.includes("plant") || lowercaseTopic.includes("tree") || lowercaseTopic.includes("flower")) return "🌱";
-  if (lowercaseTopic.includes("experiment") || lowercaseTopic.includes("science")) return "🧪";
-  if (lowercaseTopic.includes("weather") || lowercaseTopic.includes("climate")) return "🌦️";
-  if (lowercaseTopic.includes("insect") || lowercaseTopic.includes("bug") || lowercaseTopic.includes("butterfly")) return "🦋";
-  if (lowercaseTopic.includes("volcano") || lowercaseTopic.includes("lava")) return "🌋";
-  if (lowercaseTopic.includes("rainbow") || lowercaseTopic.includes("color")) return "🌈";
-  if (lowercaseTopic.includes("star") || lowercaseTopic.includes("galaxy")) return "⭐";
-  if (lowercaseTopic.includes("mountain") || lowercaseTopic.includes("hill")) return "⛰️";
-  if (lowercaseTopic.includes("water") || lowercaseTopic.includes("rain")) return "💧";
-  if (lowercaseTopic.includes("history") || lowercaseTopic.includes("ancient")) return "📜";
-  if (lowercaseTopic.includes("math") || lowercaseTopic.includes("number")) return "🔢";
-  if (lowercaseTopic.includes("music") || lowercaseTopic.includes("instrument")) return "🎵";
-  if (lowercaseTopic.includes("art") || lowercaseTopic.includes("craft") || lowercaseTopic.includes("draw")) return "🎨";
-  if (lowercaseTopic.includes("build") || lowercaseTopic.includes("bridge") || lowercaseTopic.includes("construct")) return "🏗️";
-  if (lowercaseTopic.includes("cycle")) return "🔄";
-  
-  // Default emoji for topics without specific matches
-  return "✨";
+  // Check if it's a semicolon-separated list
+  // e.g., "First topic; Second topic; Third topic"
+  if (response.includes(';')) {
+    const topics = response
+      .split(';')
+      .map(t => t.trim())
+      .filter(t => t.length > 0)
+      .filter(topic => {
+        const lowerTopic = topic.toLowerCase();
+        return !(
+          lowerTopic.includes("table of content") ||
+          lowerTopic.includes("welcome") ||
+          lowerTopic.includes("introduction")
+        );
+      });
+      
+    console.log("Processed as semicolon-separated list:", topics);
+    return topics;
+  }
+
+  // If none of the above formats match, split by lines and filter out empty lines
+  const lines = response
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .filter(line => {
+      const lowerLine = line.toLowerCase();
+      return !(
+        lowerLine.includes("table of content") ||
+        lowerLine.includes("welcome") ||
+        lowerLine.includes("introduction") ||
+        lowerLine.includes("here's what") ||
+        lowerLine.includes("let's explore")
+      );
+    });
+    
+  console.log("Processed as line breaks:", lines);
+  return lines.length > 0 ? lines : [response];
 };

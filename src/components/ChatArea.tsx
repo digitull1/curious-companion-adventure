@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -93,6 +92,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [currentBlockMessage, setCurrentBlockMessage] = useState<Message | null>(null);
   const [activeBlock, setActiveBlock] = useState<BlockType | null>(null);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
+  const [processedCurrentSection, setProcessedCurrentSection] = useState<string | null>(null);
   
   // Process related topics
   const processedRelatedTopics = processRelatedTopics(relatedTopics);
@@ -109,6 +109,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       setCurrentBlockMessage(blockMessage);
     }
   }, [messages]);
+
+  // Keep track of section changes to avoid flickering
+  useEffect(() => {
+    if (currentSection !== processedCurrentSection) {
+      console.log(`Section changing from "${processedCurrentSection}" to "${currentSection}"`);
+      setProcessedCurrentSection(currentSection);
+    }
+  }, [currentSection, processedCurrentSection]);
 
   useEffect(() => {
     // Find the most recent non-user message about the current section that isn't a block-related message
@@ -127,7 +135,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       setCurrentBlockMessage(null);
       setActiveBlock(null);
     }
-  }, [currentSection, messages]);
+  }, [processedCurrentSection, messages]);
 
   useEffect(() => {
     // Apply animations to related topics when they appear

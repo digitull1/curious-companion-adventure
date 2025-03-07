@@ -26,16 +26,27 @@ export const useSectionHandling = (
 
     // Check if the section is already completed
     if (completedSections.includes(section)) {
-      console.log(`[SectionHandling] Section "${section}" already completed. Skipping.`);
+      console.log(`[SectionHandling] Section "${section}" already completed. Showing existing content.`);
+      setCurrentSection(section);
       return;
     }
 
-    // Mark the current section
+    // Special handling for completion buttons
+    if (section === "Generate more content" || section === "Explore other topics") {
+      console.log(`[SectionHandling] Special section clicked: ${section}`);
+      processMessage(section, false, true);
+      return;
+    }
+
+    // Mark the current section immediately to prevent double-processing
     setCurrentSection(section);
 
     const sectionPrompt = `Explain the section "${section}" from the topic "${selectedTopic}" in detail.`;
-    processMessage(sectionPrompt, false)
+    console.log(`[SectionHandling] Sending section prompt: ${sectionPrompt.substring(0, 50)}...`);
+    
+    processMessage(sectionPrompt, false, true)
       .then((result) => {
+        console.log(`[SectionHandling] Section process result status: ${result.status}`);
         if (result.status === "completed") {
           // Update completed sections and learning progress
           setCompletedSections(prevSections => {
@@ -47,8 +58,10 @@ export const useSectionHandling = (
           });
 
           setLearningProgress(prevProgress => {
-            const newProgress = Math.min(100, prevProgress + (100 / (messages.length + 1)));
-            console.log(`[SectionHandling] Updating learning progress: ${newProgress}%`);
+            const toc = messages.find(m => m.tableOfContents)?.tableOfContents || [];
+            const increment = toc.length > 0 ? (100 / toc.length) : 10;
+            const newProgress = Math.min(100, prevProgress + increment);
+            console.log(`[SectionHandling] Updating learning progress: ${newProgress}% (increment: ${increment}, total sections: ${toc.length})`);
             return newProgress;
           });
 
@@ -67,7 +80,7 @@ export const useSectionHandling = (
 
   const handleRelatedTopicClick = (topic: string) => {
     console.log(`[SectionHandling] Related topic clicked: ${topic}`);
-    processMessage(`Tell me about ${topic}`, false);
+    processMessage(`Tell me about ${topic}`, false, true);
   };
 
   return {
