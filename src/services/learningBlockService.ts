@@ -25,6 +25,7 @@ export const handleBlockClick = async (
     // Prevent multiple concurrent processing
     if (window._isBlockProcessing) {
       console.log(`[LearningBlock] Already processing another block, ignoring this request`);
+      toast.info("Already processing another request. Please wait.");
       return;
     }
     

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,6 +111,7 @@ export function useOpenAI() {
         } else {
           // After max retries, fall back to placeholder
           console.log("Max retries reached, using fallback image");
+          toast.error("Image generation failed. Using a fallback image instead.");
           return generateMockImageUrl(prompt);
         }
       } finally {

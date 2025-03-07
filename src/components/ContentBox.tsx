@@ -39,7 +39,7 @@ const ContentBox: React.FC<ContentBoxProps> = ({
   quiz
 }) => {
   const [safeBlocks, setSafeBlocks] = useState<BlockType[]>(DEFAULT_BLOCKS);
-  const [isExploreVisible, setIsExploreVisible] = useState(true); // Always show explore section
+  const [isExploreVisible, setIsExploreVisible] = useState(true);
   const uniqueId = Date.now(); // Used for logging purposes
   
   // Ensure we always have valid blocks to display
@@ -73,6 +73,12 @@ const ContentBox: React.FC<ContentBoxProps> = ({
   const handleNavigate = (section: string | null) => {
     if (!section) return;
     onNavigate(section);
+  };
+
+  // Handle block click with a more explicit implementation
+  const handleBlockClick = (blockType: BlockType) => {
+    console.log(`[ContentBox] Block clicked: ${blockType}`);
+    onBlockClick(blockType);
   };
 
   return (
@@ -154,7 +160,7 @@ const ContentBox: React.FC<ContentBoxProps> = ({
             <LearningBlock
               key={block} 
               type={block}
-              onClick={() => onBlockClick(block)}
+              onClick={() => handleBlockClick(block)}
             />
           ))}
         </div>

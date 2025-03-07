@@ -1,5 +1,4 @@
-
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
@@ -46,7 +45,7 @@ interface ChatAreaProps {
 
 // Helper function to process related topics from a single string
 const processRelatedTopics = (topics: string[]): string[] => {
-  console.log("Processing related topics:", topics);
+  console.log(`[ChatArea] Processing related topics:`, topics);
   if (!topics || topics.length === 0) return [];
   
   // If it's a single string containing multiple topics
@@ -104,9 +103,36 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Store previous section to detect changes
   const prevSectionRef = useRef<string | null>(null);
   
-  // Process related topics
-  const processedRelatedTopics = processRelatedTopics(relatedTopics);
-  console.log(`[ChatArea][render:${renderId}] Processed related topics:`, processedRelatedTopics);
+  // Use useMemo to prevent unnecessary recalculations
+  const processedRelatedTopics = useMemo(() => {
+    console.log(`[ChatArea] Processing related topics:`, relatedTopics);
+    if (!relatedTopics || relatedTopics.length === 0) return [];
+    
+    // If it's a single string containing multiple topics
+    if (relatedTopics.length === 1 && typeof relatedTopics[0] === 'string') {
+      const topicStr = relatedTopics[0];
+      
+      // Check for numbered list format (e.g., "1. Topic\n2. Topic")
+      if (topicStr.includes('\n')) {
+        return topicStr.split('\n')
+          .map(line => line.replace(/^\d+[\.\)]?\s*/, '').trim())
+          .filter(line => line.length > 0);
+      }
+      
+      // Check for comma-separated list
+      if (topicStr.includes(',')) {
+        return topicStr.split(',').map(t => t.trim()).filter(t => t.length > 0);
+      }
+      
+      // Check for semicolon-separated list
+      if (topicStr.includes(';')) {
+        return topicStr.split(';').map(t => t.trim()).filter(t => t.length > 0);
+      }
+    }
+    
+    // Already an array of topics
+    return relatedTopics.filter(t => t && typeof t === 'string' && t.trim().length > 0);
+  }, [relatedTopics]);
 
   // Stable reference to scrollToBottom
   const scrollToBottom = useCallback(() => {
@@ -295,41 +321,44 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }, [currentSectionMessage, onBlockClick]);
 
   // Find the welcome message
-  const welcomeMessage = messages.find(m => !m.isUser && m.isIntroduction && !m.tableOfContents);
+  const welcomeMessage = useMemo(() => 
+    messages.find(m => !m.isUser && m.isIntroduction && !m.tableOfContents), 
+    [messages]
+  );
   
   // Find the introduction message that contains the table of contents
-  const introMessage = messages.find(m => m.isIntroduction && m.tableOfContents);
+  const introMessage = useMemo(() => 
+    messages.find(m => m.isIntroduction && m.tableOfContents), 
+    [messages]
+  );
   
-  // Check if we have related topics to display and if learning is complete
-  const shouldShowRelatedTopics = processedRelatedTopics.length > 0 && learningComplete;
-  
+  const shouldShowRelatedTopics = useMemo(() => 
+    processedRelatedTopics.length > 0 && learningComplete,
+    [processedRelatedTopics, learningComplete]
+  );
+
   // Get adjacent sections for navigation
-  const { prev, next } = getAdjacentSections();
+  const { prev, next } = useMemo(() => getAdjacentSections(), [currentSection, messages]);
   
-  // Filter user messages to display in the chat flow
-  const userMessages = messages.filter(m => m.isUser);
-  console.log(`[ChatArea][render:${renderId}] Filtered user messages: ${userMessages.length}`);
+  // Memoize filtered messages to prevent unnecessary re-renders
+  const userMessages = useMemo(() => messages.filter(m => m.isUser), [messages]);
   
-  // Filter AI messages that are not special (TOC, welcome, etc.)
-  // FIXED: Properly exclude messages that are currently displayed in the content box
-  const aiMessages = messages.filter(m => {
-    const isRegularAIMessage = !m.isUser && 
+  const aiMessages = useMemo(() => {
+    return messages.filter(m => {
+      const isRegularAIMessage = !m.isUser && 
                               !m.isIntroduction && 
                               !m.tableOfContents && 
-                              !m.blockType && // Exclude block-specific messages
+                              !m.blockType && 
                               !m.imagePrompt && 
                               !m.quiz;
-    
-    // Exclude messages that are currently displayed in the content box
-    const isInContentBox = currentSectionMessage && 
+      
+      const isInContentBox = currentSectionMessage && 
                           m.id === currentSectionMessage.id;
-    
-    return isRegularAIMessage && !isInContentBox;
-  });
+      
+      return isRegularAIMessage && !isInContentBox;
+    });
+  }, [messages, currentSectionMessage]);
   
-  console.log(`[ChatArea][render:${renderId}] Filtered AI messages: ${aiMessages.length}`);
-  console.log(`[ChatArea][render:${renderId}] Current content box blocks:`, contentBoxBlocks);
-
   // Check if a message should be truncated
   const shouldTruncate = useCallback((text: string) => text.length > 300, []);
   
@@ -437,8 +466,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           )}
           
           {/* Show related topics at the bottom if learning is complete */}
-          {shouldShowRelatedTopics && (
-            <div className="mx-auto max-w-3xl px-4 mb-6" ref={relatedTopicsRef}>
+          <div 
+            className={`mx-auto max-w-3xl px-4 mb-6 min-h-[50px] transition-opacity duration-300 ${shouldShowRelatedTopics ? 'opacity-100' : 'opacity-0 hidden'}`} 
+            ref={relatedTopicsRef}
+          >
+            {shouldShowRelatedTopics && (
               <div className="p-4 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
                 <h3 className="text-sm font-medium mb-3 text-wonder-purple flex items-center">
                   <span className="text-lg mr-2">🎉</span> Continue your learning journey with:
@@ -450,7 +482,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                       onClick={() => onRelatedTopicClick(topic)}
                       className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
                                 hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
-                                hover:-translate-y-1 transform touch-manipulation opacity-100"
+                                hover:-translate-y-1 transform touch-manipulation opacity-0"
+                      style={{
+                        animation: `fadeIn 0.4s ease-out ${0.15 * index}s forwards`,
+                      }}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
@@ -463,8 +498,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   ))}
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
           
           {/* Show a message if all sections are completed but no related topics are displayed */}
           {learningComplete && !shouldShowRelatedTopics && (
@@ -489,6 +524,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           <div ref={messagesEndRef} />
         </div>
       </div>
+      
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };
