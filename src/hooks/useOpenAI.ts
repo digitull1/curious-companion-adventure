@@ -7,35 +7,27 @@ export function useOpenAI() {
   
   const generateResponse = async (prompt: string, ageRange: string = "8-12", language: string = "en") => {
     setIsLoading(true);
-    console.log(`[OpenAI] Generating response for prompt: "${prompt.substring(0, 50)}..." in ${language} language`);
-    
-    // Check if this is a homework help request (indicated by [HOMEWORK HELP] in the prompt)
-    const isHomeworkHelp = prompt.includes("[HOMEWORK HELP]");
-    console.log(`[OpenAI] Is homework help request: ${isHomeworkHelp}`);
     
     try {
-      // Use different model/approach for homework help
-      const requestType = isHomeworkHelp ? 'homework' : 'text';
-      console.log(`[OpenAI] Using request type: ${requestType}`);
+      console.log(`Generating response for prompt: "${prompt.substring(0, 50)}..." in ${language} language`);
       
       const { data, error } = await supabase.functions.invoke('generate-response', {
-        body: { prompt, ageRange, requestType, language }
+        body: { prompt, ageRange, requestType: 'text', language }
       });
       
       if (error) {
-        console.error("[OpenAI] Error from Supabase function:", error);
+        console.error("Error from Supabase function:", error);
         throw new Error(error.message || "Failed to generate response");
       }
       
       if (!data || !data.content) {
-        console.error("[OpenAI] Invalid response data structure:", data);
+        console.error("Invalid response data structure:", data);
         throw new Error("Invalid response data");
       }
       
-      console.log(`[OpenAI] Response generated successfully with ${data.content.length} chars`);
       return data.content;
     } catch (error) {
-      console.error("[OpenAI] Error generating response:", error);
+      console.error("Error generating response:", error);
       toast.error("Oops! Something went wrong. Falling back to sample responses.");
       return generateMockResponse(prompt, language);
     } finally {

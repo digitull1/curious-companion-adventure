@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -20,7 +21,6 @@ const Chat = () => {
   const [avatar, setAvatar] = useState(localStorage.getItem("wonderwhiz_avatar") || "explorer");
   const [userName, setUserName] = useState(localStorage.getItem("wonderwhiz_username") || "Explorer");
   const [language, setLanguage] = useState(localStorage.getItem("wonderwhiz_language") || "en");
-  const [currentImageFile, setCurrentImageFile] = useState<File | null>(null);
   
   // Use our custom hooks to manage state and logic
   const chatState = useChatState(userName, ageRange, avatar, language);
@@ -121,55 +121,13 @@ const Chat = () => {
     clearChat();
   };
 
-  const handleImageUpload = (file: File) => {
-    console.log(`[Chat] Image upload initiated - Name: ${file.name}, Type: ${file.type}, Size: ${file.size} bytes`);
-    
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      console.error(`[Chat] Invalid file type: ${file.type}`);
-      toast.error('Please upload an image file');
-      return;
-    }
-    
-    // Check file size (limit to 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      console.error(`[Chat] File too large: ${file.size} bytes`);
-      toast.error('Image is too large. Please upload an image smaller than 5MB');
-      return;
-    }
-    
-    // Store the file for sending
-    setCurrentImageFile(file);
-    console.log(`[Chat] Image file set for upload: ${file.name}`);
-    
-    // If no input text, suggest a homework help message
-    if (!chatState.inputValue.trim()) {
-      console.log('[Chat] Setting default homework help prompt');
-      chatState.setInputValue("Can you help me with this homework problem?");
-    }
-    
-    toast.success("Image uploaded! Click send to ask about this homework.");
-  };
-
   const handleSendMessage = async () => {
-    if ((!chatState.inputValue.trim() && !currentImageFile) || chatState.isProcessing) return;
+    if (!chatState.inputValue.trim() || chatState.isProcessing) return;
 
     console.log("Handling send message with input:", chatState.inputValue);
     console.log("Current state - selectedTopic:", chatState.selectedTopic, 
                 "topicSectionsGenerated:", chatState.topicSectionsGenerated, 
-                "learningComplete:", chatState.learningComplete,
-                "imageFile:", currentImageFile ? `${currentImageFile.name} (${currentImageFile.size} bytes)` : 'none');
-
-    // If we have an image file, we'll process it as a homework help request
-    if (currentImageFile) {
-      console.log(`[Chat] Processing homework help request with image: ${currentImageFile.name}`);
-      // Process as homework help request
-      const result = await processMessage(chatState.inputValue, true, false, currentImageFile);
-      console.log(`[Chat] Homework help request processed with result status: ${result.status}`);
-      // Clear the current image file after sending
-      setCurrentImageFile(null);
-      return;
-    }
+                "learningComplete:", chatState.learningComplete);
 
     // If starting a new topic after completing previous one
     if (chatState.learningComplete && chatState.topicSectionsGenerated) {
@@ -260,7 +218,6 @@ const Chat = () => {
     chatState.setLearningComplete(false);
     chatState.setRelatedTopics([]);
     chatState.setPreviousTopics([]);
-    setCurrentImageFile(null);
     toast.success("Chat cleared! Ready for a new adventure!");
   };
 
@@ -318,7 +275,6 @@ const Chat = () => {
             toggleListening={toggleListening}
             onSuggestedPromptClick={handleSuggestedPromptClick}
             setShowSuggestedPrompts={chatState.setShowSuggestedPrompts}
-            onImageUpload={handleImageUpload}
           />
         </div>
       </main>

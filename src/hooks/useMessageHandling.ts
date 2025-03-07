@@ -15,67 +15,29 @@ export const useMessageHandling = (
   const processMessage = async (
     prompt: string, 
     isUserMessage: boolean = true, 
-    skipUserMessage: boolean = false,
-    imageFile?: File
+    skipUserMessage: boolean = false
   ): Promise<MessageProcessingResult> => {
     console.log(`[MessageHandler] Processing message: "${prompt.substring(0, 30)}..."`, 
-      `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`, 
-      `imageFile: ${imageFile ? 'present' : 'none'}`);
-    
-    if (imageFile) {
-      console.log(`[MessageHandler] Image file details - Name: ${imageFile.name}, Type: ${imageFile.type}, Size: ${imageFile.size} bytes`);
-    }
+      `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`);
     
     setIsProcessing(true);
     setShowTypingIndicator(true);
 
     // If it's a user message and we're not skipping user message display
     if (isUserMessage && !skipUserMessage) {
-      let userMessage: Message = {
+      const userMessage: Message = {
         id: Date.now().toString(),
         text: prompt,
         isUser: true
       };
-      
-      // If there's an image, include it in the message
-      if (imageFile) {
-        try {
-          const imageUrl = URL.createObjectURL(imageFile);
-          console.log(`[MessageHandler] Created object URL for image: ${imageUrl}`);
-          
-          userMessage = {
-            ...userMessage,
-            image: {
-              url: imageUrl,
-              alt: 'Uploaded homework image',
-              isUserUploaded: true
-            }
-          };
-          
-          console.log(`[MessageHandler] Adding user message with image: ${userMessage.id}`);
-        } catch (error) {
-          console.error(`[MessageHandler] Error creating object URL for image:`, error);
-          toast.error("Failed to process the uploaded image. Please try again.");
-        }
-      } else {
-        console.log(`[MessageHandler] Adding text-only user message: ${userMessage.id}`);
-      }
-      
+      console.log(`[MessageHandler] Adding user message to chat: ${userMessage.id}`);
       setMessages(prev => [...prev, userMessage]);
     }
 
     try {
-      // Generate response based on the prompt and/or image
+      // Generate response based on the prompt
       console.log(`[MessageHandler] Generating response for age: ${ageRange}, language: ${language}`);
-      
-      // If there's an image file, we'll modify the prompt to indicate homework help
-      let enhancedPrompt = prompt;
-      if (imageFile) {
-        enhancedPrompt = `[HOMEWORK HELP] ${prompt || 'Please help me with this homework problem.'}`;
-        console.log(`[MessageHandler] Enhanced prompt for homework help: "${enhancedPrompt.substring(0, 50)}..."`);
-      }
-      
-      const response = await generateResponse(enhancedPrompt, ageRange, language);
+      const response = await generateResponse(prompt, ageRange, language);
       console.log(`[MessageHandler] Response generated successfully: ${response.length} chars`);
       
       // Simulate a delay for typing effect

@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect } from "react";
-import { MessageCircle, Send, Sparkles, Lightbulb, Search, Image } from "lucide-react";
+import { MessageCircle, Send, Sparkles, Lightbulb, Search } from "lucide-react";
 import VoiceInput from "@/components/VoiceInput";
 import SuggestedTopics from "@/components/SuggestedTopics";
 
@@ -18,7 +18,6 @@ interface ChatInputProps {
   toggleListening: () => void;
   onSuggestedPromptClick: (prompt: string) => void;
   setShowSuggestedPrompts: (show: boolean) => void;
-  onImageUpload?: (file: File) => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -34,11 +33,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onVoiceInput,
   toggleListening,
   onSuggestedPromptClick,
-  setShowSuggestedPrompts,
-  onImageUpload
+  setShowSuggestedPrompts
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   
@@ -51,7 +48,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
     "Ask me about animals, space, or science!",
     "Wonder about something? Ask me!",
     "What's on your mind today?",
-    "Need help with homework? Upload it!",
   ];
   
   // Rotate placeholders every 5 seconds
@@ -77,34 +73,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
       return `Ask me about ${selectedTopic} or explore a section...`;
     }
     return placeholders[placeholderIndex];
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("[ChatInput] File input change event triggered");
-    if (e.target.files && e.target.files[0] && onImageUpload) {
-      const file = e.target.files[0];
-      console.log(`[ChatInput] File selected: ${file.name}, ${file.type}, ${file.size} bytes`);
-      onImageUpload(file);
-      // Reset file input
-      if (e.target.value) {
-        console.log("[ChatInput] Resetting file input");
-        e.target.value = '';
-      }
-    } else {
-      console.log("[ChatInput] No file selected or onImageUpload not provided", {
-        hasFiles: e.target.files && e.target.files.length > 0,
-        hasHandler: !!onImageUpload
-      });
-    }
-  };
-
-  const triggerFileInput = () => {
-    console.log("[ChatInput] Triggering file input click");
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    } else {
-      console.error("[ChatInput] File input ref is null");
-    }
   };
 
   return (
@@ -147,27 +115,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </div>
           
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            {/* Hidden file input */}
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handleImageUpload} 
-              disabled={isProcessing}
-            />
-            
-            {/* Image upload button */}
-            <button
-              onClick={triggerFileInput}
-              disabled={isProcessing}
-              className="w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 bg-wonder-purple/10 text-wonder-purple hover:bg-wonder-purple/20 transform hover:-translate-y-0.5"
-              title="Upload homework image"
-              type="button"
-            >
-              <Image className="h-4 w-4" />
-            </button>
-            
             <VoiceInput 
               onTranscript={onVoiceInput}
               isListening={isListening}
@@ -176,13 +123,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
             
             <button
               onClick={onSendMessage}
-              disabled={(!inputValue.trim() && !fileInputRef.current?.files?.length) || isProcessing}
+              disabled={!inputValue.trim() || isProcessing}
               className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 ${
-                (inputValue.trim() || fileInputRef.current?.files?.length) && !isProcessing
+                inputValue.trim() && !isProcessing
                   ? "bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white shadow-magical hover:shadow-magical-hover transform hover:-translate-y-0.5 hover:scale-105"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
               }`}
-              type="button"
             >
               {isProcessing ? (
                 <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -197,7 +143,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
         <button
           onClick={() => setShowSuggestedPrompts(true)}
           className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs flex items-center gap-1 px-3 py-1.5 rounded-full bg-wonder-purple/10 text-wonder-purple hover:bg-wonder-purple/20 transition-colors"
-          type="button"
         >
           <Lightbulb className="h-3 w-3" />
           <span>Need ideas?</span>

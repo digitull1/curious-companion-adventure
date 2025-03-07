@@ -1,45 +1,41 @@
 
-export type BlockType =
-  | "did-you-know"
-  | "mind-blowing"
-  | "amazing-stories"
-  | "see-it"
-  | "quiz";
-
 export interface Message {
   id: string;
   text: string;
   isUser: boolean;
   blocks?: BlockType[];
   showBlocks?: boolean;
+  imagePrompt?: string;
+  quiz?: Quiz;
+  code?: CodeSnippet;
   tableOfContents?: string[];
   isIntroduction?: boolean;
-  error?: {
-    message: string;
-    details: string;
-  };
-  image?: {
-    url: string;
-    alt: string;
-    isUserUploaded?: boolean;
-  };
-  imagePrompt?: string;
-  quiz?: {
-    question: string;
-    options: string[];
-    correctAnswer: number;
-    funFact?: string;
-  };
+  error?: ErrorInfo;
 }
 
 export interface Quiz {
   question: string;
   options: string[];
   correctAnswer: number;
-  funFact: string;
+  funFact?: string;
+  answered?: boolean;
+  selectedAnswer?: number;
 }
 
-export type MessageProcessingStatus = "processing" | "completed" | "error";
+export interface CodeSnippet {
+  snippet: string;
+  language: string;
+}
+
+export interface ErrorInfo {
+  message: string;
+  details?: string;
+  code?: string;
+}
+
+export type BlockType = "did-you-know" | "mind-blowing" | "amazing-stories" | "see-it" | "quiz";
+
+export type MessageProcessingStatus = "idle" | "processing" | "completed" | "error";
 
 export interface MessageProcessingResult {
   status: MessageProcessingStatus;
