@@ -111,7 +111,10 @@ export const useMessageHandling = (
       console.log(`[MessageHandler][END] Message processing failed`);
       return { 
         status: "error", 
-        error: errorMessageObj
+        error: { 
+          message: errorMessageText, 
+          details: errorDetails 
+        }
       };
     } finally {
       console.log(`[MessageHandler] Cleaning up after processing message`);
@@ -126,3 +129,4 @@ export const useMessageHandling = (
 
   return { processMessage };
 };
+
