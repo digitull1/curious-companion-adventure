@@ -1,5 +1,4 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&family=Varela+Round&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -89,7 +88,7 @@
   }
   
   .font-rounded {
-    font-family: 'Quicksand', system-ui, sans-serif;
+    font-family: 'Varela Round', 'Quicksand', system-ui, sans-serif;
   }
   
   .font-comic {
@@ -116,10 +115,25 @@
   
   .chat-bubble-user {
     @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white p-4 rounded-xl rounded-tr-sm shadow-wonder max-w-fit ml-auto border border-wonder-purple/20;
+    animation: pop-in 0.3s ease-out;
   }
   
   .chat-bubble-ai {
     @apply bg-white p-4 rounded-xl rounded-tl-sm shadow-wonder max-w-fit border border-gray-100;
+    animation: pop-in 0.3s ease-out;
+  }
+  
+  /* Enhanced bubble designs with 3D effect */
+  .chat-bubble-user::before {
+    content: '';
+    @apply absolute -inset-[1px] bg-gradient-to-br from-white/20 to-transparent rounded-xl rounded-tr-sm z-[-1] opacity-80;
+    filter: blur(1px);
+  }
+  
+  .chat-bubble-ai::before {
+    content: '';
+    @apply absolute -inset-[1px] bg-gradient-to-tr from-wonder-purple/10 to-transparent rounded-xl rounded-tl-sm z-[-1] opacity-50;
+    filter: blur(1px);
   }
   
   .learning-blocks-container {
@@ -136,6 +150,7 @@
   
   .btn-primary {
     @apply bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white rounded-lg px-4 py-2 shadow-magical hover:shadow-magical-hover transition-all duration-300 font-medium;
+    animation: button-pulse 2s infinite ease-in-out;
   }
   
   .btn-secondary {
@@ -238,6 +253,35 @@
   .cosmic-tooltip {
     @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-lg px-3 py-1.5 text-xs shadow-magical;
   }
+  
+  /* New interactive components */
+  .interactive-card {
+    @apply bg-white rounded-xl border border-wonder-purple/10 shadow-sm transition-all duration-300;
+    transform: perspective(800px) rotateY(0deg) rotateX(0deg);
+  }
+  
+  .interactive-card:hover {
+    @apply shadow-magical border-wonder-purple/30;
+    transform: perspective(800px) rotateY(2deg) rotateX(2deg);
+  }
+  
+  /* Accessible, kid-friendly custom scrollbar */
+  .scrollbar-friendly::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .scrollbar-friendly::-webkit-scrollbar-track {
+    @apply bg-wonder-purple/5 rounded-full;
+  }
+  
+  .scrollbar-friendly::-webkit-scrollbar-thumb {
+    @apply bg-gradient-to-b from-wonder-purple/50 to-wonder-purple-dark/50 rounded-full border-2 border-transparent border-solid bg-clip-padding;
+  }
+  
+  .scrollbar-friendly::-webkit-scrollbar-thumb:hover {
+    @apply bg-gradient-to-b from-wonder-purple/70 to-wonder-purple-dark/70;
+  }
 }
 
 @layer utilities {
@@ -284,6 +328,15 @@
   
   .cosmic-blur {
     backdrop-filter: blur(10px);
+  }
+  
+  /* Accessibility utilities */
+  .focus-visible-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wonder-purple focus-visible:ring-offset-2;
+  }
+  
+  .link-highlight {
+    @apply relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-wonder-purple after:transition-all after:duration-300 hover:after:w-full;
   }
 }
 
@@ -408,5 +461,25 @@
   100% {
     transform: translateX(-500px) translateY(500px) rotate(45deg);
     opacity: 0;
+  }
+}
+
+/* Add reveal-text animation */
+@keyframes reveal-text {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Add scale-bounce animation */
+@keyframes scale-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
   }
 }

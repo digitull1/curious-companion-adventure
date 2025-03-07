@@ -1,8 +1,9 @@
 
 import React, { useRef, useEffect } from "react";
 import { animate } from "@motionone/dom";
-import { Sparkles, Star } from "lucide-react";
+import { Sparkles, Star, Heart, Lightbulb } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import confetti from "canvas-confetti";
 
 interface ChatMessageProps {
   message: string;
@@ -21,6 +22,25 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
   
   // Clean the message text
   const cleanedMessage = cleanMessageText(message);
+
+  // Function to trigger micro-confetti
+  const triggerMicroConfetti = () => {
+    if (messageRef.current && !isUser) {
+      const rect = messageRef.current.getBoundingClientRect();
+      confetti({
+        particleCount: 25,
+        spread: 50,
+        origin: { 
+          x: (rect.left + 30) / window.innerWidth, 
+          y: (rect.top + 30) / window.innerHeight 
+        },
+        gravity: 0.5,
+        colors: ['#7c3aed', '#9d74f8', '#F59E0B', '#14B8A6'],
+        scalar: 0.6,
+        disableForReducedMotion: true
+      });
+    }
+  };
   
   useEffect(() => {
     if (messageRef.current) {
@@ -55,29 +75,35 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
     }
   }, [isUser]);
 
+  // Random helper icon selection for AI messages
+  const getRandomIconForAI = () => {
+    const icons = [<Sparkles key="sparkles" />, <Lightbulb key="lightbulb" />, <Star key="star" />];
+    return icons[Math.floor(Math.random() * icons.length)];
+  };
+
   return (
     <div 
       ref={messageRef}
       className={`mb-6 ${isUser ? 'ml-auto max-w-[85%]' : 'mr-auto max-w-[85%]'}`}
       style={{ opacity: 0 }} // Start with opacity 0 before animation
+      onClick={() => !isUser && triggerMicroConfetti()}
     >
       <div 
         className={isUser 
-          ? 'chat-bubble-user transform transition-transform active:scale-98 relative' 
-          : 'chat-bubble-ai transform transition-transform hover:scale-102 relative'
+          ? 'chat-bubble-user transform transition-transform active:scale-98 relative hover:shadow-magical-hover' 
+          : 'chat-bubble-ai transform transition-transform hover:scale-102 relative hover:shadow-wonder-lg'
         }
       >
         {/* Add subtle sparkle effect to AI responses */}
         {!isUser && (
-          <Sparkles 
-            className="absolute -top-1 -left-1 h-4 w-4 text-wonder-yellow/70 animate-sparkle" 
-            fill="currentColor"
-          />
+          <span className="absolute -top-1 -left-1 h-4 w-4 text-wonder-yellow/70 animate-sparkle">
+            {getRandomIconForAI()}
+          </span>
         )}
         
-        {/* Add star to user messages */}
+        {/* Add heart to user messages */}
         {isUser && (
-          <Star 
+          <Heart 
             className="absolute -top-1 -right-1 h-4 w-4 text-white/70 animate-pulse-soft" 
             fill="currentColor"
           />
