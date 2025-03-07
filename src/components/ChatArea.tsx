@@ -7,6 +7,7 @@ import TypingIndicator from "@/components/TypingIndicator";
 import TableOfContents from "@/components/TableOfContents";
 import ContentBox from "@/components/ContentBox";
 import { animate } from "@motionone/dom";
+import { toast } from "@/components/ui/use-toast";
 
 interface Message {
   id: string;
