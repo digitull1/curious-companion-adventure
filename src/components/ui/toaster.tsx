@@ -18,7 +18,7 @@ export function Toaster() {
           success: "group-[.toast]:bg-green-50 group-[.toast]:border-green-100 group-[.toast]:text-green-700 group-[.toast]:before:content-['🎉'] group-[.toast]:before:mr-2 group-[.toast]:before:text-xl",
           warning: "group-[.toast]:bg-yellow-50 group-[.toast]:border-yellow-100 group-[.toast]:text-yellow-800 group-[.toast]:before:content-['⚠️'] group-[.toast]:before:mr-2 group-[.toast]:before:text-xl",
           error: "group-[.toast]:bg-red-50 group-[.toast]:border-red-100 group-[.toast]:text-red-700 group-[.toast]:before:content-['❌'] group-[.toast]:before:mr-2 group-[.toast]:before:text-xl",
-          // Removed the 'animation' property since it's not supported in the ToastClassnames type
+          // Removed the 'animation' property that was causing the TypeScript error
         },
         unstyled: false,
         closeButton: true,

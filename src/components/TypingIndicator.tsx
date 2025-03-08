@@ -4,26 +4,26 @@ import { motion } from "framer-motion";
 import "./TypingIndicator.css";
 
 const TypingIndicator: React.FC = () => {
-  // Bubble variants for animation with improved timing
+  // Simplified bubble variants for animation with only two keyframes (supported by framer-motion)
   const bubbleVariants = {
     initial: {
-      scale: 0,
-      opacity: 0
+      scale: 0.7,
+      opacity: 0.6
     },
     animate: (i: number) => ({
-      scale: [0.7, 1, 0.7],
-      opacity: [0.6, 1, 0.6],
+      scale: 1,
+      opacity: 1,
       transition: {
         delay: i * 0.15,
         duration: 0.7,
         repeat: Infinity,
-        repeatType: "loop" as const,
+        repeatType: "reverse" as const,
         ease: "easeInOut"
       }
     })
   };
 
-  // Character animation variants
+  // Character animation variants (simplified)
   const characterVariants = {
     hidden: { opacity: 0, y: 5 },
     visible: (i: number) => ({
@@ -34,6 +34,20 @@ const TypingIndicator: React.FC = () => {
         duration: 0.3
       }
     })
+  };
+
+  // Simplified mascot animation with only two keyframes
+  const mascotVariants = {
+    initial: { y: 0, rotate: 0 },
+    animate: {
+      y: -4,
+      rotate: 5,
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        repeatType: "reverse" as const
+      }
+    }
   };
 
   // Text for "thinking..." animation
@@ -54,18 +68,12 @@ const TypingIndicator: React.FC = () => {
             />
           ))}
           
-          {/* Add a small bouncing mascot */}
+          {/* Add a simplified bouncing mascot with only two keyframe states */}
           <motion.div 
             className="typing-mascot"
-            animate={{ 
-              y: [0, -4, 0],
-              rotate: [0, 5, 0, -5, 0]
-            }}
-            transition={{ 
-              duration: 2, 
-              repeat: Infinity,
-              repeatType: "loop" 
-            }}
+            variants={mascotVariants}
+            initial="initial"
+            animate="animate"
           >
             🧠
           </motion.div>

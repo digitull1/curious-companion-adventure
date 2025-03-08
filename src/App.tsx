@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Onboarding from "./pages/Onboarding";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
 
 // Create a query client with retry options and error handling
 const queryClient = new QueryClient({
@@ -20,22 +21,28 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <div className="min-h-screen bg-background">
-        <SonnerToaster />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </div>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  useEffect(() => {
+    console.log("App component mounted");
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <div className="min-h-screen bg-background">
+          <SonnerToaster />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </div>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
