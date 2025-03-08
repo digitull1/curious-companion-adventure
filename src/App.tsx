@@ -1,5 +1,6 @@
 
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -7,7 +8,6 @@ import Index from "./pages/Index";
 import Onboarding from "./pages/Onboarding";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
-import { useEffect } from "react";
 
 // Create a query client with retry options and error handling
 const queryClient = new QueryClient({
@@ -20,28 +20,23 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => {
-  useEffect(() => {
-    console.log("App component mounted");
-  }, []);
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <div className="min-h-screen bg-background">
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </div>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        {/* Using only SonnerToaster for toast notifications */}
+        <SonnerToaster />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

@@ -4,54 +4,24 @@ import { motion } from "framer-motion";
 import "./TypingIndicator.css";
 
 const TypingIndicator: React.FC = () => {
-  // Simplified bubble variants for animation with only two keyframes (supported by framer-motion)
+  // Bubble variants for animation
   const bubbleVariants = {
     initial: {
-      scale: 0.7,
-      opacity: 0.6
+      scale: 0,
+      opacity: 0
     },
     animate: (i: number) => ({
-      scale: 1,
-      opacity: 1,
+      scale: [0.7, 1, 0.7],
+      opacity: [0.5, 1, 0.5],
       transition: {
         delay: i * 0.15,
-        duration: 0.7,
+        duration: 0.8,
         repeat: Infinity,
-        repeatType: "reverse" as const,
+        repeatType: "loop" as const,
         ease: "easeInOut"
       }
     })
   };
-
-  // Character animation variants (simplified)
-  const characterVariants = {
-    hidden: { opacity: 0, y: 5 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: 1.5 + (i * 0.08),
-        duration: 0.3
-      }
-    })
-  };
-
-  // Simplified mascot animation with only two keyframes
-  const mascotVariants = {
-    initial: { y: 0, rotate: 0 },
-    animate: {
-      y: -4,
-      rotate: 5,
-      transition: {
-        duration: 2,
-        repeat: Infinity,
-        repeatType: "reverse" as const
-      }
-    }
-  };
-
-  // Text for "thinking..." animation
-  const thinkingText = "thinking...";
 
   return (
     <div className="chat-bubble-ai mb-6 mr-auto max-w-[85%] flex items-center">
@@ -67,32 +37,15 @@ const TypingIndicator: React.FC = () => {
               className="typing-dot"
             />
           ))}
-          
-          {/* Add a simplified bouncing mascot with only two keyframe states */}
-          <motion.div 
-            className="typing-mascot"
-            variants={mascotVariants}
-            initial="initial"
-            animate="animate"
-          >
-            🧠
-          </motion.div>
         </div>
-        
-        <div className="typing-label">
-          {thinkingText.split('').map((char, i) => (
-            <motion.span
-              key={i}
-              custom={i}
-              variants={characterVariants}
-              initial="hidden"
-              animate="visible"
-              className="typing-char"
-            >
-              {char}
-            </motion.span>
-          ))}
-        </div>
+        <motion.div 
+          className="typing-label"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.7 }}
+          transition={{ delay: 1.5, duration: 0.5 }}
+        >
+          thinking...
+        </motion.div>
       </div>
     </div>
   );
