@@ -1,46 +1,42 @@
 
 .typing-indicator {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 12px 16px;
+  padding: 12px 20px;
   position: relative;
   border-radius: 20px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
-  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.15), 0 2px 5px rgba(124, 58, 237, 0.1), 
-              inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.15), 0 2px 5px rgba(124, 58, 237, 0.1);
   backdrop-filter: blur(8px);
   max-width: 120px;
   transform-origin: left center;
+  animation: bounce-subtle 3s infinite;
 }
 
-.typing-indicator-content {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.typing-indicator span.typing-dot {
-  height: 8px;
-  width: 8px;
-  margin: 0 2px;
+.typing-indicator span {
+  height: 14px;
+  width: 14px;
+  margin: 0 4px;
   border-radius: 50%;
   display: inline-block;
   position: relative;
   box-shadow: 0 0 10px rgba(124, 58, 237, 0.5);
 }
 
-.typing-indicator span.typing-dot:nth-child(1) {
+.typing-indicator span:nth-child(1) {
+  animation: bounce 1.2s infinite 0.2s;
   background-image: linear-gradient(135deg, #F59E0B, #FBBF24);
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
 }
 
-.typing-indicator span.typing-dot:nth-child(2) {
+.typing-indicator span:nth-child(2) {
+  animation: bounce 1.2s infinite 0.4s;
   background-image: linear-gradient(135deg, #7c3aed, #9d74f8);
   box-shadow: 0 0 10px rgba(124, 58, 237, 0.5);
 }
 
-.typing-indicator span.typing-dot:nth-child(3) {
+.typing-indicator span:nth-child(3) {
+  animation: bounce 1.2s infinite 0.6s;
   background-image: linear-gradient(135deg, #14B8A6, #5EEAD4);
   box-shadow: 0 0 10px rgba(20, 184, 166, 0.5);
 }
@@ -70,44 +66,35 @@
   animation: float-subtle 4s ease-in-out infinite;
 }
 
-.typing-label {
-  font-size: 10px;
-  margin-top: 5px;
-  color: rgba(124, 58, 237, 0.7);
-  font-style: italic;
-  letter-spacing: 0.5px;
-}
-
-/* Custom animation for the indicator itself */
-@keyframes pulse-glow {
+@keyframes bounce {
   0%, 100% {
-    box-shadow: 0 0 5px rgba(124, 58, 237, 0.3);
+    transform: translateY(0) scale(1);
+    opacity: 0.7;
   }
   50% {
-    box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
+    transform: translateY(-15px) scale(1.1);
+    opacity: 1;
   }
 }
 
-/* Addition of better fallbacks for older browsers */
-@supports not (backdrop-filter: blur(8px)) {
-  .typing-indicator {
-    background: rgba(255, 255, 255, 0.95);
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-5px) scale(1.1);
+    opacity: 1;
   }
 }
 
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  .typing-indicator {
-    max-width: 100px;
-    padding: 10px 14px;
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.4;
   }
-  
-  .typing-indicator span.typing-dot {
-    height: 6px;
-    width: 6px;
-  }
-  
-  .typing-label {
-    font-size: 9px;
+  50% {
+    transform: scale(1.8);
+    opacity: 0.8;
   }
 }

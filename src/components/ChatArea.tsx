@@ -1,6 +1,6 @@
-import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
+
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import ChatMessage from "@/components/ChatMessage";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
 import TypingIndicator from "@/components/TypingIndicator";
@@ -46,7 +46,7 @@ interface ChatAreaProps {
 
 // Helper function to process related topics from a single string
 const processRelatedTopics = (topics: string[]): string[] => {
-  console.log(`[ChatArea] Processing related topics:`, topics);
+  console.log("Processing related topics:", topics);
   if (!topics || topics.length === 0) return [];
   
   // If it's a single string containing multiple topics
@@ -104,36 +104,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Store previous section to detect changes
   const prevSectionRef = useRef<string | null>(null);
   
-  // Use useMemo to prevent unnecessary recalculations
-  const processedRelatedTopics = useMemo(() => {
-    console.log(`[ChatArea] Processing related topics:`, relatedTopics);
-    if (!relatedTopics || relatedTopics.length === 0) return [];
-    
-    // If it's a single string containing multiple topics
-    if (relatedTopics.length === 1 && typeof relatedTopics[0] === 'string') {
-      const topicStr = relatedTopics[0];
-      
-      // Check for numbered list format (e.g., "1. Topic\n2. Topic")
-      if (topicStr.includes('\n')) {
-        return topicStr.split('\n')
-          .map(line => line.replace(/^\d+[\.\)]?\s*/, '').trim())
-          .filter(line => line.length > 0);
-      }
-      
-      // Check for comma-separated list
-      if (topicStr.includes(',')) {
-        return topicStr.split(',').map(t => t.trim()).filter(t => t.length > 0);
-      }
-      
-      // Check for semicolon-separated list
-      if (topicStr.includes(';')) {
-        return topicStr.split(';').map(t => t.trim()).filter(t => t.length > 0);
-      }
-    }
-    
-    // Already an array of topics
-    return relatedTopics.filter(t => t && typeof t === 'string' && t.trim().length > 0);
-  }, [relatedTopics]);
+  // Process related topics
+  const processedRelatedTopics = processRelatedTopics(relatedTopics);
+  console.log(`[ChatArea][render:${renderId}] Processed related topics:`, processedRelatedTopics);
 
   // Stable reference to scrollToBottom
   const scrollToBottom = useCallback(() => {
@@ -273,7 +246,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return { prev, next };
   }, [currentSection, messages]);
 
-  // Topic pill with enhanced visual design
+  // Topic pill instead of a sticky header
   const renderTopicPill = useCallback(() => {
     if (!currentSection) return null;
     
@@ -281,12 +254,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     const cleanedSection = currentSection.replace(/\*\*/g, "");
     
     return (
-      <motion.div 
-        className="mx-auto max-w-3xl px-4 my-3"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div className="mx-auto max-w-3xl px-4 my-3">
         <div className="flex items-center justify-between bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 backdrop-blur-md p-2 px-4 rounded-full border border-wonder-purple/10 shadow-sm">
           <div className="flex items-center gap-1.5 ml-1">
             <div className="w-6 h-6 flex-shrink-0 rounded-full bg-wonder-purple/20 flex items-center justify-center">
@@ -299,17 +267,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <div className="w-20 h-1.5 bg-white/70 rounded-full overflow-hidden">
-              <motion.div 
+              <div 
                 className="h-full bg-wonder-purple/50 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${learningProgress}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              ></motion.div>
+                style={{ width: `${learningProgress}%` }}
+              ></div>
             </div>
             <span className="text-xs text-wonder-purple/70">{Math.round(learningProgress)}%</span>
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   }, [currentSection, learningProgress]);
 
@@ -329,44 +295,41 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }, [currentSectionMessage, onBlockClick]);
 
   // Find the welcome message
-  const welcomeMessage = useMemo(() => 
-    messages.find(m => !m.isUser && m.isIntroduction && !m.tableOfContents), 
-    [messages]
-  );
+  const welcomeMessage = messages.find(m => !m.isUser && m.isIntroduction && !m.tableOfContents);
   
   // Find the introduction message that contains the table of contents
-  const introMessage = useMemo(() => 
-    messages.find(m => m.isIntroduction && m.tableOfContents), 
-    [messages]
-  );
+  const introMessage = messages.find(m => m.isIntroduction && m.tableOfContents);
   
-  const shouldShowRelatedTopics = useMemo(() => 
-    processedRelatedTopics.length > 0 && learningComplete,
-    [processedRelatedTopics, learningComplete]
-  );
-
+  // Check if we have related topics to display and if learning is complete
+  const shouldShowRelatedTopics = processedRelatedTopics.length > 0 && learningComplete;
+  
   // Get adjacent sections for navigation
-  const { prev, next } = useMemo(() => getAdjacentSections(), [currentSection, messages]);
+  const { prev, next } = getAdjacentSections();
   
-  // Memoize filtered messages to prevent unnecessary re-renders
-  const userMessages = useMemo(() => messages.filter(m => m.isUser), [messages]);
+  // Filter user messages to display in the chat flow
+  const userMessages = messages.filter(m => m.isUser);
+  console.log(`[ChatArea][render:${renderId}] Filtered user messages: ${userMessages.length}`);
   
-  const aiMessages = useMemo(() => {
-    return messages.filter(m => {
-      const isRegularAIMessage = !m.isUser && 
+  // Filter AI messages that are not special (TOC, welcome, etc.)
+  // FIXED: Properly exclude messages that are currently displayed in the content box
+  const aiMessages = messages.filter(m => {
+    const isRegularAIMessage = !m.isUser && 
                               !m.isIntroduction && 
                               !m.tableOfContents && 
-                              !m.blockType && 
+                              !m.blockType && // Exclude block-specific messages
                               !m.imagePrompt && 
                               !m.quiz;
-      
-      const isInContentBox = currentSectionMessage && 
+    
+    // Exclude messages that are currently displayed in the content box
+    const isInContentBox = currentSectionMessage && 
                           m.id === currentSectionMessage.id;
-      
-      return isRegularAIMessage && !isInContentBox;
-    });
-  }, [messages, currentSectionMessage]);
+    
+    return isRegularAIMessage && !isInContentBox;
+  });
   
+  console.log(`[ChatArea][render:${renderId}] Filtered AI messages: ${aiMessages.length}`);
+  console.log(`[ChatArea][render:${renderId}] Current content box blocks:`, contentBoxBlocks);
+
   // Check if a message should be truncated
   const shouldTruncate = useCallback((text: string) => text.length > 300, []);
   
@@ -389,73 +352,41 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       <div className="relative">
         <div className="space-y-6">
           {/* Display welcome message first */}
-          <AnimatePresence>
-            {welcomeMessage && (
-              <motion.div 
-                className="fade-scale-in mb-6 px-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <ChatMessage message={welcomeMessage.text} isUser={welcomeMessage.isUser} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {welcomeMessage && (
+            <div className="fade-scale-in mb-6 px-4">
+              <ChatMessage message={welcomeMessage.text} isUser={welcomeMessage.isUser} />
+            </div>
+          )}
           
           {/* Display the intro message with Table of Contents */}
-          <AnimatePresence>
-            {introMessage && (
-              <motion.div 
-                className="fade-scale-in mb-6 px-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <ChatMessage message={introMessage.text} isUser={introMessage.isUser}>
-                  <TableOfContents 
-                    sections={introMessage.tableOfContents || []} 
-                    completedSections={completedSections}
-                    currentSection={currentSection}
-                    onSectionClick={onTocSectionClick}
-                  />
-                </ChatMessage>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {introMessage && (
+            <div className="fade-scale-in mb-6 px-4">
+              <ChatMessage message={introMessage.text} isUser={introMessage.isUser}>
+                <TableOfContents 
+                  sections={introMessage.tableOfContents || []} 
+                  completedSections={completedSections}
+                  currentSection={currentSection}
+                  onSectionClick={onTocSectionClick}
+                />
+              </ChatMessage>
+            </div>
+          )}
           
           {/* Place typing indicator within the message flow, right after the last message */}
-          <AnimatePresence>
-            {showTypingIndicator && (
-              <motion.div 
-                className="px-4 mb-2"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.3 }}
-              >
-                <TypingIndicator />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {showTypingIndicator && (
+            <div className="px-4 mb-2">
+              <TypingIndicator />
+            </div>
+          )}
           
           {/* Display user and AI message pairs in sequence */}
           {userMessages.map((message, index) => (
             <React.Fragment key={message.id}>
-              <motion.div 
-                className="fade-scale-in px-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-              >
+              <div className="fade-scale-in px-4">
                 <ChatMessage message={message.text} isUser={true} />
-              </motion.div>
+              </div>
               {aiMessages[index] && (
-                <motion.div 
-                  className="fade-scale-in px-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                >
+                <div className="fade-scale-in px-4">
                   <div className="relative">
                     <ChatMessage 
                       message={expandedMessages.has(aiMessages[index].id) ? 
@@ -469,144 +400,95 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                     
                     {/* Show expand/collapse button for long messages */}
                     {shouldTruncate(aiMessages[index].text) && (
-                      <motion.button 
+                      <button 
                         onClick={() => toggleMessageExpansion(aiMessages[index].id)}
-                        className="mt-2 flex items-center text-xs text-wonder-purple/70 hover:text-wonder-purple transition-colors group"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        className="mt-2 flex items-center text-xs text-wonder-purple/70 hover:text-wonder-purple transition-colors"
                       >
                         {expandedMessages.has(aiMessages[index].id) ? (
-                          <>Show less <ChevronDown className="h-3 w-3 ml-1 transform rotate-180 group-hover:translate-y-0.5 transition-transform" /></>
+                          <>Show less <ChevronDown className="h-3 w-3 ml-1 transform rotate-180" /></>
                         ) : (
-                          <>Read more <ChevronDown className="h-3 w-3 ml-1 group-hover:translate-y-0.5 transition-transform" /></>
+                          <>Read more <ChevronDown className="h-3 w-3 ml-1" /></>
                         )}
-                      </motion.button>
+                      </button>
                     )}
                   </div>
-                </motion.div>
+                </div>
               )}
             </React.Fragment>
           ))}
           
           {/* Display content box for current section if selected */}
-          <AnimatePresence>
-            {currentSection && currentSectionMessage && (
-              <motion.div 
-                className="px-4 max-w-4xl mx-auto"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                key={`content-box-${currentSection}`}
-              >
-                <ContentBox
-                  key={`content-${currentSection}-${currentBlockMessage?.id || 'none'}-${activeBlock || 'none'}-${renderId}`}
-                  title={currentSection}
-                  content={currentSectionMessage.text}
-                  prevSection={prev}
-                  nextSection={next}
-                  blocks={contentBoxBlocks}
-                  onBlockClick={handleContentBoxBlockClick}
-                  onNavigate={onTocSectionClick}
-                  activeBlock={activeBlock}
-                  imagePrompt={currentBlockMessage?.imagePrompt}
-                  quiz={currentBlockMessage?.quiz}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {currentSection && currentSectionMessage && (
+            <div className="px-4 max-w-4xl mx-auto">
+              <ContentBox
+                key={`content-${currentSection}-${currentBlockMessage?.id || 'none'}-${activeBlock || 'none'}-${renderId}`}
+                title={currentSection}
+                content={currentSectionMessage.text}
+                prevSection={prev}
+                nextSection={next}
+                blocks={contentBoxBlocks}
+                onBlockClick={handleContentBoxBlockClick}
+                onNavigate={onTocSectionClick}
+                activeBlock={activeBlock}
+                imagePrompt={currentBlockMessage?.imagePrompt}
+                quiz={currentBlockMessage?.quiz}
+              />
+            </div>
+          )}
           
           {/* Show related topics at the bottom if learning is complete */}
-          <AnimatePresence>
-            {shouldShowRelatedTopics && (
-              <motion.div 
-                className="mx-auto max-w-3xl px-4 mb-6"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                ref={relatedTopicsRef}
-              >
-                <div className="p-4 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
-                  <h3 className="text-sm font-medium mb-3 text-wonder-purple flex items-center">
-                    <span className="text-lg mr-2">🎉</span> Continue your learning journey with:
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {processedRelatedTopics.map((topic, index) => (
-                      <motion.div 
-                        key={`related-topic-${index}`}
-                        onClick={() => onRelatedTopicClick(topic)}
-                        className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
-                                  hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
-                                  hover:-translate-y-1 transform touch-manipulation"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.1 * index }}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          </div>
-                          <h3 className="font-medium text-sm text-foreground font-rounded leading-tight">{topic}</h3>
+          {shouldShowRelatedTopics && (
+            <div className="mx-auto max-w-3xl px-4 mb-6" ref={relatedTopicsRef}>
+              <div className="p-4 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
+                <h3 className="text-sm font-medium mb-3 text-wonder-purple flex items-center">
+                  <span className="text-lg mr-2">🎉</span> Continue your learning journey with:
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {processedRelatedTopics.map((topic, index) => (
+                    <div 
+                      key={`related-topic-${index}`}
+                      onClick={() => onRelatedTopicClick(topic)}
+                      className="related-topic p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-wonder-purple/10 
+                                hover:border-wonder-purple/30 shadow-sm hover:shadow-magical cursor-pointer transition-all duration-300
+                                hover:-translate-y-1 transform touch-manipulation opacity-100"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-wonder-yellow/20 to-wonder-yellow flex items-center justify-center text-wonder-yellow-dark">
+                          <ChevronRight className="h-3.5 w-3.5" />
                         </div>
-                        <p className="text-xs text-muted-foreground font-rounded">Tap to explore this fascinating topic</p>
-                      </motion.div>
-                    ))}
-                  </div>
+                        <h3 className="font-medium text-sm text-foreground font-rounded leading-tight">{topic}</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-rounded">Tap to explore this fascinating topic</p>
+                    </div>
+                  ))}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </div>
+          )}
           
           {/* Show a message if all sections are completed but no related topics are displayed */}
-          <AnimatePresence>
-            {learningComplete && !shouldShowRelatedTopics && (
-              <motion.div 
-                className="px-4 mt-8 mb-6 max-w-3xl mx-auto"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                <div className="p-4 bg-white/90 rounded-xl border border-wonder-purple/10 shadow-sm">
-                  <div className="text-center">
-                    <motion.h3 
-                      className="text-wonder-purple font-medium mb-2"
-                      initial={{ scale: 0.9 }}
-                      animate={{ scale: 1 }}
-                      transition={{ duration: 0.3, delay: 0.2 }}
-                    >
-                      🎉 Congratulations!
-                    </motion.h3>
-                    <p className="text-muted-foreground text-sm">You've completed all sections of this topic.</p>
-                    <motion.button 
-                      className="mt-3 px-4 py-2 bg-wonder-purple/10 hover:bg-wonder-purple/20 text-wonder-purple rounded-full text-sm font-medium transition-colors"
-                      onClick={() => {
-                        onRelatedTopicClick("Give me a new interesting topic to learn about");
-                      }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      Explore a new topic
-                    </motion.button>
-                  </div>
+          {learningComplete && !shouldShowRelatedTopics && (
+            <div className="px-4 mt-8 mb-6 max-w-3xl mx-auto">
+              <div className="p-4 bg-white/90 rounded-xl border border-wonder-purple/10 shadow-sm">
+                <div className="text-center">
+                  <h3 className="text-wonder-purple font-medium mb-2">🎉 Congratulations!</h3>
+                  <p className="text-muted-foreground text-sm">You've completed all sections of this topic.</p>
+                  <button 
+                    className="mt-3 px-4 py-2 bg-wonder-purple/10 hover:bg-wonder-purple/20 text-wonder-purple rounded-full text-sm font-medium transition-colors"
+                    onClick={() => {
+                      onRelatedTopicClick("Give me a new interesting topic to learn about");
+                    }}
+                  >
+                    Explore a new topic
+                  </button>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </div>
+          )}
           
           <div ref={messagesEndRef} />
         </div>
       </div>
-      
-      {/* Fix the style tag by removing the jsx property */}
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-        `}
-      </style>
     </div>
   );
 };
