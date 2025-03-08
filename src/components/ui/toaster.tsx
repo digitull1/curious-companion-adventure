@@ -1,5 +1,4 @@
 
-// This is now just a wrapper around the sonner Toaster
 import { Toaster as SonnerToaster } from "sonner";
 
 export function Toaster() {
@@ -17,8 +16,8 @@ export function Toaster() {
           info: "group-[.toast]:bg-blue-50 group-[.toast]:border-blue-100 group-[.toast]:text-blue-700 group-[.toast]:before:content-['✨'] group-[.toast]:before:mr-2 group-[.toast]:before:text-xl",
           success: "group-[.toast]:bg-green-50 group-[.toast]:border-green-100 group-[.toast]:text-green-700 group-[.toast]:before:content-['🎉'] group-[.toast]:before:mr-2 group-[.toast]:before:text-xl",
           warning: "group-[.toast]:bg-yellow-50 group-[.toast]:border-yellow-100 group-[.toast]:text-yellow-800 group-[.toast]:before:content-['⚠️'] group-[.toast]:before:mr-2 group-[.toast]:before:text-xl",
-          error: "group-[.toast]:bg-red-50 group-[.toast]:border-red-100 group-[.toast]:text-red-700 group-[.toast]:before:content-['❌'] group-[.toast]:before:mr-2 group-[.toast]:before:text-xl",
-          // Removed the 'animation' property that was causing the TypeScript error
+          error: "group-[.toast]:bg-red-50 group-[.toast]:border-red-100 group-[.toast]:text-red-700 group-[.toast]:before:content-['❌'] group-[.toast]:before:mr-2 group-[.toast]:before:text-xl"
+          // Removed the animation property entirely as it doesn't exist in the ToastClassnames type
         },
         unstyled: false,
         closeButton: true,
