@@ -24,7 +24,6 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <div className="min-h-screen bg-background">
-        {/* Using only SonnerToaster for toast notifications */}
         <SonnerToaster />
         <BrowserRouter>
           <Routes>
