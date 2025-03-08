@@ -14,18 +14,18 @@ const VoiceInput: React.FC<VoiceInputProps> = ({
   toggleListening 
 }) => {
   const [transcript, setTranscript] = useState("");
-  const [recognition, setRecognition] = useState<any>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
 
   useEffect(() => {
     if (window.SpeechRecognition || window.webkitSpeechRecognition) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognitionAPI();
       
       recognitionInstance.continuous = true;
       recognitionInstance.interimResults = true;
       recognitionInstance.lang = 'en-US';
       
-      recognitionInstance.onresult = (event: any) => {
+      recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
         let interimTranscript = '';
         let finalTranscript = '';
         
@@ -43,7 +43,7 @@ const VoiceInput: React.FC<VoiceInputProps> = ({
         onTranscript(currentTranscript);
       };
       
-      recognitionInstance.onerror = (event: any) => {
+      recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error', event.error);
         if (isListening) {
           toggleListening();
