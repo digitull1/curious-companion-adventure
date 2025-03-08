@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Mic, MicOff } from "lucide-react";
-// Reference the type definitions
-/// <reference path="../types/webspeech.d.ts" />
 
 interface VoiceInputProps {
   onTranscript: (transcript: string) => void;
@@ -16,18 +14,18 @@ const VoiceInput: React.FC<VoiceInputProps> = ({
   toggleListening 
 }) => {
   const [transcript, setTranscript] = useState("");
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [recognition, setRecognition] = useState<any>(null);
 
   useEffect(() => {
     if (window.SpeechRecognition || window.webkitSpeechRecognition) {
-      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognitionAPI();
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
       
       recognitionInstance.continuous = true;
       recognitionInstance.interimResults = true;
       recognitionInstance.lang = 'en-US';
       
-      recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
+      recognitionInstance.onresult = (event: any) => {
         let interimTranscript = '';
         let finalTranscript = '';
         
@@ -45,7 +43,7 @@ const VoiceInput: React.FC<VoiceInputProps> = ({
         onTranscript(currentTranscript);
       };
       
-      recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognitionInstance.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
         if (isListening) {
           toggleListening();
