@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Mic, MicOff } from "lucide-react";
+// Reference the type definitions
+/// <reference path="../types/webspeech.d.ts" />
 
 interface VoiceInputProps {
   onTranscript: (transcript: string) => void;
