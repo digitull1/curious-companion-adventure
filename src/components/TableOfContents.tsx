@@ -1,23 +1,20 @@
+
 import React, { useRef, useEffect } from "react";
-import { CheckCircle, BookOpen, ArrowRight, ChevronRight, Plus, Lightbulb, MessageSquareText, Video, HelpCircle, Sparkles } from "lucide-react";
+import { CheckCircle, BookOpen, ArrowRight, ChevronRight, Plus } from "lucide-react";
 import { animate } from "@motionone/dom";
 import { Button } from "@/components/ui/button";
-import { BlockType } from "@/components/LearningBlock";
 
 interface TableOfContentsProps {
   sections: string[];
   completedSections: string[];
   currentSection: string | null;
   onSectionClick: (section: string) => void;
-  onBlockClick?: (block: BlockType) => void;
-  relatedTopics?: string[]; // Add relatedTopics prop
 }
 
 // Emoji mapping for different topics
 const getTopicEmoji = (section: string): string => {
   const lowerSection = section.toLowerCase();
   
-  if (lowerSection === "explore more") return "🔍";
   if (lowerSection.includes("planet") || lowerSection.includes("space") || lowerSection.includes("star") || lowerSection.includes("galaxy")) return "🌌";
   if (lowerSection.includes("rocket") || lowerSection.includes("astronaut")) return "🚀";
   if (lowerSection.includes("animal") || lowerSection.includes("wildlife")) return "🦁";
@@ -35,7 +32,7 @@ const getTopicEmoji = (section: string): string => {
   if (lowerSection.includes("water") || lowerSection.includes("cycle") || lowerSection.includes("rain")) return "💧";
   
   // Default emojis based on position in the list (for topics that don't match above)
-  const defaultEmojis = ["📚", "✨", "💡", "🔍"];
+  const defaultEmojis = ["📚", "✨", "💡", "🔍", "🧩"];
   
   return defaultEmojis[Math.floor(Math.random() * defaultEmojis.length)];
 };
@@ -101,14 +98,11 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   sections,
   completedSections,
   currentSection,
-  onSectionClick,
-  onBlockClick,
-  relatedTopics = [] // Default to empty array
+  onSectionClick
 }) => {
   const tocRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const celebrationRef = useRef<HTMLDivElement>(null);
-  const exploreMoreRef = useRef<HTMLDivElement>(null);
   const [showAllSections, setShowAllSections] = React.useState(false);
   
   // Process sections to handle multilingual content properly
@@ -120,80 +114,9 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   processedSections = filterIntroSections(processedSections);
   console.log("After filtering intros:", processedSections);
   
-  // Add "Explore More" as the last section if it doesn't exist
-  if (!processedSections.includes("Explore More")) {
-    processedSections.push("Explore More");
-    console.log("Added 'Explore More' section");
-  }
-  
-  // Now limit to 5 sections initially (excluding Explore More)
-  const exploreMoreIndex = processedSections.findIndex(s => s === "Explore More");
-  const regularSections = exploreMoreIndex !== -1 
-    ? processedSections.filter((_, i) => i !== exploreMoreIndex) 
-    : processedSections;
-  
-  const displaySections = showAllSections 
-    ? regularSections 
-    : regularSections.slice(0, 5);
-  
-  // Always add Explore More to the displayed sections
-  const limitedSections = exploreMoreIndex !== -1 
-    ? [...displaySections, "Explore More"] 
-    : displaySections;
-  
-  const hasMoreSections = regularSections.length > 5;
-  
-  // Determine if "Explore More" section is current
-  const isExploreMoreCurrent = currentSection === "Explore More";
-  
-  // Map block types to dynamic titles and descriptions based on relatedTopics
-  const getExploreBlocks = (): {type: BlockType, title: string, description: string, icon: React.ReactNode, color: string}[] => {
-    const baseBlocks: {type: BlockType, title: string, description: string, icon: React.ReactNode, color: string}[] = [
-      {
-        type: "did-you-know",
-        title: "Did You Know?",
-        description: "Fascinating facts about this topic",
-        icon: <Lightbulb className="h-4 w-4" />,
-        color: "bg-gradient-to-r from-wonder-yellow/80 to-wonder-yellow-light/40"
-      },
-      {
-        type: "quiz",
-        title: "Test Your Knowledge",
-        description: "Fun quizzes on what you've learned",
-        icon: <HelpCircle className="h-4 w-4" />,
-        color: "bg-gradient-to-r from-wonder-coral/80 to-wonder-coral-light/40"
-      },
-      {
-        type: "see-it",
-        title: "See It In Action",
-        description: "Visual exploration of the topic",
-        icon: <Video className="h-4 w-4" />,
-        color: "bg-gradient-to-r from-wonder-green/80 to-wonder-green-light/40"
-      }
-    ];
-    
-    // Add dynamic related topics if available
-    if (relatedTopics && relatedTopics.length > 0) {
-      // Take up to 2 related topics to display
-      const topicBlocks = relatedTopics.slice(0, 2).map((topic, index) => ({
-        type: index === 0 ? "mind-blowing" : "amazing-stories" as BlockType,
-        title: topic,
-        description: index === 0 ? "Explore this fascinating related topic" : "Discover this connected subject",
-        icon: <BookOpen className="h-4 w-4" />,
-        color: index === 0 
-          ? "bg-gradient-to-r from-wonder-purple/80 to-wonder-purple-light/40"
-          : "bg-gradient-to-r from-wonder-blue/80 to-wonder-blue-light/40"
-      }));
-      
-      // Combine base blocks and topic blocks, keeping to 5 total
-      return [...topicBlocks, ...baseBlocks].slice(0, 5);
-    }
-    
-    return baseBlocks;
-  };
-  
-  // Get dynamic explore blocks based on related topics
-  const exploreBlocks = getExploreBlocks();
+  // Now limit to 5 sections initially
+  const limitedSections = showAllSections ? processedSections : processedSections.slice(0, 5);
+  const hasMoreSections = processedSections.length > 5;
   
   useEffect(() => {
     if (tocRef.current) {
@@ -215,19 +138,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         }
       });
     }
-    
-    // Animate explore more blocks if that section is active
-    if (isExploreMoreCurrent && exploreMoreRef.current) {
-      const blocks = exploreMoreRef.current.querySelectorAll('.explore-block');
-      blocks.forEach((block, index) => {
-        animate(
-          block,
-          { opacity: [0, 1], scale: [0.95, 1], y: [10, 0] },
-          { duration: 0.4, easing: "ease-out", delay: 0.3 + (index * 0.1) }
-        );
-      });
-    }
-  }, [limitedSections, isExploreMoreCurrent]);
+  }, [limitedSections]);
   
   // Add celebration animation when all sections are completed
   useEffect(() => {
@@ -258,15 +169,6 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
     ? Math.round((completedSections.length / processedSections.length) * 100)
     : 0;
     
-  const handleBlockClick = (type: BlockType, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onBlockClick) {
-      console.log(`[TableOfContents] Block clicked: ${type}`);
-      onBlockClick(type);
-    }
-  };
-
   return (
     <div className="mt-4 relative">
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm p-3 border-b border-wonder-purple/10 rounded-t-xl flex items-center justify-between mb-2">
@@ -299,108 +201,68 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         
         <div className="space-y-3 relative">
           {limitedSections.map((section, index) => {
-            const isExploreMore = section === "Explore More";
-            const isCompleted = isExploreMore ? false : completedSections.includes(section);
+            const isCompleted = completedSections.includes(section);
             const isCurrent = section === currentSection;
             const topicEmoji = getTopicEmoji(section);
             const cleanedSection = section.replace(/\*\*/g, '').trim();
             
             return (
-              <div key={index}>
-                <button
-                  ref={el => sectionsRef.current[index] = el}
-                  onClick={() => onSectionClick(section)}
-                  className={`w-full text-left px-4 py-3 rounded-lg flex items-center justify-between transition-all duration-300
-                    transform hover:-translate-y-1 active:translate-y-0 group touch-manipulation
-                    ${isCompleted
-                      ? "bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 border border-wonder-purple/20 shadow-sm"
-                      : isCurrent
-                        ? "bg-gradient-to-r from-wonder-blue/10 to-wonder-blue/5 border border-wonder-blue/20 shadow-magical"
-                        : "bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-wonder-purple/20 hover:bg-wonder-purple/5 hover:shadow-magical"
-                    }`}
-                  style={{ opacity: 0 }} // Start invisible for animation
-                >
-                  <div className="flex items-center w-[85%]">
-                    <div className={`flex-shrink-0 flex items-center justify-center min-w-8 h-8 rounded-full mr-3 transition-all 
+              <button
+                key={index}
+                ref={el => sectionsRef.current[index] = el}
+                onClick={() => onSectionClick(section)}
+                className={`w-full text-left px-4 py-3 rounded-lg flex items-center justify-between transition-all duration-300
+                  transform hover:-translate-y-1 active:translate-y-0 group touch-manipulation
+                  ${isCompleted
+                    ? "bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 border border-wonder-purple/20 shadow-sm"
+                    : isCurrent
+                      ? "bg-gradient-to-r from-wonder-blue/10 to-wonder-blue/5 border border-wonder-blue/20 shadow-magical"
+                      : "bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-wonder-purple/20 hover:bg-wonder-purple/5 hover:shadow-magical"
+                  }`}
+                style={{ opacity: 0 }} // Start invisible for animation
+              >
+                <div className="flex items-center w-[85%]">
+                  <div className={`flex-shrink-0 flex items-center justify-center min-w-8 h-8 rounded-full mr-3 transition-all 
                                  ${isCompleted 
                                   ? "bg-wonder-purple text-white shadow-magical" 
                                   : isCurrent
                                     ? "bg-wonder-blue text-white shadow-magical"
                                     : "bg-wonder-purple/10 text-wonder-purple"}`}>
-                      {isCompleted 
-                        ? <CheckCircle className="h-5 w-5" /> 
-                        : isExploreMore
-                          ? <Sparkles className="h-5 w-5" />
-                          : <span className="text-sm font-medium">{index + 1}</span>
-                      }
-                    </div>
-                    <div className="flex flex-col w-full">
-                      <span className={`transition-colors ${
-                        isCompleted 
-                          ? "text-wonder-purple font-medium" 
-                          : isCurrent
-                            ? "text-wonder-blue font-medium"
-                            : "group-hover:text-wonder-purple"
-                      } line-clamp-2`}>
-                        {cleanedSection} <span className="ml-1">{isExploreMore ? "" : topicEmoji}</span>
-                      </span>
-                      {isCurrent && (
-                        <span className="text-xs text-wonder-blue/70 mt-0.5">Current section</span>
-                      )}
-                    </div>
+                    {isCompleted 
+                      ? <CheckCircle className="h-5 w-5" /> 
+                      : <span className="text-sm font-medium">{index + 1}</span>
+                    }
                   </div>
-                  
-                  <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transform transition-all duration-300 
+                  <div className="flex flex-col w-full">
+                    <span className={`transition-colors ${
+                      isCompleted 
+                        ? "text-wonder-purple font-medium" 
+                        : isCurrent
+                          ? "text-wonder-blue font-medium"
+                          : "group-hover:text-wonder-purple"
+                    } line-clamp-2`}>
+                      {cleanedSection} <span className="ml-1">{topicEmoji}</span>
+                    </span>
+                    {isCurrent && (
+                      <span className="text-xs text-wonder-blue/70 mt-0.5">Current section</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transform transition-all duration-300 
                                ${isCompleted 
                                   ? "bg-wonder-purple/10" 
                                   : isCurrent
                                     ? "bg-wonder-blue/10"
                                     : "bg-gray-100 group-hover:bg-wonder-purple/10"}`}>
-                    <ArrowRight className={`h-4 w-4 transition-all transform 
+                  <ArrowRight className={`h-4 w-4 transition-all transform 
                                        ${isCompleted 
                                         ? "text-wonder-purple" 
                                         : isCurrent
                                           ? "text-wonder-blue"
                                           : "text-gray-400 group-hover:text-wonder-purple group-hover:translate-x-0.5"}`} />
-                  </div>
-                </button>
-                
-                {/* Show explore more blocks when "Explore More" section is active */}
-                {isCurrent && isExploreMore && (
-                  <div 
-                    ref={exploreMoreRef}
-                    className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 px-3 pb-3 animate-fade-in overflow-hidden rounded-lg"
-                  >
-                    <h4 className="col-span-full text-wonder-purple font-medium text-sm mb-1 mt-1 flex items-center">
-                      <Sparkles className="h-3.5 w-3.5 mr-1.5 text-wonder-yellow" />
-                      Explore these interesting aspects:
-                    </h4>
-                    
-                    {exploreBlocks.map((block, blockIndex) => (
-                      <button
-                        key={`explore-block-${blockIndex}`}
-                        onClick={(e) => handleBlockClick(block.type, e)}
-                        className={`explore-block group relative p-4 ${block.color} rounded-xl border border-wonder-purple/10 
-                                  shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1
-                                  flex flex-col h-full opacity-0`}
-                      >
-                        <div className="flex items-center mb-2">
-                          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center mr-2">
-                            {block.icon}
-                          </div>
-                          <h3 className="font-medium text-white">{block.title}</h3>
-                        </div>
-                        <p className="text-xs text-white/90 mb-2">{block.description}</p>
-                        <div className="mt-auto flex justify-end">
-                          <div className="bg-white/20 px-2 py-1 rounded-full text-white text-xs font-medium flex items-center">
-                            Explore <ChevronRight className="h-3 w-3 ml-1 group-hover:translate-x-0.5 transition-transform" />
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                </div>
+              </button>
             );
           })}
           
@@ -413,16 +275,16 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                        hover:border-wonder-purple/20 transition-all duration-300 hover:shadow-sm"
             >
               <Plus className="h-4 w-4" />
-              <span>{showAllSections ? "Show fewer sections" : `Show ${regularSections.length - 5} more sections`}</span>
+              <span>{showAllSections ? "Show fewer sections" : `Show ${processedSections.length - 5} more sections`}</span>
             </button>
           )}
         </div>
         
-        {completedSections.length === processedSections.length - 1 && processedSections.length > 1 && (
+        {completedSections.length === processedSections.length && processedSections.length > 0 && (
           <div ref={celebrationRef} className="mt-6 bg-gradient-to-r from-wonder-purple/20 to-wonder-purple-dark/20 p-4 rounded-lg border border-wonder-purple/20 relative overflow-hidden flex items-center justify-between">
             <div>
               <p className="text-wonder-purple font-medium text-base">
-                Congratulations! You've completed all learning sections!
+                🎉 Congratulations! You've completed all sections!
               </p>
               <p className="text-sm text-wonder-purple/80 mt-1">
                 You've earned a learning badge for this topic!
@@ -435,7 +297,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         )}
         
         {/* Call to action after completing sections */}
-        {completedSections.length === processedSections.length - 1 && processedSections.length > 1 && (
+        {completedSections.length === processedSections.length && processedSections.length > 0 && (
           <div className="mt-4 grid grid-cols-2 gap-3">
             <Button 
               variant="outline"

@@ -1,5 +1,4 @@
-
-import React, { useRef, useEffect, useState, useCallback, memo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { animate } from "@motionone/dom";
 import { ChevronLeft, ChevronRight, Book, Star, Sparkles, Lightbulb, AtomIcon, MessageSquareText, Video, HelpCircle, Loader2 } from "lucide-react";
 import { BlockType } from "@/components/LearningBlock";
@@ -24,66 +23,7 @@ interface ContentBoxProps {
   };
 }
 
-// Clean text by removing asterisks
-const cleanText = (text: string) => {
-  return text.replace(/\*\*/g, "");
-};
-
-// Extract emojis from title if they exist
-const extractEmoji = (text: string) => {
-  const emojiRegex = /(\p{Emoji})/gu;
-  const matches = text.match(emojiRegex);
-  return matches ? matches[0] : "✨";
-};
-
-// Format content with proper paragraph breaks
-const formatContent = (content: string) => {
-  return content
-    .replace(/\n\n+/g, '</p><p class="mb-3">') // Replace double line breaks with paragraphs
-    .replace(/\n/g, '<br />'); // Replace single line breaks with <br>
-};
-
-// Map BlockType to more descriptive titles, icons, and descriptions
-const blockInfo = {
-  "did-you-know": {
-    title: "Did You Know?",
-    description: "Fascinating facts about this topic",
-    icon: (props: any) => <Lightbulb {...props} className="h-4 w-4 text-wonder-yellow" fill="currentColor" />,
-    color: "from-wonder-yellow to-wonder-yellow-light",
-    shadow: "shadow-[0_4px_12px_-2px_rgba(245,158,11,0.3)]"
-  },
-  "mind-blowing": {
-    title: "Mind-Blowing Science",
-    description: "Amazing scientific discoveries",
-    icon: (props: any) => <AtomIcon {...props} className="h-4 w-4 text-wonder-blue" />,
-    color: "from-wonder-blue to-wonder-blue-light",
-    shadow: "shadow-[0_4px_12px_-2px_rgba(14,165,233,0.3)]"
-  },
-  "amazing-stories": {
-    title: "Amazing Stories",
-    description: "Incredible tales and legends",
-    icon: (props: any) => <MessageSquareText {...props} className="h-4 w-4 text-wonder-purple" />,
-    color: "from-wonder-purple to-wonder-purple-light",
-    shadow: "shadow-[0_4px_12px_-2px_rgba(139,92,246,0.3)]"
-  },
-  "see-it": {
-    title: "See It in Action",
-    description: "Visual exploration of the topic",
-    icon: (props: any) => <Video {...props} className="h-4 w-4 text-wonder-green" />,
-    color: "from-wonder-green to-wonder-green-light",
-    shadow: "shadow-[0_4px_12px_-2px_rgba(16,185,129,0.3)]"
-  },
-  "quiz": {
-    title: "Test Your Knowledge",
-    description: "Fun quiz to test what you've learned",
-    icon: (props: any) => <HelpCircle {...props} className="h-4 w-4 text-wonder-coral" />,
-    color: "from-wonder-coral to-wonder-coral-light",
-    shadow: "shadow-[0_4px_12px_-2px_rgba(244,63,94,0.3)]"
-  }
-};
-
-// Use memo to prevent unnecessary rerenders and hold persistent state
-const ContentBox: React.FC<ContentBoxProps> = memo(({
+const ContentBox: React.FC<ContentBoxProps> = ({
   title,
   content,
   prevSection,
@@ -95,55 +35,50 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
   imagePrompt,
   quiz
 }) => {
-  // Use refs to store DOM elements
   const contentBoxRef = useRef<HTMLDivElement>(null);
+  const exploreMoreRef = useRef<HTMLDivElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  
-  // Create a unique ID for logging and tracking this component instance
-  const componentId = useRef(`contentbox-${Date.now()}`).current;
-  
-  // Local state management
   const [isContentLoading, setIsContentLoading] = useState(false);
   const [expandedContent, setExpandedContent] = useState(true);
   
-  // Clean and prepare displayed content
+  // Clean text by removing asterisks
+  const cleanText = (text: string) => {
+    return text.replace(/\*\*/g, "");
+  };
+  
   const cleanedTitle = cleanText(title);
   const cleanedContent = cleanText(content);
   const cleanedPrevSection = prevSection ? cleanText(prevSection) : null;
   const cleanedNextSection = nextSection ? cleanText(nextSection) : null;
+  
+  // Extract emojis from title if they exist
+  const extractEmoji = (text: string) => {
+    const emojiRegex = /(\p{Emoji})/gu;
+    const matches = text.match(emojiRegex);
+    return matches ? matches[0] : "✨";
+  };
+  
   const titleEmoji = extractEmoji(cleanedTitle);
   
-  // Log significant prop changes to help with debugging
-  useEffect(() => {
-    console.log(`[ContentBox][${componentId}] Mounted/Updated with title: "${cleanedTitle.substring(0, 30)}..."`);
-    console.log(`[ContentBox][${componentId}] activeBlock: ${activeBlock}, imagePrompt: ${imagePrompt ? "present" : "none"}, quiz: ${quiz ? "present" : "none"}`);
-    console.log(`[ContentBox][${componentId}] blocks provided:`, blocks);
-    
-    return () => {
-      console.log(`[ContentBox][${componentId}] Component unmounting`);
-    };
-  }, [cleanedTitle, activeBlock, imagePrompt, quiz, componentId, blocks]);
+  // Format content with proper paragraph breaks
+  const formatContent = (content: string) => {
+    return content
+      .replace(/\n\n+/g, '</p><p class="mb-3">') // Replace double line breaks with paragraphs
+      .replace(/\n/g, '<br />'); // Replace single line breaks with <br>
+  };
   
-  // Only simulate content loading when title changes, not on every render
+  // Simulate content loading when navigating between sections
   useEffect(() => {
     setIsContentLoading(true);
-    console.log(`[ContentBox][${componentId}] Starting content loading simulation`);
-    
     const timer = setTimeout(() => {
-      console.log(`[ContentBox][${componentId}] Finished content loading simulation`);
       setIsContentLoading(false);
     }, 800);
     
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [title, componentId]);
+    return () => clearTimeout(timer);
+  }, [title]);
   
-  // Apply animations when component mounts
   useEffect(() => {
-    console.log(`[ContentBox][${componentId}] Applying animations`);
-    
     if (contentBoxRef.current) {
       // Animate the content box in
       animate(
@@ -151,6 +86,18 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
         { opacity: [0, 1], y: [20, 0] },
         { duration: 0.5, easing: [0.25, 1, 0.5, 1] }
       );
+    }
+    
+    if (exploreMoreRef.current) {
+      // Staggered animation for explore more links
+      const links = exploreMoreRef.current.querySelectorAll('.explore-link');
+      links.forEach((link, index) => {
+        animate(
+          link,
+          { opacity: [0, 1], scale: [0.95, 1] },
+          { duration: 0.3, delay: 0.3 + (index * 0.1), easing: "ease-out" }
+        );
+      });
     }
     
     if (navigationRef.current) {
@@ -162,12 +109,7 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
       );
     }
     
-  }, [componentId]);
-  
-  // Apply highlight animations after content loads
-  useEffect(() => {
     if (contentRef.current && !isContentLoading) {
-      console.log(`[ContentBox][${componentId}] Highlighting keywords in content`);
       // Highlight keywords in the content with a subtle animation
       const keywords = contentRef.current.querySelectorAll('strong');
       keywords.forEach((keyword, index) => {
@@ -178,43 +120,86 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
         );
       });
     }
-  }, [isContentLoading, componentId]);
+  }, [title, content, isContentLoading]);
   
-  // Handle navigation with debounce - prevent page refreshes
-  const handleNavigation = useCallback((section: string, e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
+  // Debug logs for quiz and image display
+  useEffect(() => {
+    if (activeBlock === 'see-it') {
+      console.log("See-It block active, image prompt:", imagePrompt);
     }
-    
-    console.log(`[ContentBox][${componentId}] Navigation clicked for section: ${section}`);
-    setIsContentLoading(true);
-    
-    // Use a short delay to prevent rapid navigation
-    setTimeout(() => {
-      onNavigate(section);
-    }, 100);
-  }, [onNavigate, componentId]);
+    if (activeBlock === 'quiz') {
+      console.log("Quiz block active, quiz data:", quiz);
+    }
+  }, [activeBlock, imagePrompt, quiz]);
   
-  // Log when interactive blocks are displayed
+  // Map BlockType to more descriptive titles, icons, and descriptions
+  const blockInfo = {
+    "did-you-know": {
+      title: "Did You Know?",
+      description: "Fascinating facts about this topic",
+      icon: <Lightbulb className="h-4 w-4 text-wonder-yellow" fill="currentColor" />,
+      color: "from-wonder-yellow to-wonder-yellow-light",
+      shadow: "shadow-[0_4px_12px_-2px_rgba(245,158,11,0.3)]"
+    },
+    "mind-blowing": {
+      title: "Mind-Blowing Science",
+      description: "Amazing scientific discoveries",
+      icon: <AtomIcon className="h-4 w-4 text-wonder-blue" />,
+      color: "from-wonder-blue to-wonder-blue-light",
+      shadow: "shadow-[0_4px_12px_-2px_rgba(14,165,233,0.3)]"
+    },
+    "amazing-stories": {
+      title: "Amazing Stories",
+      description: "Incredible tales and legends",
+      icon: <MessageSquareText className="h-4 w-4 text-wonder-purple" />,
+      color: "from-wonder-purple to-wonder-purple-light",
+      shadow: "shadow-[0_4px_12px_-2px_rgba(139,92,246,0.3)]"
+    },
+    "see-it": {
+      title: "See It in Action",
+      description: "Visual exploration of the topic",
+      icon: <Video className="h-4 w-4 text-wonder-green" />,
+      color: "from-wonder-green to-wonder-green-light",
+      shadow: "shadow-[0_4px_12px_-2px_rgba(16,185,129,0.3)]"
+    },
+    "quiz": {
+      title: "Test Your Knowledge",
+      description: "Fun quiz to test what you've learned",
+      icon: <HelpCircle className="h-4 w-4 text-wonder-coral" />,
+      color: "from-wonder-coral to-wonder-coral-light",
+      shadow: "shadow-[0_4px_12px_-2px_rgba(244,63,94,0.3)]"
+    }
+  };
+  
+  // Handler for clicking on interactive blocks
+  const handleBlockButtonClick = (blockType: BlockType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log(`[ContentBox] Block button clicked: ${blockType}`); 
+    onBlockClick(blockType);
+  };
+  
+  // Debug logs for tracking state
   useEffect(() => {
     if (activeBlock) {
-      console.log(`[ContentBox][${componentId}] Displaying active block: ${activeBlock}`);
+      console.log(`[ContentBox] Active block changed to: ${activeBlock}`);
     }
     
     if (imagePrompt && activeBlock === 'see-it') {
-      console.log(`[ContentBox][${componentId}] Displaying image with prompt: ${imagePrompt.substring(0, 50)}...`);
+      console.log(`[ContentBox] Image prompt for See-It block: ${imagePrompt.substring(0, 50)}...`);
     }
     
     if (quiz && activeBlock === 'quiz') {
-      console.log(`[ContentBox][${componentId}] Displaying quiz with question: ${quiz.question.substring(0, 50)}...`);
+      console.log(`[ContentBox] Quiz data for Quiz block: ${JSON.stringify({
+        question: quiz.question.substring(0, 30) + "...",
+        options: quiz.options.length,
+        correctAnswer: quiz.correctAnswer
+      })}`);
     }
-  }, [activeBlock, imagePrompt, quiz, componentId]);
+  }, [activeBlock, imagePrompt, quiz]);
   
   return (
     <div 
       ref={contentBoxRef} 
-      key={`content-box-${cleanedTitle}`}
       className="bg-white rounded-xl shadow-magical overflow-hidden border border-wonder-purple/10 mb-6 opacity-0 transform"
       aria-labelledby="content-title"
     >
@@ -284,18 +269,61 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
                 </div>
               )}
               
-              {/* Removed Explore More section */}
+              {/* Explore More section with improved interactive grid */}
+              <div ref={exploreMoreRef} className="mt-8 pt-4 border-t border-wonder-purple/10">
+                <h3 className="text-sm font-medium text-wonder-purple mb-3 flex items-center">
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-wonder-yellow" />
+                  Explore More
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
+                  {blocks.map((block) => (
+                    <button
+                      key={block}
+                      onClick={(e) => handleBlockButtonClick(block, e)}
+                      className={`explore-link group relative p-3 bg-gradient-to-br ${
+                        activeBlock === block ? blockInfo[block].color : 'from-white to-white/90'
+                      } rounded-lg border ${
+                        activeBlock === block ? 'border-transparent' : 'border-wonder-purple/10 hover:border-wonder-purple/30'
+                      } ${blockInfo[block].shadow} transition-all duration-300 transform hover:-translate-y-1 
+                      flex flex-col items-center text-center opacity-0`}
+                      aria-label={`Explore ${blockInfo[block].title}`}
+                    >
+                      <div className={`w-8 h-8 rounded-full ${
+                        activeBlock === block ? 'bg-white/20' : 'bg-wonder-purple/5'
+                      } flex items-center justify-center mb-1`}>
+                        {blockInfo[block].icon}
+                      </div>
+                      <span className={`font-medium text-xs ${
+                        activeBlock === block ? 'text-white' : 'text-foreground'
+                      }`}>{blockInfo[block].title}</span>
+                      <span className={`text-[10px] ${
+                        activeBlock === block ? 'text-white/80' : 'text-muted-foreground'
+                      } mt-0.5 hidden sm:block`}>{blockInfo[block].description}</span>
+                      
+                      {/* Magical sparkle effect for active blocks */}
+                      {activeBlock === block && (
+                        <div className="absolute top-0 right-0 h-6 w-6 pointer-events-none">
+                          <Sparkles className="h-5 w-5 text-white/60 animate-sparkle absolute" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </>
           )}
         </div>
       </div>
       
       {/* Navigation controls with improved visual design */}
-      <div ref={navigationRef} className="px-4 pb-4">
+      <div ref={navigationRef} className="px-4 pb-4 opacity-0">
         <div className="flex items-center justify-between gap-3">
           {cleanedPrevSection ? (
             <button 
-              onClick={(e) => handleNavigation(prevSection!, e)}
+              onClick={() => {
+                setIsContentLoading(true);
+                onNavigate(prevSection!);
+              }}
               className="flex-1 p-3 bg-white hover:bg-wonder-purple/5 border border-wonder-purple/20 rounded-xl 
                        shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-left
                        focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 focus:ring-offset-2 group"
@@ -317,7 +345,10 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
           
           {cleanedNextSection ? (
             <button 
-              onClick={(e) => handleNavigation(nextSection!, e)}
+              onClick={() => {
+                setIsContentLoading(true);
+                onNavigate(nextSection!);
+              }}
               className="flex-1 p-3 bg-white hover:bg-wonder-purple/5 border border-wonder-purple/20 rounded-xl 
                        shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-right
                        focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 focus:ring-offset-2 group"
@@ -340,8 +371,6 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
       </div>
     </div>
   );
-});
-
-ContentBox.displayName = 'ContentBox';
+};
 
 export default ContentBox;

@@ -1,11 +1,5 @@
 
-declare global {
-  interface Window {
-    _isBlockProcessing?: boolean;
-    _blockProcessingStartTime?: number;
-    _lastProcessedBlock?: string;
-    _blockOperationCounter?: number;
-  }
+interface Window {
+  webkitSpeechRecognition: any;
+  SpeechRecognition: any;
 }
-
-export {};

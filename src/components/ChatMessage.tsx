@@ -1,194 +1,139 @@
 
-import React, { useState, useRef, useEffect } from "react";
-import { Bot, User, Copy, CheckCheck } from "lucide-react";
-import { motion } from "framer-motion";
-import { toast } from "sonner";
-import LearningBlock, { BlockType } from "@/components/LearningBlock";
-import CodeBlock from "@/components/CodeBlock";
-import { Message } from "@/types/chat";
+import React, { useRef, useEffect } from "react";
+import { animate } from "@motionone/dom";
+import { Sparkles, Star, Heart, Lightbulb } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import confetti from "canvas-confetti";
 
 interface ChatMessageProps {
-  message: Message;
-  onBlockClick?: (type: BlockType) => void;
+  message: string;
+  isUser: boolean;
+  children?: React.ReactNode;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({
-  message,
-  onBlockClick
-}) => {
-  const [copied, setCopied] = useState(false);
-  const blockContainerRef = useRef<HTMLDivElement>(null);
-  const [isProcessingClick, setIsProcessingClick] = useState(false);
-  const messageId = useRef(`chatmsg-${Date.now()}`).current;
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) => {
+  const messageRef = useRef<HTMLDivElement>(null);
   
-  const { 
-    id, 
-    text, 
-    isUser, 
-    blocks = [], 
-    showBlocks = false,
-    code
-  } = message;
-  
-  console.log(`[ChatMessage][${messageId}] Rendering with props:`, { 
-    isUser, 
-    messagePreview: text?.substring(0, 30),
-    hasBlocks: blocks && blocks.length > 0,
-    showBlocks,
-    blocksData: blocks
-  });
-
-  useEffect(() => {
-    // Debug log for blocks visibility
-    if (blocks && blocks.length > 0) {
-      console.log(`[ChatMessage][${messageId}] Message has ${blocks.length} blocks:`, blocks);
-      console.log(`[ChatMessage][${messageId}] showBlocks flag is: ${showBlocks}`);
-    }
-    
-    // Add horizontal scroll behavior
-    if (blockContainerRef.current) {
-      const container = blockContainerRef.current;
-      
-      const handleWheel = (e: WheelEvent) => {
-        if (container.contains(e.target as Node)) {
-          e.preventDefault();
-          container.scrollLeft += e.deltaY;
-        }
-      };
-      
-      container.addEventListener('wheel', handleWheel, { passive: false });
-      
-      return () => {
-        container.removeEventListener('wheel', handleWheel);
-      };
-    }
-  }, [blocks, showBlocks, messageId]);
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    toast.success("Message copied to clipboard!");
-    setTimeout(() => setCopied(false), 2000);
+  // Function to clean text content by removing asterisks
+  const cleanMessageText = (text: string) => {
+    // Remove all asterisks from text
+    return text.replace(/\*\*/g, "");
   };
+  
+  // Clean the message text
+  const cleanedMessage = cleanMessageText(message);
 
-  const handleBlockClicked = (type: BlockType) => {
-    console.log(`[ChatMessage][${messageId}] Block clicked: ${type}`);
-    
-    // Prevent multiple clicks with debounce
-    if (isProcessingClick || !onBlockClick) return;
-    
-    setIsProcessingClick(true);
-    
-    // Call the handler with debounce protection
-    onBlockClick(type);
-    
-    // Reset after a short delay to prevent rapid clicking
-    setTimeout(() => {
-      setIsProcessingClick(false);
-    }, 1000);
+  // Function to trigger micro-confetti
+  const triggerMicroConfetti = () => {
+    if (messageRef.current && !isUser) {
+      const rect = messageRef.current.getBoundingClientRect();
+      confetti({
+        particleCount: 25,
+        spread: 50,
+        origin: { 
+          x: (rect.left + 30) / window.innerWidth, 
+          y: (rect.top + 30) / window.innerHeight 
+        },
+        gravity: 0.5,
+        colors: ['#7c3aed', '#9d74f8', '#F59E0B', '#14B8A6'],
+        scalar: 0.6,
+        disableForReducedMotion: true
+      });
+    }
+  };
+  
+  useEffect(() => {
+    if (messageRef.current) {
+      // Create a staggered animation for text appearing
+      const textElement = messageRef.current.querySelector("p");
+      if (textElement) {
+        animate(
+          messageRef.current,
+          { opacity: [0, 1], y: [20, 0] },
+          { duration: 0.5, easing: [0.25, 1, 0.5, 1] }
+        );
+      }
+      
+      // Add ripple effect to user messages
+      if (isUser && messageRef.current) {
+        const ripple = document.createElement("div");
+        ripple.className = "absolute inset-0 rounded-2xl bg-wonder-purple/20 z-[-1]";
+        messageRef.current.style.position = "relative";
+        messageRef.current.appendChild(ripple);
+        
+        animate(
+          ripple,
+          { opacity: [0.6, 0], scale: [0.85, 1.05] },
+          { duration: 1, easing: "ease-out" }
+        );
+        
+        // Remove ripple after animation
+        setTimeout(() => {
+          ripple.remove();
+        }, 1000);
+      }
+    }
+  }, [isUser]);
+
+  // Random helper icon selection for AI messages
+  const getRandomIconForAI = () => {
+    const icons = [<Sparkles key="sparkles" />, <Lightbulb key="lightbulb" />, <Star key="star" />];
+    return icons[Math.floor(Math.random() * icons.length)];
   };
 
   return (
     <div 
-      className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-3 w-full px-1`}
-      data-message-id={id}
+      ref={messageRef}
+      className={`mb-6 ${isUser ? 'ml-auto max-w-[85%]' : 'mr-auto max-w-[85%]'}`}
+      style={{ opacity: 0 }} // Start with opacity 0 before animation
+      onClick={() => !isUser && triggerMicroConfetti()}
     >
-      {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-purple to-wonder-purple-dark flex items-center justify-center flex-shrink-0 shadow-magical">
-          <Bot className="h-4 w-4 text-white" />
-        </div>
-      )}
-      
-      <div className={`relative px-3 py-2.5 rounded-xl w-full max-w-[calc(100%-3rem)] shadow-sm
-        ${isUser 
-          ? 'bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-tr-none ml-8' 
-          : 'bg-white border border-wonder-purple/10 rounded-tl-none'}`}>
-        
-        {/* Copy button (only for AI messages) */}
+      <div 
+        className={isUser 
+          ? 'chat-bubble-user transform transition-transform active:scale-98 relative hover:shadow-magical-hover' 
+          : 'chat-bubble-ai transform transition-transform hover:scale-102 relative hover:shadow-wonder-lg'
+        }
+      >
+        {/* Add subtle sparkle effect to AI responses */}
         {!isUser && (
-          <button 
-            onClick={copyToClipboard} 
-            className="absolute top-2 right-2 p-1 text-wonder-purple/60 hover:text-wonder-purple transition-colors"
-            aria-label="Copy message"
-          >
-            {copied ? <CheckCheck className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-          </button>
+          <span className="absolute -top-1 -left-1 h-4 w-4 text-wonder-yellow/70 animate-sparkle">
+            {getRandomIconForAI()}
+          </span>
         )}
         
-        {/* Message content */}
-        <div className="prose prose-sm max-w-none">
-          <p className={`whitespace-pre-line ${isUser ? 'text-white' : 'text-foreground'}`}>
-            {/* Process text to remove excessive emojis and clean up appearance */}
-            {cleanMessageText(text)}
-          </p>
-          
-          {/* Code block if provided */}
-          {code && <CodeBlock code={code.snippet} language={code.language} />}
-          
-          {/* Additional content (e.g., table of contents) */}
-          {message.tableOfContents && (
-            <div className="mt-2">
-              <h4 className="text-sm font-medium mb-2">Table of Contents</h4>
-              <ul className="list-disc pl-5 space-y-1">
-                {message.tableOfContents.map((section, idx) => (
-                  <li key={idx} className="text-sm">{cleanSectionText(section)}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+        {/* Add heart to user messages */}
+        {isUser && (
+          <Heart 
+            className="absolute -top-1 -right-1 h-4 w-4 text-white/70 animate-pulse-soft" 
+            fill="currentColor"
+          />
+        )}
+        
+        <p className="whitespace-pre-line leading-relaxed text-base font-rounded">
+          {cleanedMessage}
+        </p>
+        {children}
+        
+        {/* Add tooltip for user to know they can tap on non-user messages for more info */}
+        {!isUser && !message.includes("I'd love to teach you about") && (
+          <div className="mt-2 text-xs text-wonder-purple/70 flex items-center opacity-70">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center cursor-help">
+                    <Star className="h-3 w-3 mr-1" /> Tap to interact
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Tap on elements to learn more!</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        )}
       </div>
-      
-      {isUser && (
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-yellow to-wonder-orange flex items-center justify-center flex-shrink-0 shadow-magical">
-          <User className="h-4 w-4 text-white" />
-        </div>
-      )}
     </div>
   );
-};
-
-// Helper function to clean up message text by reducing emojis and improving readability
-const cleanMessageText = (text: string): string => {
-  if (!text) return "";
-  
-  // Remove excessive emoji repetition (keep only one of each emoji in a row)
-  let cleanedText = text.replace(/(\p{Emoji}+)(\1+)/gu, "$1");
-  
-  // Replace excessive exclamation marks (more than 2 in a row)
-  cleanedText = cleanedText.replace(/!{3,}/g, "!");
-  
-  // Replace all-caps words with regular case (preserving proper nouns)
-  cleanedText = cleanedText.replace(/\b[A-Z]{4,}\b/g, (match) => match.toLowerCase());
-  
-  // Remove redundant spaces
-  cleanedText = cleanedText.replace(/\s{2,}/g, " ");
-  
-  return cleanedText;
-};
-
-// Helper function to clean section text by removing excessive emojis
-const cleanSectionText = (text: string): string => {
-  if (!text) return "";
-  
-  // Keep maximum of one emoji at start and one at end
-  const emojiRegex = /^(\p{Emoji}+)(.*?)(\p{Emoji}+)$/gu;
-  let cleanedText = text.replace(emojiRegex, (_, startEmoji, content, endEmoji) => {
-    // Take first emoji from start and end groups
-    const firstEmoji = [...startEmoji][0] || "";
-    const lastEmoji = [...endEmoji][0] || "";
-    return `${firstEmoji} ${content.trim()} ${lastEmoji}`;
-  });
-  
-  // If the pattern didn't match, check for just emojis at the start
-  if (cleanedText === text) {
-    cleanedText = text.replace(/^(\p{Emoji}+)(.*)/gu, (_, emojis, content) => {
-      const firstEmoji = [...emojis][0] || "";
-      return `${firstEmoji} ${content.trim()}`;
-    });
-  }
-  
-  return cleanedText;
 };
 
 export default ChatMessage;

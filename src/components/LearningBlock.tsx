@@ -13,12 +13,9 @@ interface LearningBlockProps {
 const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
   const blockRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
-  const [isClicked, setIsClicked] = useState(false);
-  const clickTimeoutRef = useRef<number | null>(null);
   
   useEffect(() => {
     if (blockRef.current) {
-      console.log(`[LearningBlock] Block of type ${type} mounted`);
       // Add hover animation
       blockRef.current.addEventListener('mouseenter', () => {
         animate(
@@ -28,18 +25,9 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
         );
       });
     }
-    
-    return () => {
-      console.log(`[LearningBlock] Block of type ${type} unmounted`);
-      // Clear any timeouts to prevent memory leaks
-      if (clickTimeoutRef.current) {
-        window.clearTimeout(clickTimeoutRef.current);
-      }
-    };
-  }, [type]);
+  }, []);
   
   const getBlockContent = () => {
-    console.log(`[LearningBlock] Rendering content for block type: ${type}`);
     switch (type) {
       case "did-you-know":
         return {
@@ -100,54 +88,20 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
 
   const { icon, title, description, className, gradient, shadowColor } = getBlockContent();
   
-  // Prevent page refreshes and propagation
   const toggleExpand = (e: React.MouseEvent) => {
     console.log("Toggle expand clicked for block type:", type);
-    
-    // Prevent default browser behavior and stop event propagation
-    e.preventDefault();
-    e.stopPropagation();
-    
+    e.stopPropagation(); // Prevent the click from bubbling up to the block
     setExpanded(!expanded);
   };
 
-  // Debounced handler to prevent double clicks
   const handleExploreClick = (e: React.MouseEvent) => {
-    // Prevent default browser behavior and stop event propagation
-    e.preventDefault();
-    e.stopPropagation();
-    
     console.log("Explore button clicked for block type:", type);
-    
-    // Prevent multiple rapid clicks
-    if (isClicked) {
-      console.log("Click ignored - already processing");
-      return;
-    }
-    
-    // Visual feedback that button was clicked
-    setIsClicked(true);
-    
-    // Call the handler
-    onClick();
-    
-    // Reset clicked state after animation completes
-    if (clickTimeoutRef.current) {
-      window.clearTimeout(clickTimeoutRef.current);
-    }
-    
-    clickTimeoutRef.current = window.setTimeout(() => {
-      setIsClicked(false);
-      clickTimeoutRef.current = null;
-    }, 1000);
+    e.stopPropagation(); // Prevent the click from bubbling up to the block
+    onClick(); // Call the parent-provided onClick handler
   };
 
-  const handleBlockClick = (e: React.MouseEvent) => {
-    // Prevent default browser behavior
-    e.preventDefault();
-    
+  const handleBlockClick = () => {
     console.log("Block clicked for block type:", type);
-    
     if (!expanded) {
       setExpanded(true);
     }
@@ -160,7 +114,6 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
       transition-all duration-300 overflow-hidden flex-shrink-0 snap-center 
       ${shadowColor} ${expanded ? "h-auto" : "h-12"} min-w-[180px] sm:min-w-[220px] cursor-pointer`}
       onClick={handleBlockClick}
-      style={{ opacity: 1, display: 'block' }} /* Explicitly set visible styles */
     >
       {/* Subtle background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5 rounded-xl z-0`}></div>
@@ -176,7 +129,6 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
           <h3 className="font-medium text-sm truncate">{title}</h3>
         </div>
         <button 
-          type="button"
           className="text-wonder-purple/70 hover:text-wonder-purple transition-colors"
           onClick={toggleExpand}
           aria-label={expanded ? "Collapse" : "Expand"}
@@ -189,14 +141,10 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
       <div className={`px-3 pb-3 pt-0 ${expanded ? "block" : "hidden"}`}>
         <p className="text-xs text-muted-foreground mb-3">{description}</p>
         <button
-          type="button"
           onClick={handleExploreClick}
-          disabled={isClicked}
-          className={`w-full py-2 px-3 text-xs font-medium text-white rounded-lg bg-gradient-to-r from-wonder-purple to-wonder-purple-dark transition-all duration-300 transform ${
-            isClicked ? 'scale-95 opacity-80' : 'hover:scale-102 hover:shadow-magical-hover'
-          } active:scale-98 focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 focus:ring-offset-2`}
+          className="w-full py-2 px-3 text-xs font-medium text-white rounded-lg bg-gradient-to-r from-wonder-purple to-wonder-purple-dark hover:shadow-magical-hover transition-all duration-300 transform hover:scale-102 active:scale-98"
         >
-          {isClicked ? 'Loading...' : 'Explore'}
+          Explore
         </button>
       </div>
       

@@ -13,10 +13,6 @@
   animation: bounce-subtle 3s infinite;
 }
 
-.typing-indicator.paused span {
-  animation-play-state: paused;
-}
-
 .typing-indicator span {
   height: 14px;
   width: 14px;
@@ -101,17 +97,4 @@
     transform: scale(1.8);
     opacity: 0.8;
   }
-}
-
-/* Add debugging indicator to make it clear when the typing indicator is active */
-.typing-indicator::before {
-  content: '';
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(124, 58, 237, 0.4);
-  top: 3px;
-  right: 3px;
-  animation: pulse 1.5s infinite;
 }

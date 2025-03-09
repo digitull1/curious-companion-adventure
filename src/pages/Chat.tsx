@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -26,7 +27,7 @@ const Chat = () => {
   const { generateRelatedTopics } = useRelatedTopics(chatState.generateResponse);
   
   // Initialize message handling hook
-  const { processMessage, cancelCurrentOperation } = useMessageHandling(
+  const { processMessage } = useMessageHandling(
     chatState.generateResponse,
     ageRange,
     language,
@@ -64,56 +65,9 @@ const Chat = () => {
     chatState.setPoints,
     chatState.setLearningProgress
   );
-
-  // Create a wrapped version of handleLearningBlockClick to match the expected signature
-  const wrappedHandleBlockClick = useCallback((type: BlockType, messageId: string, messageText: string) => {
-    // Call the original function with all the needed parameters
-    handleLearningBlockClick(
-      type,
-      messageId,
-      messageText,
-      ageRange,
-      language,
-      chatState.setIsProcessing,
-      chatState.setShowTypingIndicator,
-      chatState.setPoints,
-      chatState.setMessages,
-      chatState.generateResponse,
-      async (topic, language) => {
-        try {
-          const response = await chatState.generateResponse(
-            `Create a quiz with 4 options about ${topic}. Format as JSON with question, options array, and correctAnswer index.`,
-            ageRange,
-            language
-          );
-          // Parse the response to extract quiz data
-          try {
-            // Try to parse JSON response
-            return JSON.parse(response);
-          } catch (e) {
-            console.error("Failed to parse quiz JSON", e);
-            // Fallback quiz
-            return {
-              question: `What's interesting about ${topic}?`,
-              options: ["Option 1", "Option 2", "Option 3", "Option 4"],
-              correctAnswer: 0
-            };
-          }
-        } catch (error) {
-          console.error("Error generating quiz:", error);
-          return {
-            question: "Quiz question",
-            options: ["Option 1", "Option 2", "Option 3", "Option 4"],
-            correctAnswer: 0
-          };
-        }
-      }
-    );
-  }, [ageRange, language, chatState.setIsProcessing, chatState.setShowTypingIndicator, 
-      chatState.setPoints, chatState.setMessages, chatState.generateResponse]);
   
-  // Initialize section handling hook with the wrapped block click handler
-  const { handleTocSectionClick, handleRelatedTopicClick, handleBlockClick } = useSectionHandling(
+  // Initialize section handling hook
+  const { handleTocSectionClick, handleRelatedTopicClick } = useSectionHandling(
     chatState.messages,
     chatState.selectedTopic,
     chatState.completedSections,
@@ -121,8 +75,7 @@ const Chat = () => {
     chatState.setCurrentSection,
     chatState.setCompletedSections,
     chatState.setPoints,
-    chatState.setLearningProgress,
-    wrappedHandleBlockClick
+    chatState.setLearningProgress
   );
   
   // Initialize chat
@@ -212,15 +165,20 @@ const Chat = () => {
     }
   };
 
-  const handleBlockClickWrapper = (type: BlockType, messageId: string, messageText: string) => {
-    console.log(`[Chat] Block click handler called with type=${type}, messageId=${messageId}`);
-    console.log(`[Chat] Message text: "${messageText.substring(0, 50)}..."`);
-    
-    // Cancel any ongoing message processing to prevent race conditions
-    cancelCurrentOperation();
-    
-    // Call the handler from useSectionHandling
-    handleBlockClick(type, messageId, messageText);
+  const handleBlockClick = (type: BlockType, messageId: string, messageText: string) => {
+    handleLearningBlockClick(
+      type,
+      messageId,
+      messageText,
+      ageRange,
+      language,
+      chatState.setIsProcessing,
+      chatState.setShowTypingIndicator,
+      chatState.setPoints,
+      chatState.setMessages,
+      chatState.generateResponse,
+      chatState.generateQuiz
+    );
   };
 
   const handleSuggestedPromptClick = (prompt: string) => {
@@ -296,7 +254,7 @@ const Chat = () => {
             currentSection={chatState.currentSection}
             relatedTopics={chatState.relatedTopics}
             learningComplete={chatState.learningComplete}
-            onBlockClick={handleBlockClickWrapper}
+            onBlockClick={handleBlockClick}
             onTocSectionClick={handleTocSectionClick}
             onRelatedTopicClick={handleRelatedTopicClick}
             learningProgress={chatState.learningProgress}
