@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef } from "react";
 import { Message } from "@/types/chat";
 import { toast } from "sonner";
@@ -13,7 +14,7 @@ export const useTopicManagement = (
   language: string,
   setLearningComplete: (learningComplete: boolean) => void,
   setRelatedTopics: (relatedTopics: string[]) => void,
-  generateRelatedTopics: (topic: string, ageRange: string, language: string[]) => Promise<string[]>,
+  generateRelatedTopics: (topic: string, ageRange: string, language: string) => Promise<string[]>,
   inputValue: string,
   isProcessing: boolean,
   setMessages: (messageSetter: (prev: Message[]) => Message[]) => void,
