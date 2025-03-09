@@ -1,24 +1,6 @@
-
-import { useCallback, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Message } from "@/types/chat";
 import { toast } from "sonner";
-import { processTopicsFromResponse } from "@/utils/topicUtils";
-
-// Function to filter out introductory/welcome sections
-const filterIntroSections = (sections: string[]): string[] => {
-  return sections.filter(section => {
-    const lowerSection = section.toLowerCase();
-    return !(
-      lowerSection.includes("welcome") ||
-      lowerSection.includes("introduction") ||
-      lowerSection.includes("hey there") ||
-      lowerSection.includes("hello") ||
-      lowerSection.includes("let's dive") ||
-      lowerSection.includes("explore") ||
-      lowerSection.includes("get ready")
-    );
-  });
-};
 
 export const useTopicManagement = (
   selectedTopic: string | null,
@@ -29,161 +11,338 @@ export const useTopicManagement = (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
   ageRange: string,
   language: string,
-  setLearningComplete: (complete: boolean) => void,
-  setRelatedTopics: (topics: string[]) => void,
+  setLearningComplete: (learningComplete: boolean) => void,
+  setRelatedTopics: (relatedTopics: string[]) => void,
   generateRelatedTopics: (topic: string, ageRange: string, language: string) => Promise<string[]>,
   inputValue: string,
   isProcessing: boolean,
   setMessages: (messageSetter: (prev: Message[]) => Message[]) => void,
   setInputValue: (value: string) => void,
-  setIsProcessing: (processing: boolean) => void,
+  setIsProcessing: (isProcessing: boolean) => void,
   setShowTypingIndicator: (show: boolean) => void,
   setSelectedTopic: (topic: string | null) => void,
-  setTopicSectionsGenerated: (generated: boolean) => void,
-  setCompletedSections: (sections: string[]) => void,
-  setCurrentSection: (section: string | null) => void,
-  setPreviousTopics: (topicsSetter: (prev: string[]) => string[]) => void,
+  setTopicSectionsGenerated: (topicSectionsGenerated: boolean) => void,
+  setCompletedSections: (completedSections: string[]) => void,
+  setCurrentSection: (currentSection: string | null) => void,
+  setPreviousTopics: (previousTopics: string[]) => void,
   setPoints: (pointsSetter: (prev: number) => number) => void,
-  setLearningProgress: (progress: number) => void
+  setLearningProgress: (learningProgress: number) => void
 ) => {
-  // Check if all sections are completed
-  useEffect(() => {
-    if (topicSectionsGenerated && messages.some(m => m.tableOfContents)) {
-      const sections = messages.find(m => m.tableOfContents)?.tableOfContents || [];
-      if (sections.length > 0 && completedSections.length === sections.length) {
-        console.log("All sections completed, setting learningComplete to true");
-        setLearningComplete(true);
-        
-        // Generate related topics if not already generated
-        if (relatedTopics.length === 0 && selectedTopic) {
-          generateTopicRelations(selectedTopic);
-        }
+  // Add a ref to track if TOC has been generated for this topic
+  const tocGeneratedRef = useRef<Set<string>>(new Set());
+  
+  const isNewTopicRequest = (input: string, currentTopic: string | null, sectionsGenerated: boolean): boolean => {
+    const trimmedInput = input.trim();
+    
+    // If there's no current topic, it's definitely a new topic
+    if (!currentTopic) {
+      console.log("[TopicManagement] No current topic, new topic request");
+      return true;
+    }
+    
+    // If sections haven't been generated, it's likely a new topic
+    if (!sectionsGenerated) {
+      console.log("[TopicManagement] Sections not generated, new topic request");
+      return true;
+    }
+    
+    // Check if the input is different from the current topic
+    if (trimmedInput.toLowerCase() !== currentTopic.toLowerCase()) {
+      console.log("[TopicManagement] Input differs from current topic, new topic request");
+      return true;
+    }
+    
+    // If none of the above conditions are met, it's not a new topic
+    console.log("[TopicManagement] Input matches current topic, not a new topic request");
+    return false;
+  };
+  
+  const handleSectionSelection = useCallback(
+    async (section: string, sectionIndex: number) => {
+      if (isProcessing) {
+        console.log("[TopicManagement] Already processing, skipping section selection");
+        return;
       }
+      
+      console.log(`[TopicManagement] Handling section selection: ${section} at index: ${sectionIndex}`);
+      
+      // Check if the section is already completed
+      if (completedSections.includes(section)) {
+        console.log("[TopicManagement] Section already completed, skipping");
+        toast.info("You've already explored this section!");
+        return;
+      }
+      
+      setIsProcessing(true);
+      setShowTypingIndicator(true);
+      setCurrentSection(section);
+      
+      try {
+        // Process the section content
+        const sectionPrompt = `Explain the following topic in detail for a ${ageRange} year old: ${section}.`;
+        const result = await generateResponse(sectionPrompt, ageRange, language);
+        
+        // Simulate typing delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setShowTypingIndicator(false);
+        
+        // Add section message
+        const sectionMessage: Message = {
+          id: Date.now().toString(),
+          text: result,
+          isUser: false,
+          blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
+          showBlocks: true
+        };
+        
+        setMessages(prev => [...prev, sectionMessage]);
+        
+        // Mark the section as completed
+        setCompletedSections(prev => {
+          if (!prev.includes(section)) {
+            console.log(`[TopicManagement] Marking section as completed: ${section}`);
+            return [...prev, section];
+          }
+          return prev;
+        });
+        
+        // Award points for completing a section
+        setPoints(prev => {
+          console.log(`[TopicManagement] Awarding points: +25 (current: ${prev})`);
+          return prev + 25;
+        });
+        
+        // Update learning progress
+        const newProgress = Math.min(100, 10 + (sectionIndex + 1) * (80 / 5));
+        setLearningProgress(newProgress);
+        
+        // Check if all sections are completed
+        const allSectionsCompleted = messages.find(msg => msg.tableOfContents)?.tableOfContents?.every(s => completedSections.includes(s));
+        if (allSectionsCompleted) {
+          console.log("[TopicManagement] All sections completed for this topic!");
+          setLearningComplete(true);
+          setLearningProgress(100);
+          toast.success("Congratulations! You've completed this topic!");
+        }
+      } catch (error) {
+        console.error("[TopicManagement] Error handling section selection:", error);
+        toast.error("I had trouble loading this section. Let's try another one!");
+      } finally {
+        setIsProcessing(false);
+        setShowTypingIndicator(false);
+      }
+    },
+    [
+      ageRange,
+      completedSections,
+      generateResponse,
+      isProcessing,
+      language,
+      messages,
+      setCompletedSections,
+      setCurrentSection,
+      setIsProcessing,
+      setLearningComplete,
+      setMessages,
+      setPoints,
+      setShowTypingIndicator,
+      setLearningProgress
+    ]
+  );
+  
+  // Modify the generateTopicRelations function to use the cache
+  const generateTopicRelations = useCallback(async () => {
+    if (!selectedTopic) return;
+    
+    console.log("Checking if TOC already generated for:", selectedTopic);
+    
+    // Skip regeneration if we've already done it for this topic
+    const cacheKey = `${selectedTopic}-${ageRange}-${language}`;
+    if (tocGeneratedRef.current.has(cacheKey)) {
+      console.log("TOC already generated for this topic, skipping");
+      return;
     }
-  }, [completedSections, topicSectionsGenerated, messages, selectedTopic]);
-
-  // Generate related topics
-  const generateTopicRelations = useCallback(async (topic: string) => {
-    try {
-      const topics = await generateRelatedTopics(topic, ageRange, language);
-      setRelatedTopics(topics);
-    } catch (error) {
-      console.error("Error in generateTopicRelations:", error);
-      setRelatedTopics([
-        "Space exploration", 
-        "Astronomy facts", 
-        "Planets and moons", 
-        "Solar system formation", 
-        "Black holes"
-      ]);
-    }
-  }, [ageRange, language, generateRelatedTopics, setRelatedTopics]);
-
-  // Handle new topic request
-  const handleNewTopicRequest = async () => {
-    console.log("Handling new topic request");
     
-    // Record previous topic if exists
-    if (selectedTopic) {
-      console.log("Saving previous topic:", selectedTopic);
-      setPreviousTopics(prev => [...prev, selectedTopic]);
-    }
-    
-    // IMPORTANT: Reset states for new topic before adding new messages
-    console.log("RESET: Clearing state for new topic request");
-    setTopicSectionsGenerated(false);
-    setCompletedSections([]);
-    setCurrentSection(null);
-    setLearningComplete(false);
-    setRelatedTopics([]);
-    
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputValue,
-      isUser: true
-    };
-    
-    console.log("Adding user message for new topic:", userMessage);
-    setMessages(prev => {
-      // Keep only the welcome message, remove all topic-specific messages
-      const welcomeMsg = prev.find(m => m.isIntroduction && !m.tableOfContents);
-      return welcomeMsg ? [welcomeMsg, userMessage] : [userMessage];
-    });
-    
-    setInputValue("");
+    console.log("Generating TOC and related topics for:", selectedTopic);
     setIsProcessing(true);
     setShowTypingIndicator(true);
-
+    
     try {
-      console.log("Generating TOC for new topic:", inputValue);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setShowTypingIndicator(false);
-      
-      // Generate table of contents for encyclopedia-style approach - limit to 5 focused sections
-      const tocPrompt = `Generate a concise table of contents with exactly 5 short, focused sections for learning about: ${inputValue}. Format as a simple numbered list. No welcome or introduction sections, focus only on educational content.`;
-      const tocResponse = await generateResponse(tocPrompt, ageRange, language);
-      console.log("Generated TOC response:", tocResponse);
-      
-      // Parse the TOC into sections
-      let sections = processTopicsFromResponse(tocResponse);
-      console.log("Parsed TOC sections:", sections);
-      
-      // Filter out any introduction sections and limit to 5
-      sections = filterIntroSections(sections);
-      if (sections.length > 5) {
-        sections = sections.slice(0, 5);
+      // Generate the table of contents
+      if (!topicSectionsGenerated) {
+        console.log("Topic sections not yet generated, creating TOC");
+        const tocPrompt = `Generate a concise table of contents with exactly 5 short, focused sections for learning about: ${selectedTopic}. Format as a simple numbered list. No welcome or introduction sections, focus only on educational content.`;
+        const tocResponse = await generateResponse(tocPrompt, ageRange, language);
+        
+        // Parse TOC sections - improved with clearer section extraction
+        const sections = parseTOCSections(tocResponse);
+        console.log("Generated TOC sections:", sections);
+        
+        // Add TOC message
+        const tocMessage: Message = {
+          id: Date.now().toString(),
+          text: `I'd love to teach you about ${selectedTopic}! Here's what we'll cover:`,
+          isUser: false,
+          tableOfContents: sections
+        };
+        
+        // Update state - make sure this happens only once per topic
+        setMessages(prev => {
+          // Check if we already have a TOC message for this topic
+          const hasTOC = prev.some(msg => 
+            msg.tableOfContents && 
+            msg.text.includes(`I'd love to teach you about ${selectedTopic}`)
+          );
+          
+          if (hasTOC) {
+            console.log("TOC message already exists, not adding duplicate");
+            return prev;
+          }
+          
+          return [...prev, tocMessage];
+        });
+        
+        setTopicSectionsGenerated(true);
+        tocGeneratedRef.current.add(cacheKey);
       }
       
-      // Create introduction message with TOC
-      const tocMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: `I'd love to teach you about ${inputValue}! Here's what we'll explore:`,
-        isUser: false,
-        tableOfContents: sections,
-        isIntroduction: true
-      };
+      // Generate related topics only if needed
+      if (relatedTopics.length === 0) {
+        console.log("Generating related topics for:", selectedTopic);
+        const newRelatedTopics = await generateRelatedTopics(selectedTopic, ageRange, language);
+        setRelatedTopics(newRelatedTopics);
+      } else {
+        console.log("Related topics already exist:", relatedTopics);
+      }
       
-      console.log("Adding TOC message:", tocMessage);
-      setMessages(prev => {
-        // Find and keep the welcome message and user message
-        const welcomeMsg = prev.find(m => m.isIntroduction && !m.tableOfContents);
-        const userMsg = prev.find(m => m.isUser && m.text === inputValue);
-        
-        const baseMessages = [];
-        if (welcomeMsg) baseMessages.push(welcomeMsg);
-        if (userMsg) baseMessages.push(userMsg);
-        
-        return [...baseMessages, tocMessage];
-      });
-      
-      setSelectedTopic(inputValue);
-      setTopicSectionsGenerated(true);
-      
-      // Generate related topics based on the main topic
-      generateTopicRelations(inputValue);
-      
-      // Add points for starting a new learning journey
-      setPoints(prev => prev + 25);
-      setLearningProgress(10);
+      // Set learning progress for this section
+      setLearningProgress(10); // 10% progress for seeing TOC
     } catch (error) {
-      console.error("Error generating TOC:", error);
-      toast.error("Sorry, there was an error processing your request. Please try again.");
+      console.error("Error generating topic relations:", error);
+      toast.error("Oops! Something went wrong while creating your learning path. Let's try again!");
     } finally {
       setIsProcessing(false);
+      setShowTypingIndicator(false);
     }
-  };
-
-  // Check if this is a new topic request
-  const isNewTopicRequest = useCallback((input: string, currentTopic: string | null, sectionsGenerated: boolean) => {
-    return !currentTopic || !sectionsGenerated || 
-           (input.toLowerCase().indexOf("tell me about") === 0) ||
-           (input.toLowerCase().indexOf("what is") === 0) ||
-           (input.toLowerCase().indexOf("how does") === 0);
-  }, []);
-
-  return {
-    handleNewTopicRequest,
-    isNewTopicRequest,
-    generateTopicRelations
-  };
+  }, [
+    selectedTopic, 
+    ageRange, 
+    language, 
+    topicSectionsGenerated, 
+    relatedTopics.length,
+    generateResponse, 
+    generateRelatedTopics, 
+    setMessages, 
+    setTopicSectionsGenerated, 
+    setIsProcessing, 
+    setShowTypingIndicator, 
+    setRelatedTopics,
+    setLearningProgress
+  ]);
+  
+  const handleNewTopicRequest = useCallback(async () => {
+    if (!inputValue.trim() || isProcessing) return;
+    
+    // Modify to better handle state transitions and prevent refreshes
+    try {
+      setIsProcessing(true);
+      setShowTypingIndicator(true);
+      
+      console.log("Processing new topic:", inputValue);
+      setSelectedTopic(inputValue);
+      
+      // Add user message
+      const userMessage: Message = {
+        id: `user-${Date.now()}`,
+        text: inputValue,
+        isUser: true
+      };
+      
+      setMessages(prev => [...prev, userMessage]);
+      setInputValue("");
+      
+      // Wait for the user message to be properly rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Now generate topic relations (TOC and related topics)
+      await generateTopicRelations();
+      
+      // Wait a bit more for proper rendering before fetching the first section
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Start with the first section if this is truly a new topic
+      const sections = messages.find(msg => msg.tableOfContents)?.tableOfContents || [];
+      if (sections.length > 0) {
+        await handleSectionSelection(sections[0], 0);
+      }
+      
+    } catch (error) {
+      console.error("Error handling new topic:", error);
+      toast.error("I had trouble processing that topic. Let's try something else!");
+    } finally {
+      setIsProcessing(false);
+      setShowTypingIndicator(false);
+    }
+  }, [
+    inputValue,
+    isProcessing,
+    generateTopicRelations,
+    handleSectionSelection,
+    messages,
+    setMessages,
+    setInputValue,
+    setIsProcessing,
+    setShowTypingIndicator,
+    setSelectedTopic
+  ]);
+  
+  return { handleNewTopicRequest, isNewTopicRequest, generateTopicRelations };
 };
+
+// Helper function to parse TOC sections
+const parseTOCSections = (tocResponse: string): string[] => {
+  // Try numbered list pattern first (most common format)
+  const numberedRegex = /\d+\.\s+\*\*([^*]+)\*\*/g;
+  const numberedMatches = [...tocResponse.matchAll(numberedRegex)].map(match => match[1].trim());
+  
+  if (numberedMatches.length >= 3) {
+    return numberedMatches;
+  }
+  
+  // Try bulleted list pattern
+  const bulletRegex = /[•*-]\s+\*\*([^*]+)\*\*/g;
+  const bulletMatches = [...tocResponse.matchAll(bulletRegex)].map(match => match[1].trim());
+  
+  if (bulletMatches.length >= 3) {
+    return bulletMatches;
+  }
+  
+  // Try section headers
+  const headerRegex = /\*\*([^*]+)\*\*/g;
+  const headerMatches = [...tocResponse.matchAll(headerRegex)].map(match => match[1].trim());
+  
+  if (headerMatches.length >= 3) {
+    return headerMatches;
+  }
+  
+  // Fallback: just find any lines that might be sections
+  const lines = tocResponse.split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 10 && line.length < 100)
+    .slice(0, 5);
+  
+  if (lines.length >= 3) {
+    return lines;
+  }
+  
+  // If all else fails, use a generic fallback
+  return [
+    "Introduction to the Topic",
+    "Key Facts and Information",
+    "Interesting Details",
+    "Real-World Applications",
+    "Fun Activities to Try"
+  ];
+};
+
+export default useTopicManagement;

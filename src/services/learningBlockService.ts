@@ -2,6 +2,9 @@
 import { BlockType, Message } from "@/types/chat";
 import { toast } from "sonner";
 
+// Track block requests to prevent duplicates
+const blockRequestTracker = new Map<string, boolean>();
+
 export const handleBlockClick = async (
   type: BlockType,
   messageId: string,
@@ -15,6 +18,18 @@ export const handleBlockClick = async (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
   generateQuiz: (topic: string, language: string) => Promise<any>
 ) => {
+  // Create a unique request ID to prevent duplicates
+  const requestId = `${type}-${messageId}-${Date.now()}`;
+  
+  // Check if this exact request is already being processed (prevent double-clicks)
+  if (blockRequestTracker.get(`${type}-${messageId}`)) {
+    console.log(`[LearningBlock] Duplicate request for ${type} block detected, ignoring`);
+    return;
+  }
+  
+  // Mark this request as being processed
+  blockRequestTracker.set(`${type}-${messageId}`, true);
+  
   console.log(`[LearningBlock] Processing ${type} block for message: ${messageId.substring(0, 8)}...`);
   console.log(`[LearningBlock] Message text: "${messageText.substring(0, 50)}..."`);
   
@@ -87,7 +102,7 @@ export const handleBlockClick = async (
 
     // Create the block message with the correct image prompt
     const blockMessage: Message = {
-      id: Date.now().toString(),
+      id: `block-${Date.now().toString()}`, // Add prefix for easier tracking
       text: blockResponse,
       isUser: false,
       imagePrompt: imagePrompt || undefined,
@@ -119,5 +134,10 @@ export const handleBlockClick = async (
   } finally {
     console.log(`[LearningBlock] Finished processing ${type} block`);
     setIsProcessing(false);
+    
+    // Clear the tracker after a delay to prevent rapid clicks but allow future clicks
+    setTimeout(() => {
+      blockRequestTracker.delete(`${type}-${messageId}`);
+    }, 2000);
   }
 };

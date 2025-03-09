@@ -10,6 +10,87 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Content guidelines implementation inside edge function (since we can't import from src)
+const formatLLMResponse = (text: string): string => {
+  if (!text) return '';
+  
+  // Track emoji usage to limit frequency
+  let emojiCount = 0;
+  const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+  const emojisInText = text.match(emojiRegex) || [];
+  emojiCount = emojisInText.length;
+  
+  let formattedText = text;
+  
+  // 1. Reduce excessive emojis (limit to ~1 emoji per paragraph)
+  if (emojiCount > 3) {
+    // Count paragraphs to determine reasonable emoji count
+    const paragraphs = text.split('\n\n').filter(p => p.trim().length > 0);
+    const targetEmojiCount = Math.min(paragraphs.length + 1, 5); // Max 5 emojis
+    
+    if (emojiCount > targetEmojiCount) {
+      // Extract all emojis
+      const emojis = Array.from(text.matchAll(emojiRegex)).map(m => m[0]);
+      
+      // Keep only the first few emojis
+      const emojisToKeep = emojis.slice(0, targetEmojiCount);
+      const emojisToRemove = emojis.slice(targetEmojiCount);
+      
+      // Remove excess emojis
+      let cleanedText = formattedText;
+      emojisToRemove.forEach(emoji => {
+        cleanedText = cleanedText.replace(new RegExp(emoji, 'g'), '');
+      });
+      
+      formattedText = cleanedText;
+    }
+  }
+  
+  // 2. Remove emoji clusters (more than 2 consecutive emojis)
+  formattedText = formattedText.replace(/(?:[\p{Emoji_Presentation}\p{Extended_Pictographic}]{2,})/gu, match => {
+    return match.slice(0, 1); // Keep only the first emoji
+  });
+  
+  // 3. Fix formatting issues
+  // Fix excessive spaces
+  formattedText = formattedText.replace(/\s{2,}/g, ' ');
+  
+  // Restore paragraph breaks (keep existing ones)
+  if (!formattedText.includes('\n\n')) {
+    formattedText = formattedText.replace(/\.\s+([A-Z])/g, '.\n\n$1');
+  }
+  
+  // 4. Remove duplicate paragraph breaks
+  formattedText = formattedText.replace(/\n{3,}/g, '\n\n');
+  
+  return formattedText;
+};
+
+const getSystemPromptForAge = (ageRange: string, language: string = 'en'): string => {
+  let systemPrompt = `You are WonderWhiz, an educational AI assistant designed for children aged ${ageRange}.
+  Your responses should be:
+  - Engaging, friendly, and encouraging
+  - Age-appropriate in language and content (for ${ageRange} year olds)
+  - Educational and factually accurate
+  - Concise (2-3 paragraphs maximum)
+  - Focused on explaining complex topics in simple terms
+  - Free of any inappropriate content
+  - Written with short sentences and simple vocabulary
+  - Include VERY SPARING use of emojis (maximum 2-3 per response) to emphasize key points
+  - Structured with paragraph breaks for readability
+  - Include mind-blowing facts that will fascinate children
+  - Occasionally use storytelling to explain complex concepts
+  - End with a question or hook to encourage further exploration
+  - IMPORTANT: Limit your content to 5 main points or less
+  - IMPORTANT: Stay 100% on topic and directly address the specific question or topic`;
+  
+  if (language !== 'en') {
+    systemPrompt += `\n\nIMPORTANT: Respond in ${language} language only. All your content must be in ${language}.`;
+  }
+  
+  return systemPrompt;
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -35,27 +116,8 @@ serve(async (req) => {
     let response;
     
     if (requestType === 'text') {
-      // Define a system message that guides the AI to respond appropriately for kids
-      let systemMessage = `You are WonderWhiz, an educational AI assistant designed for children aged ${ageRange}.
-      Your responses should be:
-      - Engaging, friendly, and encouraging
-      - Age-appropriate in language and content (for ${ageRange} year olds)
-      - Educational and factually accurate
-      - Concise (2-3 paragraphs maximum)
-      - Focused on explaining complex topics in simple terms
-      - Free of any inappropriate content
-      - Written with short sentences and simple vocabulary
-      - Include selective use of emojis to enhance engagement
-      - Structured with paragraph breaks for readability
-      - Include mind-blowing facts that will fascinate children
-      - Occasionally use storytelling to explain complex concepts
-      - IMPORTANT: Limit your content to 5 main points or less
-      - IMPORTANT: Stay 100% on topic and directly address the specific question or topic`;
-      
-      // Add language-specific instructions
-      if (language !== 'en') {
-        systemMessage += `\n\nIMPORTANT: Respond in ${language} language only. All your content must be in ${language}.`;
-      }
+      // Define a system message with updated content guidelines
+      let systemMessage = getSystemPromptForAge(ageRange, language);
       
       try {
         // Use Groq API instead of OpenAI
@@ -94,7 +156,11 @@ serve(async (req) => {
           throw new Error("Invalid response from Groq");
         }
         
-        return new Response(JSON.stringify({ content: data.choices[0].message.content }), {
+        // Apply content formatting guidelines to clean up the response
+        const formattedContent = formatLLMResponse(data.choices[0].message.content);
+        console.log("[DEBUG] Formatted content with guidelines:", formattedContent.substring(0, 100) + "...");
+        
+        return new Response(JSON.stringify({ content: formattedContent }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (textError) {
