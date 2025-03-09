@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Bot, User, Copy, CheckCheck } from "lucide-react";
 import { motion } from "framer-motion";
@@ -88,14 +89,17 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   return (
-    <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-6 w-full px-1 md:px-2`}>
+    <div 
+      className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-3 w-full px-1`}
+      data-message-id={id}
+    >
       {!isUser && (
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-purple to-wonder-purple-dark flex items-center justify-center flex-shrink-0 shadow-magical">
           <Bot className="h-4 w-4 text-white" />
         </div>
       )}
       
-      <div className={`relative px-4 py-3 rounded-xl w-full max-w-[calc(100%-3rem)] shadow-sm
+      <div className={`relative px-3 py-2.5 rounded-xl w-full max-w-[calc(100%-3rem)] shadow-sm
         ${isUser 
           ? 'bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-tr-none ml-8' 
           : 'bg-white border border-wonder-purple/10 rounded-tl-none'}`}>

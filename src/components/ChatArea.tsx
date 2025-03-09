@@ -43,6 +43,12 @@ const ChatArea: React.FC<ChatAreaProps> = memo(({
     }
   }, [messages, showTypingIndicator]);
   
+  // Debug the scrolling behavior
+  useEffect(() => {
+    console.log("[ChatArea] Messages changed, scrolling to bottom", 
+                { messageCount: messages.length, showTypingIndicator });
+  }, [messages, showTypingIndicator]);
+  
   // Check if we have a TOC message
   const tocMessage = messages.find(m => m.tableOfContents);
   
@@ -91,9 +97,13 @@ const ChatArea: React.FC<ChatAreaProps> = memo(({
   };
 
   return (
-    <div ref={chatAreaRef} className="flex-1 overflow-y-auto p-4 space-y-6 md:px-6">
-      {/* Main content */}
-      <div className="max-w-3xl w-full mx-auto relative z-10 pb-4">
+    <div 
+      ref={chatAreaRef} 
+      className="flex-1 overflow-y-auto w-full p-2 md:p-3 space-y-4 md:space-y-5"
+      id="chat-area-container"
+    >
+      {/* Chat content goes full width with proper padding */}
+      <div className="w-full mx-auto relative z-10 pb-4">
         {/* Regular chat messages */}
         {messages.map((message) => {
           // Skip TOC message, we'll display it separately
@@ -155,7 +165,7 @@ const ChatArea: React.FC<ChatAreaProps> = memo(({
         
         {/* Typing Indicator */}
         {showTypingIndicator && (
-          <div className="flex items-start space-x-4 mt-4 animate-fade-in">
+          <div className="flex items-start space-x-3 animate-fade-in mt-2 mx-1">
             <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-wonder-purple to-wonder-blue">
               <div className="h-full w-full bg-[url('/lovable-uploads/22fa1957-ce26-4f1a-ae37-bf442630d36d.png')] bg-cover opacity-20"></div>
             </div>
@@ -166,7 +176,7 @@ const ChatArea: React.FC<ChatAreaProps> = memo(({
         )}
         
         {/* Spacer for scrolling to bottom */}
-        <div ref={messagesEndRef}></div>
+        <div ref={messagesEndRef} id="messages-end-ref"></div>
       </div>
     </div>
   );

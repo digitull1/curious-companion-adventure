@@ -1,3 +1,4 @@
+
 import { Message, MessageProcessingStatus, MessageProcessingResult } from "@/types/chat";
 import { toast } from "sonner";
 
@@ -6,6 +7,7 @@ let isMessageBeingProcessed = false;
 let processingStartTime = 0;
 let processingId = '';
 let canceledOperations = new Set<string>();
+let messageProcessCounter = 0;
 
 export const useMessageHandling = (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
@@ -26,9 +28,11 @@ export const useMessageHandling = (
     // Generate a unique ID for this processing operation
     const currentProcessingId = `msg-${Date.now()}`;
     processingId = currentProcessingId;
+    messageProcessCounter++;
+    const currentCounter = messageProcessCounter;
     
     console.log(`[MessageHandler][START:${currentProcessingId}] Processing message: "${prompt.substring(0, 30)}..."`, 
-      `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`);
+      `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`, `counter: ${currentCounter}`);
     
     // Log current state
     console.log(`[MessageHandler][${currentProcessingId}] Current isMessageBeingProcessed flag: ${isMessageBeingProcessed}`, 
@@ -61,7 +65,12 @@ export const useMessageHandling = (
         isUser: true
       };
       console.log(`[MessageHandler][${currentProcessingId}] Adding user message to chat: ${userMessage.id}`);
-      setMessages(prev => [...prev, userMessage]);
+      
+      // Use a function to set messages to avoid race conditions
+      setMessages(prev => {
+        console.log(`[MessageHandler][${currentProcessingId}] setMessages called with prev.length=${prev.length}`);
+        return [...prev, userMessage];
+      });
     }
 
     try {
@@ -85,6 +94,8 @@ export const useMessageHandling = (
         return { status: "error", error: { message: "Operation was superseded by another request" } };
       }
       
+      // Log before changing typing indicator
+      console.log(`[MessageHandler][${currentProcessingId}] About to set showTypingIndicator to false`);
       setShowTypingIndicator(false);
       
       const aiMessage: Message = {
@@ -96,7 +107,22 @@ export const useMessageHandling = (
       };
       
       console.log(`[MessageHandler][${currentProcessingId}] Adding AI message to chat: ${aiMessage.id}`);
-      setMessages(prev => [...prev, aiMessage]);
+      
+      // Use a function to set messages to avoid race conditions
+      setMessages(prev => {
+        console.log(`[MessageHandler][${currentProcessingId}] setMessages (AI) called with prev.length=${prev.length}`);
+        // Check if the most recent message is a user message that matches our expected ID
+        const lastMessage = prev[prev.length - 1];
+        const expectedUserMessageExists = lastMessage && 
+                                          lastMessage.isUser && 
+                                          (!isUserMessage || skipUserMessage || lastMessage.id === userMessageId);
+        
+        if (!expectedUserMessageExists && isUserMessage && !skipUserMessage) {
+          console.warn(`[MessageHandler][${currentProcessingId}] Expected user message not found, might cause UI refresh issues`);
+        }
+        
+        return [...prev, aiMessage];
+      });
       
       // Award points
       setPoints(prev => {
@@ -108,6 +134,9 @@ export const useMessageHandling = (
       return { status: "completed", messageId: aiMessage.id };
     } catch (error) {
       console.error(`[MessageHandler][${currentProcessingId}] Error processing message:`, error);
+      
+      // Log before changing typing indicator
+      console.log(`[MessageHandler][${currentProcessingId}] About to set showTypingIndicator to false due to error`);
       setShowTypingIndicator(false);
       
       // Handle errors
@@ -157,7 +186,7 @@ export const useMessageHandling = (
         } else {
           console.log(`[MessageHandler][${currentProcessingId}][SKIP] Not resetting flag as this is no longer the active operation`);
         }
-      }, 500);
+      }, 700); // Slightly longer delay to ensure smooth transitions
     }
   };
 

@@ -1,11 +1,26 @@
 
 import { processTopicsFromResponse } from "@/utils/topicUtils";
 
+// Track pending topic generation requests to avoid duplicates
+const pendingTopicRequests = new Set<string>();
+
 export const useRelatedTopics = (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>
 ) => {
   const generateRelatedTopics = async (topic: string, ageRange: string, language: string) => {
     try {
+      // Create a unique key for this request to avoid duplicates
+      const requestKey = `${topic}-${ageRange}-${language}`;
+      
+      // If we're already generating topics for this combination, return undefined
+      if (pendingTopicRequests.has(requestKey)) {
+        console.log("Skipping duplicate related topics request for:", topic);
+        return [];
+      }
+      
+      // Mark this request as pending
+      pendingTopicRequests.add(requestKey);
+      
       console.log("Generating related topics for:", topic);
       const relatedTopicsPrompt = `Generate 5 related topics to "${topic}" that might interest a learner aged ${ageRange}. Each topic should be specific, educational and engaging. Format as a comma-separated list.`;
       const relatedTopicsResponse = await generateResponse(relatedTopicsPrompt, ageRange, language);
@@ -18,6 +33,9 @@ export const useRelatedTopics = (
       // Make sure we have up to 5 topics
       const finalRelatedTopics = newRelatedTopics.slice(0, 5);
       console.log("Final related topics list:", finalRelatedTopics);
+      
+      // Clear the pending request
+      pendingTopicRequests.delete(requestKey);
       
       return finalRelatedTopics;
     } catch (error) {
