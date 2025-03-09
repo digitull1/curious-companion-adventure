@@ -15,6 +15,11 @@ let currentSectionId = '';
 let canceledSections = new Set<string>();
 let activeSectionRequests: Record<string, boolean> = {};
 
+// Track block click processing
+let isBlockBeingProcessed = false;
+let currentBlockId = '';
+let lastBlockType: BlockType | null = null;
+
 export const useSectionHandling = (
   messages: Message[],
   selectedTopic: string | null,
@@ -156,9 +161,31 @@ export const useSectionHandling = (
   };
   
   const handleBlockClickWrapper = (type: BlockType, messageId: string, messageText: string) => {
-    console.log(`[SectionHandling] Block clicked: ${type} from message ${messageId}`);
+    const blockId = `block-${Date.now()}`;
+    console.log(`[SectionHandling][START:${blockId}] Block clicked: ${type} from message ${messageId}`);
+    
+    // Prevent multiple clicks of the same block type
+    if (isBlockBeingProcessed && lastBlockType === type) {
+      console.log(`[SectionHandling][${blockId}] Already processing block type ${type}, ignoring this request`);
+      return;
+    }
+    
+    // Set processing flags
+    isBlockBeingProcessed = true;
+    currentBlockId = blockId;
+    lastBlockType = type;
+    
     // Call the provided handleBlockClick function with the correct parameters
     handleBlockClick(type, messageId, messageText);
+    
+    // Clear processing flags after a delay
+    setTimeout(() => {
+      if (currentBlockId === blockId) {
+        isBlockBeingProcessed = false;
+        lastBlockType = null;
+        console.log(`[SectionHandling][${blockId}] Released block processing lock`);
+      }
+    }, 2000); // Longer timeout to ensure request completes
   };
 
   return {

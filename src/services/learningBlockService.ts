@@ -4,6 +4,8 @@ import { toast } from "sonner";
 
 // Ensure we have a single instance of this flag across the application
 let isBlockProcessing = false;
+let activeBlockType: BlockType | null = null;
+let blockRequestId: string | null = null;
 
 export const handleBlockClick = async (
   type: BlockType,
@@ -22,17 +24,24 @@ export const handleBlockClick = async (
   console.log(`[LearningBlock][START:${blockId}] Processing ${type} block for message: ${messageId.substring(0, 8)}...`);
   console.log(`[LearningBlock][${blockId}] Message text: "${messageText.substring(0, 50)}..."`);
   
-  // Check for existing block processing - return early to prevent race conditions
+  // Check for existing block processing - specifically checking for same block type
   if (isBlockProcessing) {
-    console.log(`[LearningBlock][${blockId}] Already processing another block, ignoring this request`);
-    toast.info("Already processing a request, please wait...");
-    return;
+    if (activeBlockType === type) {
+      console.log(`[LearningBlock][${blockId}] Already processing ${type} block, ignoring this request`);
+      toast.info(`Already processing ${type} content, please wait...`);
+      return;
+    } else {
+      console.log(`[LearningBlock][${blockId}] Processing different block type: current=${activeBlockType}, new=${type}`);
+      // Continue processing new block type, replacing the previous one
+    }
   }
   
   try {
     // Set processing flag immediately to prevent multiple clicks
     isBlockProcessing = true;
-    console.log(`[LearningBlock][${blockId}] Setting isBlockProcessing flag to true`);
+    activeBlockType = type;
+    blockRequestId = blockId;
+    console.log(`[LearningBlock][${blockId}] Setting isBlockProcessing flag to true for type: ${type}`);
     
     setIsProcessing(true);
     setShowTypingIndicator(true);
@@ -95,9 +104,22 @@ export const handleBlockClick = async (
         blockResponse = "I'm not sure how to process this block type. Let's try something else!";
     }
 
+    // Validate this operation is still current
+    if (blockRequestId !== blockId) {
+      console.log(`[LearningBlock][${blockId}] This operation has been superseded by a newer request, abandoning`);
+      return;
+    }
+
     // Simulate typing delay
     console.log(`[LearningBlock][${blockId}] Simulating typing delay before showing response`);
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Check again after delay if this operation is still current
+    if (blockRequestId !== blockId) {
+      console.log(`[LearningBlock][${blockId}] This operation has been superseded after delay, abandoning`);
+      return;
+    }
+    
     setShowTypingIndicator(false);
 
     // Create the block message with the correct structure
@@ -151,7 +173,13 @@ export const handleBlockClick = async (
     
     // Use a longer timeout to ensure all operations are complete
     setTimeout(() => {
-      isBlockProcessing = false;
+      if (blockRequestId === blockId) {
+        isBlockProcessing = false;
+        activeBlockType = null;
+        blockRequestId = null;
+      } else {
+        console.log(`[LearningBlock][${blockId}] Not clearing flags as this operation is no longer active`);
+      }
     }, 1000);
   }
 };

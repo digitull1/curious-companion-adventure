@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import React, { useRef, useEffect, useState, useCallback, memo } from "react";
 import { animate } from "@motionone/dom";
 import { ChevronLeft, ChevronRight, Book, Star, Sparkles, Lightbulb, AtomIcon, MessageSquareText, Video, HelpCircle, Loader2 } from "lucide-react";
 import { BlockType } from "@/components/LearningBlock";
@@ -109,6 +108,7 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
   const [isContentLoading, setIsContentLoading] = useState(false);
   const [expandedContent, setExpandedContent] = useState(true);
   const [isExploreVisible, setIsExploreVisible] = useState(true);
+  const [lastClickedBlock, setLastClickedBlock] = useState<BlockType | null>(null);
   
   // Clean and prepare displayed content
   const cleanedTitle = cleanText(title);
@@ -125,7 +125,6 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
     
     // Force explore section visibility if blocks are provided
     if (blocks && blocks.length > 0) {
-      console.log(`[ContentBox][${componentId}] Setting explore section visible due to blocks being provided:`, blocks);
       setIsExploreVisible(true);
     }
     
@@ -145,7 +144,6 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
     }, 800);
     
     return () => {
-      console.log(`[ContentBox][${componentId}] Clearing content loading timer`);
       clearTimeout(timer);
     };
   }, [title, componentId]);
@@ -211,29 +209,38 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
     
     console.log(`[ContentBox][${componentId}] Block button clicked: ${blockType}`);
     
-    // Clear any existing timeout
-    if (blockClickTimeoutRef.current) {
-      clearTimeout(blockClickTimeoutRef.current);
+    // Prevent multiple clicks by checking if we're already processing this block type
+    if (lastClickedBlock === blockType) {
+      console.log(`[ContentBox][${componentId}] Already processing this block type: ${blockType}, ignoring`);
+      return;
     }
     
-    // Set a flag on the window object to prevent multiple consecutive clicks
+    // Set the last clicked block type
+    setLastClickedBlock(blockType);
+    
+    // Set a flag on the component instance to prevent multiple consecutive clicks
     if ((window as any)._blockClickInProgress) {
-      console.log(`[ContentBox] Block click already in progress, ignoring this click`);
+      console.log(`[ContentBox][${componentId}] Block click already in progress, ignoring this click`);
       return;
     }
     
     (window as any)._blockClickInProgress = true;
+    console.log(`[ContentBox][${componentId}] Setting _blockClickInProgress flag to true`);
     
     // Call the handler immediately
     onBlockClick(blockType);
     
     // Set a timeout to clear the flag
-    blockClickTimeoutRef.current = window.setTimeout(() => {
-      console.log(`[ContentBox] Clearing block click in progress flag`);
+    setTimeout(() => {
+      console.log(`[ContentBox][${componentId}] Clearing block click in progress flag`);
       (window as any)._blockClickInProgress = false;
-      blockClickTimeoutRef.current = null;
-    }, 1000) as unknown as number;
-  }, [onBlockClick, componentId]);
+      
+      // Clear last clicked block after a delay to allow for new clicks
+      setTimeout(() => {
+        setLastClickedBlock(null);
+      }, 500);
+    }, 1000);
+  }, [onBlockClick, componentId, lastClickedBlock]);
   
   // Handle navigation with debounce - prevent page refreshes
   const handleNavigation = useCallback((section: string, e?: React.MouseEvent) => {

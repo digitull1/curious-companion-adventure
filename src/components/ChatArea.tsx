@@ -96,9 +96,19 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [processedCurrentSection, setProcessedCurrentSection] = useState<string | null>(null);
   const [renderId, setRenderId] = useState(0); // Add a render ID to help with memoization
   const [contentBoxBlocks, setContentBoxBlocks] = useState<BlockType[]>([]); // Track blocks for ContentBox
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  // Store previous section to detect changes
-  const prevSectionRef = useRef<string | null>(null);
+  // Keep stable references to current state values
+  const activeBlockRef = useRef<BlockType | null>(null);
+  const currentSectionRef = useRef<string | null>(null);
+  const currentSectionMessageRef = useRef<Message | null>(null);
+  
+  // Update refs when state changes
+  useEffect(() => {
+    activeBlockRef.current = activeBlock;
+    currentSectionRef.current = currentSection;
+    currentSectionMessageRef.current = currentSectionMessage;
+  }, [activeBlock, currentSection, currentSectionMessage]);
   
   // Process related topics
   const processedRelatedTopics = processRelatedTopics(relatedTopics);
@@ -154,26 +164,28 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         setActiveBlock(blockTypeMessage.blockType || null);
       }
     }
-  }, [messages, renderId]);
+  }, [messages, renderId, currentBlockMessage]);
 
   // Track section changes without triggering re-renders
   useEffect(() => {
-    if (currentSection !== prevSectionRef.current) {
-      console.log(`[ChatArea] Section changing from "${prevSectionRef.current}" to "${currentSection}"`);
-      prevSectionRef.current = currentSection;
+    currentSectionRef.current = currentSection;
+    
+    // Only trigger content loading if not already the current section
+    if (currentSection !== processedCurrentSection) {
+      console.log(`[ChatArea] Section changing from "${processedCurrentSection}" to "${currentSection}"`);
       setProcessedCurrentSection(currentSection);
       
-      // Reset block-related state when changing sections
-      setActiveBlock(null);
+      // Don't reset block-related state when changing sections anymore
+      // This prevents ContentBox from remounting and losing its state
+      
       // Increment render ID to help with memoization
       setRenderId(prev => prev + 1);
     }
-  }, [currentSection]);
+  }, [currentSection, processedCurrentSection]);
 
   // Find the appropriate content message for the current section and extract blocks
   useEffect(() => {
-    // Find the most recent non-user message about the current section that isn't a block-related message
-    if (currentSection) {
+    if (!isNavigating && currentSection) {
       console.log(`[ChatArea][render:${renderId}] Finding content for section: "${currentSection}"`);
       
       const sectionMessage = [...messages]
@@ -189,6 +201,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         
         // Only update if different to avoid unnecessary re-renders
         if (!currentSectionMessage || currentSectionMessage.id !== sectionMessage.id) {
+          console.log(`[ChatArea] Updating section message from ${currentSectionMessage?.id} to ${sectionMessage.id}`);
+          currentSectionMessageRef.current = sectionMessage;
           setCurrentSectionMessage(sectionMessage);
           
           // Extract blocks from this message or use defaults
@@ -202,44 +216,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         console.log(`[ChatArea] No section message found, using default blocks:`, defaultBlocks);
         setContentBoxBlocks(defaultBlocks);
       }
-    } else {
-      console.log(`[ChatArea][render:${renderId}] No current section selected, clearing section message`);
-      if (currentSectionMessage !== null) {
-        setCurrentSectionMessage(null);
-      }
-      // Reset blocks when no section is selected
-      setContentBoxBlocks([]);
     }
-  }, [processedCurrentSection, messages, renderId, currentSection]);
+  }, [currentSection, messages, renderId, currentSectionMessage, isNavigating]);
 
   // Apply animations to related topics when they appear
-  useEffect(() => {
-    if (relatedTopicsRef.current && learningComplete && processedRelatedTopics.length > 0) {
-      console.log(`[ChatArea][render:${renderId}] Animating related topics:`, processedRelatedTopics);
-      const topics = relatedTopicsRef.current.querySelectorAll('.related-topic');
-      topics.forEach((topic, index) => {
-        animate(
-          topic,
-          { opacity: [0, 1], scale: [0.9, 1], y: [10, 0] },
-          { duration: 0.4, delay: 0.15 * index, easing: "ease-out" }
-        );
-      });
-    }
-  }, [learningComplete, processedRelatedTopics, renderId]);
+  // ... keep existing code (related topics animations)
 
   // Toggle message expansion
-  const toggleMessageExpansion = useCallback((messageId: string) => {
-    console.log(`[ChatArea] Toggling expansion for message: ${messageId}`);
-    setExpandedMessages(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(messageId)) {
-        newSet.delete(messageId);
-      } else {
-        newSet.add(messageId);
-      }
-      return newSet;
-    });
-  }, []);
+  // ... keep existing code (toggle message expansion)
 
   // Function to get previous and next section based on current section
   const getAdjacentSections = useCallback(() => {
@@ -258,54 +242,57 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }, [currentSection, messages]);
 
   // Topic pill instead of a sticky header
-  const renderTopicPill = useCallback(() => {
-    if (!currentSection) return null;
-    
-    // Remove asterisks from current section
-    const cleanedSection = currentSection.replace(/\*\*/g, "");
-    
-    return (
-      <div className="mx-auto max-w-3xl px-4 my-3">
-        <div className="flex items-center justify-between bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/5 backdrop-blur-md p-2 px-4 rounded-full border border-wonder-purple/10 shadow-sm">
-          <div className="flex items-center gap-1.5 ml-1">
-            <div className="w-6 h-6 flex-shrink-0 rounded-full bg-wonder-purple/20 flex items-center justify-center">
-              <BookOpen className="h-3 w-3 text-wonder-purple" />
-            </div>
-            <span className="text-xs text-wonder-purple/70">Learning about:</span>
-            <span className="text-sm font-medium text-wonder-purple truncate max-w-[150px] sm:max-w-[300px]">
-              {cleanedSection}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-20 h-1.5 bg-white/70 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-wonder-purple/50 rounded-full"
-                style={{ width: `${learningProgress}%` }}
-              ></div>
-            </div>
-            <span className="text-xs text-wonder-purple/70">{Math.round(learningProgress)}%</span>
-          </div>
-        </div>
-      </div>
-    );
-  }, [currentSection, learningProgress]);
+  // ... keep existing code (topic pill)
 
   // Handle specific block click within ContentBox
   const handleContentBoxBlockClick = useCallback((block: BlockType) => {
     console.log(`[ChatArea] Content box block clicked: ${block}`);
     
+    // Set the active block first, so ContentBox updates immediately
+    setActiveBlock(block);
+    
     if (currentSectionMessage) {
       console.log(`[ChatArea] Using current section message: ${currentSectionMessage.id}`);
       console.log(`[ChatArea] Current section message text: ${currentSectionMessage.text.substring(0, 50)}...`);
       
-      setActiveBlock(block);
-      onBlockClick(block, currentSectionMessage.id, currentSectionMessage.text);
+      // Use a small timeout to allow the UI to update before making the request
+      setTimeout(() => {
+        onBlockClick(block, currentSectionMessage.id, currentSectionMessage.text);
+      }, 10);
     } else {
       console.warn("[ChatArea] Block clicked but no current section message found!");
     }
   }, [currentSectionMessage, onBlockClick]);
 
-  // Find the welcome message
+  // Wrap onTocSectionClick to prevent refreshes
+  const handleTocSectionClick = useCallback((section: string) => {
+    console.log(`[ChatArea] Section clicked: ${section}`);
+    setIsNavigating(true);
+    
+    // Use timeout to prevent race conditions
+    setTimeout(() => {
+      onTocSectionClick(section);
+      setIsNavigating(false);
+    }, 50);
+  }, [onTocSectionClick]);
+
+  // Generate a stable key for ContentBox to prevent remounting
+  const getContentBoxKey = useCallback(() => {
+    // Use the current section as the base of the key
+    const baseKey = `content-${currentSection || 'none'}`;
+    
+    // Add the active block to the key ONLY if it exists
+    // This prevents key from changing when a block is clicked
+    const blockPart = activeBlockRef.current ? `-${activeBlockRef.current}` : '';
+    
+    // Include block message ID only if we have one
+    const blockMsgPart = currentBlockMessage?.id ? `-${currentBlockMessage.id}` : '';
+    
+    // Final key - stable while blocks are active
+    return `${baseKey}${blockPart}${blockMsgPart}`;
+  }, [currentSection, currentBlockMessage?.id]);
+
+  // Find the welcome message and intro message
   const welcomeMessage = messages.find(m => !m.isUser && m.isIntroduction && !m.tableOfContents);
   
   // Find the introduction message that contains the table of contents
@@ -317,7 +304,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Get adjacent sections for navigation
   const { prev, next } = getAdjacentSections();
   
-  // Filter user messages to display in the chat flow
+  // Filter messages for display
   const userMessages = messages.filter(m => m.isUser);
   console.log(`[ChatArea][render:${renderId}] Filtered user messages: ${userMessages.length}`);
   
@@ -402,7 +389,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   sections={introMessage.tableOfContents || []} 
                   completedSections={completedSections}
                   currentSection={currentSection}
-                  onSectionClick={onTocSectionClick}
+                  onSectionClick={handleTocSectionClick}
                 />
               </ChatMessage>
             </div>
@@ -439,19 +426,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           {currentSection && currentSectionMessage && (
             <div className="px-4 max-w-4xl mx-auto">
               <ContentBox
-                key={`content-${currentSection}-${currentBlockMessage?.id || 'none'}-${activeBlock || 'none'}-${renderId}`}
+                key={getContentBoxKey()}
                 title={currentSection}
                 content={currentSectionMessage.text}
-                prevSection={null}
-                nextSection={null}
+                prevSection={prev}
+                nextSection={next}
                 blocks={contentBoxBlocks.length > 0 ? contentBoxBlocks : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"]}
-                onBlockClick={(block) => {
-                  console.log(`[ChatArea] Content box block clicked: ${block}`);
-                  if (currentSectionMessage) {
-                    onBlockClick(block, currentSectionMessage.id, currentSectionMessage.text);
-                  }
-                }}
-                onNavigate={onTocSectionClick}
+                onBlockClick={handleContentBoxBlockClick}
+                onNavigate={handleTocSectionClick}
                 activeBlock={activeBlock}
                 imagePrompt={currentBlockMessage?.imagePrompt}
                 quiz={currentBlockMessage?.quiz}

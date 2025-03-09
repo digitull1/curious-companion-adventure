@@ -97,16 +97,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
 
   return (
-    <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-6 w-full px-4`}>
+    <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-6 w-full px-1 md:px-2`}>
       {!isUser && (
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-purple to-wonder-purple-dark flex items-center justify-center flex-shrink-0 shadow-magical">
           <Bot className="h-4 w-4 text-white" />
         </div>
       )}
       
-      <div className={`relative px-4 py-3 rounded-xl w-full max-w-[100%] shadow-sm
+      <div className={`relative px-4 py-3 rounded-xl w-full max-w-[calc(100%-3rem)] shadow-sm
         ${isUser 
-          ? 'bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-tr-none ml-8 max-w-[85%]' 
+          ? 'bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-tr-none ml-8' 
           : 'bg-white border border-wonder-purple/10 rounded-tl-none'}`}>
         
         {/* Copy button (only for AI messages) */}
@@ -132,7 +132,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         </div>
         
         {/* Learning blocks - Only show on welcome messages, not in regular chat */}
-        {!isUser && showBlocks && (
+        {!isUser && showBlocks && blocks && blocks.length > 0 && (
           <div className="mt-4">
             <h3 className="text-xs font-medium mb-3 flex items-center gap-1">
               <Sparkles className="h-3.5 w-3.5 text-wonder-yellow" />
