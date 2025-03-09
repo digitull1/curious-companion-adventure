@@ -1,3 +1,4 @@
+
 import { Message, MessageProcessingResult } from "@/types/chat";
 import { BlockType } from "@/components/LearningBlock";
 import { toast } from "sonner";
@@ -8,9 +9,11 @@ interface SectionHandlingProps {
   handleBlockClick: (type: BlockType, messageId: string, messageText: string) => void;
 }
 
-// Module-level variable to track section processing
+// Module-level variables to track section processing
 let isSectionBeingProcessed = false;
 let currentSectionId = '';
+let canceledSections = new Set<string>();
+let activeSectionRequests: Record<string, boolean> = {};
 
 export const useSectionHandling = (
   messages: Message[],
@@ -25,10 +28,23 @@ export const useSectionHandling = (
 ): SectionHandlingProps => {
   
   const handleTocSectionClick = async (section: string) => {
+    // Generate unique ID for this operation
     const sectionId = `section-${Date.now()}`;
-    currentSectionId = sectionId;
+    
+    // Track this request
+    activeSectionRequests[sectionId] = true;
     
     console.log(`[SectionHandling][START:${sectionId}] Table of Contents section clicked: ${section}`);
+    console.log(`[SectionHandling][${sectionId}] Current section processing state: isSectionBeingProcessed=${isSectionBeingProcessed}, currentSectionId=${currentSectionId}`);
+    
+    // Cancel any previous pending operation
+    if (currentSectionId && currentSectionId !== sectionId) {
+      console.log(`[SectionHandling][${sectionId}] Canceling previous operation: ${currentSectionId}`);
+      canceledSections.add(currentSectionId);
+      delete activeSectionRequests[currentSectionId];
+    }
+    
+    currentSectionId = sectionId;
     
     // Prevent multiple concurrent section processing
     if (isSectionBeingProcessed) {
@@ -42,6 +58,7 @@ export const useSectionHandling = (
     if (!selectedTopic) {
       console.warn(`[SectionHandling][${sectionId}] No topic selected, cannot process section click.`);
       isSectionBeingProcessed = false;
+      delete activeSectionRequests[sectionId];
       return;
     }
 
@@ -50,6 +67,7 @@ export const useSectionHandling = (
       console.log(`[SectionHandling][${sectionId}] Section "${section}" already completed. Showing existing content.`);
       setCurrentSection(section);
       isSectionBeingProcessed = false;
+      delete activeSectionRequests[sectionId];
       return;
     }
 
@@ -58,6 +76,7 @@ export const useSectionHandling = (
       console.log(`[SectionHandling][${sectionId}] Special section clicked: ${section}`);
       processMessage(section, false, true);
       isSectionBeingProcessed = false;
+      delete activeSectionRequests[sectionId];
       return;
     }
 
@@ -69,12 +88,18 @@ export const useSectionHandling = (
     console.log(`[SectionHandling][${sectionId}] Sending section prompt: ${sectionPrompt.substring(0, 50)}...`);
     
     try {
+      // Check if this operation was canceled
+      if (canceledSections.has(sectionId) || !activeSectionRequests[sectionId]) {
+        console.log(`[SectionHandling][${sectionId}] Operation was canceled before processing, aborting`);
+        return;
+      }
+      
       const result = await processMessage(sectionPrompt, false, true);
       console.log(`[SectionHandling][${sectionId}] Section process result status: ${result.status}`);
       
       // Check if this operation is still relevant
-      if (currentSectionId !== sectionId) {
-        console.log(`[SectionHandling][${sectionId}] Operation superseded by newer request, not updating state`);
+      if (canceledSections.has(sectionId) || !activeSectionRequests[sectionId] || currentSectionId !== sectionId) {
+        console.log(`[SectionHandling][${sectionId}] Operation superseded by newer request or canceled, not updating state`);
         return;
       }
       
@@ -109,6 +134,10 @@ export const useSectionHandling = (
       toast.error("There was an error loading this section. Please try again.");
     } finally {
       console.log(`[SectionHandling][${sectionId}][END] Finished processing section: ${section}`);
+      
+      // Clean up this request
+      delete activeSectionRequests[sectionId];
+      
       // Release the processing lock after a short delay to prevent immediate re-clicks
       setTimeout(() => {
         if (currentSectionId === sectionId) {

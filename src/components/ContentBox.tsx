@@ -82,7 +82,7 @@ const blockInfo = {
   }
 };
 
-// Use memo to prevent unnecessary rerenders
+// Use memo to prevent unnecessary rerenders and hold persistent state
 const ContentBox: React.FC<ContentBoxProps> = memo(({
   title,
   content,
@@ -95,20 +95,20 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
   imagePrompt,
   quiz
 }) => {
+  // Use refs to store DOM elements
   const contentBoxRef = useRef<HTMLDivElement>(null);
   const exploreMoreRef = useRef<HTMLDivElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const blockClickTimeoutRef = useRef<number | null>(null);
+  
+  // Create a unique ID for logging and tracking this component instance
+  const componentId = useRef(`contentbox-${Date.now()}`).current;
+  
+  // Local state management
   const [isContentLoading, setIsContentLoading] = useState(false);
   const [expandedContent, setExpandedContent] = useState(true);
-  const [internalRenderKey, setInternalRenderKey] = useState(Date.now());
-  const [isExploreVisible, setIsExploreVisible] = useState(true); // Added state to track visibility
-  
-  // Track state for logging
-  const prevActiveBlockRef = useRef<BlockType | null | undefined>(null);
-  const prevImagePromptRef = useRef<string | undefined>(undefined);
-  const prevQuizRef = useRef<typeof quiz | undefined>(undefined);
+  const [isExploreVisible, setIsExploreVisible] = useState(true);
   
   // Clean and prepare displayed content
   const cleanedTitle = cleanText(title);
@@ -119,56 +119,40 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
   
   // Log significant prop changes to help with debugging
   useEffect(() => {
-    console.log(`[ContentBox][${internalRenderKey}] Mounted/Updated with title: "${cleanedTitle.substring(0, 30)}..."`);
-    console.log(`[ContentBox][${internalRenderKey}] activeBlock: ${activeBlock}, imagePrompt: ${imagePrompt ? "present" : "none"}, quiz: ${quiz ? "present" : "none"}`);
-    console.log(`[ContentBox][${internalRenderKey}] blocks provided:`, blocks);
-    
-    // Compare with previous state
-    if (prevActiveBlockRef.current !== activeBlock) {
-      console.log(`[ContentBox][${internalRenderKey}] ActiveBlock changed: ${prevActiveBlockRef.current} -> ${activeBlock}`);
-      prevActiveBlockRef.current = activeBlock;
-    }
-    
-    if ((prevImagePromptRef.current && !imagePrompt) || (!prevImagePromptRef.current && imagePrompt)) {
-      console.log(`[ContentBox][${internalRenderKey}] ImagePrompt changed: ${prevImagePromptRef.current ? "present" : "none"} -> ${imagePrompt ? "present" : "none"}`);
-      prevImagePromptRef.current = imagePrompt;
-    }
-    
-    if ((prevQuizRef.current && !quiz) || (!prevQuizRef.current && quiz)) {
-      console.log(`[ContentBox][${internalRenderKey}] Quiz changed: ${prevQuizRef.current ? "present" : "none"} -> ${quiz ? "present" : "none"}`);
-      prevQuizRef.current = quiz;
-    }
+    console.log(`[ContentBox][${componentId}] Mounted/Updated with title: "${cleanedTitle.substring(0, 30)}..."`);
+    console.log(`[ContentBox][${componentId}] activeBlock: ${activeBlock}, imagePrompt: ${imagePrompt ? "present" : "none"}, quiz: ${quiz ? "present" : "none"}`);
+    console.log(`[ContentBox][${componentId}] blocks provided:`, blocks);
     
     // Force explore section visibility if blocks are provided
     if (blocks && blocks.length > 0) {
-      console.log(`[ContentBox][${internalRenderKey}] Setting explore section visible due to blocks being provided:`, blocks);
+      console.log(`[ContentBox][${componentId}] Setting explore section visible due to blocks being provided:`, blocks);
       setIsExploreVisible(true);
     }
     
     return () => {
-      console.log(`[ContentBox][${internalRenderKey}] Unmounting component`);
+      console.log(`[ContentBox][${componentId}] Component unmounting`);
     };
-  }, [cleanedTitle, activeBlock, imagePrompt, quiz, internalRenderKey, blocks]);
+  }, [cleanedTitle, activeBlock, imagePrompt, quiz, componentId, blocks]);
   
-  // Simulate content loading when navigating between sections
+  // Only simulate content loading when title changes, not on every render
   useEffect(() => {
     setIsContentLoading(true);
-    console.log(`[ContentBox][${internalRenderKey}] Starting content loading simulation`);
+    console.log(`[ContentBox][${componentId}] Starting content loading simulation`);
     
     const timer = setTimeout(() => {
-      console.log(`[ContentBox][${internalRenderKey}] Finished content loading simulation`);
+      console.log(`[ContentBox][${componentId}] Finished content loading simulation`);
       setIsContentLoading(false);
     }, 800);
     
     return () => {
-      console.log(`[ContentBox][${internalRenderKey}] Clearing content loading timer`);
+      console.log(`[ContentBox][${componentId}] Clearing content loading timer`);
       clearTimeout(timer);
     };
-  }, [title, internalRenderKey]);
+  }, [title, componentId]);
   
   // Apply animations when component mounts
   useEffect(() => {
-    console.log(`[ContentBox][${internalRenderKey}] Applying animations`);
+    console.log(`[ContentBox][${componentId}] Applying animations`);
     
     if (contentBoxRef.current) {
       // Animate the content box in
@@ -182,7 +166,7 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
     if (exploreMoreRef.current) {
       // Staggered animation for explore more links
       const links = exploreMoreRef.current.querySelectorAll('.explore-link');
-      console.log(`[ContentBox][${internalRenderKey}] Found ${links.length} explore links to animate`);
+      console.log(`[ContentBox][${componentId}] Found ${links.length} explore links to animate`);
       
       links.forEach((link, index) => {
         animate(
@@ -202,12 +186,12 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
       );
     }
     
-  }, [internalRenderKey]);
+  }, [componentId]);
   
   // Apply highlight animations after content loads
   useEffect(() => {
     if (contentRef.current && !isContentLoading) {
-      console.log(`[ContentBox][${internalRenderKey}] Highlighting keywords in content`);
+      console.log(`[ContentBox][${componentId}] Highlighting keywords in content`);
       // Highlight keywords in the content with a subtle animation
       const keywords = contentRef.current.querySelectorAll('strong');
       keywords.forEach((keyword, index) => {
@@ -218,13 +202,14 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
         );
       });
     }
-  }, [isContentLoading, internalRenderKey]);
+  }, [isContentLoading, componentId]);
   
   // Stable handler for block buttons with debounce to prevent double clicks
   const handleBlockButtonClick = useCallback((blockType: BlockType, e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     
-    console.log(`[ContentBox][${internalRenderKey}] Block button clicked: ${blockType}`);
+    console.log(`[ContentBox][${componentId}] Block button clicked: ${blockType}`);
     
     // Clear any existing timeout
     if (blockClickTimeoutRef.current) {
@@ -248,48 +233,50 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
       (window as any)._blockClickInProgress = false;
       blockClickTimeoutRef.current = null;
     }, 1000) as unknown as number;
-  }, [onBlockClick, internalRenderKey]);
+  }, [onBlockClick, componentId]);
   
-  // Handle navigation with debounce
-  const handleNavigation = useCallback((section: string) => {
-    console.log(`[ContentBox][${internalRenderKey}] Navigation clicked for section: ${section}`);
+  // Handle navigation with debounce - prevent page refreshes
+  const handleNavigation = useCallback((section: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    console.log(`[ContentBox][${componentId}] Navigation clicked for section: ${section}`);
     setIsContentLoading(true);
     
-    // Generate a new render key to force re-render on navigation
-    setInternalRenderKey(Date.now());
-    
-    // Set a short delay to prevent rapid navigation
+    // Use a short delay to prevent rapid navigation
     setTimeout(() => {
       onNavigate(section);
     }, 100);
-  }, [onNavigate, internalRenderKey]);
+  }, [onNavigate, componentId]);
   
   // Log when interactive blocks are displayed
   useEffect(() => {
     if (activeBlock) {
-      console.log(`[ContentBox][${internalRenderKey}] Displaying active block: ${activeBlock}`);
+      console.log(`[ContentBox][${componentId}] Displaying active block: ${activeBlock}`);
     }
     
     if (imagePrompt && activeBlock === 'see-it') {
-      console.log(`[ContentBox][${internalRenderKey}] Displaying image with prompt: ${imagePrompt.substring(0, 50)}...`);
+      console.log(`[ContentBox][${componentId}] Displaying image with prompt: ${imagePrompt.substring(0, 50)}...`);
     }
     
     if (quiz && activeBlock === 'quiz') {
-      console.log(`[ContentBox][${internalRenderKey}] Displaying quiz with question: ${quiz.question.substring(0, 50)}...`);
+      console.log(`[ContentBox][${componentId}] Displaying quiz with question: ${quiz.question.substring(0, 50)}...`);
     }
-  }, [activeBlock, imagePrompt, quiz, internalRenderKey]);
+  }, [activeBlock, imagePrompt, quiz, componentId]);
   
   // Ensure blocks is an array with default values if not provided
   const safeBlocks = Array.isArray(blocks) && blocks.length > 0 
     ? blocks 
     : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"] as BlockType[];
 
-  console.log(`[ContentBox][${internalRenderKey}] Using safe blocks:`, safeBlocks);
+  console.log(`[ContentBox][${componentId}] Using safe blocks:`, safeBlocks);
   
   return (
     <div 
       ref={contentBoxRef} 
-      key={`content-box-${cleanedTitle}-${activeBlock || 'none'}`}
+      key={`content-box-${cleanedTitle}`}
       className="bg-white rounded-xl shadow-magical overflow-hidden border border-wonder-purple/10 mb-6 opacity-0 transform"
       aria-labelledby="content-title"
     >
@@ -342,14 +329,14 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
               
               {/* Display image if there's an image prompt and active block is see-it */}
               {imagePrompt && activeBlock === 'see-it' && (
-                <div className="mt-6 mb-6 animate-fade-in" key={`image-${imagePrompt.substring(0, 20)}-${internalRenderKey}`}>
+                <div className="mt-6 mb-6 animate-fade-in" key={`image-${imagePrompt.substring(0, 20)}`}>
                   <ImageBlock prompt={imagePrompt} />
                 </div>
               )}
               
               {/* Display quiz if there's quiz data and active block is quiz */}
               {quiz && activeBlock === 'quiz' && (
-                <div className="mt-6 mb-6 animate-fade-in" key={`quiz-${quiz.question.substring(0, 20)}-${internalRenderKey}`}>
+                <div className="mt-6 mb-6 animate-fade-in" key={`quiz-${quiz.question.substring(0, 20)}`}>
                   <QuizBlock 
                     question={quiz.question} 
                     options={quiz.options}
@@ -359,72 +346,70 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
                 </div>
               )}
               
-              {/* Explore More section with improved interactive grid - only hide when explicitly set */}
-              {isExploreVisible && (
-                <div ref={exploreMoreRef} className="mt-8 pt-4 border-t border-wonder-purple/10">
-                  <h3 className="text-sm font-medium text-wonder-purple mb-3 flex items-center">
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5 text-wonder-yellow" />
-                    Explore More
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
-                    {safeBlocks.map((block) => {
-                      const info = blockInfo[block];
-                      if (!info) {
-                        console.error(`[ContentBox] Unknown block type: ${block}`);
-                        return null;
-                      }
-                      
-                      const BlockIcon = info.icon;
-                      return (
-                        <button
-                          key={`${block}-${internalRenderKey}`}
-                          onClick={(e) => handleBlockButtonClick(block, e)}
-                          data-block-type={block} // Add data attribute for debugging
-                          className={`explore-link group relative p-3 bg-gradient-to-br ${
-                            activeBlock === block ? info.color : 'from-white to-white/90'
-                          } rounded-lg border ${
-                            activeBlock === block ? 'border-transparent' : 'border-wonder-purple/10 hover:border-wonder-purple/30'
-                          } ${info.shadow} transition-all duration-300 transform hover:-translate-y-1 
-                          flex flex-col items-center text-center opacity-0`}
-                          aria-label={`Explore ${info.title}`}
-                        >
-                          <div className={`w-8 h-8 rounded-full ${
-                            activeBlock === block ? 'bg-white/20' : 'bg-wonder-purple/5'
-                          } flex items-center justify-center mb-1`}>
-                            <BlockIcon className={`h-4 w-4 ${
-                              activeBlock === block ? 'text-white' : BlockIcon({}).props.className
-                            }`} />
+              {/* Explore More section - always show this section now */}
+              <div ref={exploreMoreRef} className="mt-8 pt-4 border-t border-wonder-purple/10">
+                <h3 className="text-sm font-medium text-wonder-purple mb-3 flex items-center">
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-wonder-yellow" />
+                  Explore More
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
+                  {safeBlocks.map((block) => {
+                    const info = blockInfo[block];
+                    if (!info) {
+                      console.error(`[ContentBox] Unknown block type: ${block}`);
+                      return null;
+                    }
+                    
+                    const BlockIcon = info.icon;
+                    return (
+                      <button
+                        key={`${block}-${componentId}`}
+                        onClick={(e) => handleBlockButtonClick(block, e)}
+                        data-block-type={block} // Add data attribute for debugging
+                        className={`explore-link group relative p-3 bg-gradient-to-br ${
+                          activeBlock === block ? info.color : 'from-white to-white/90'
+                        } rounded-lg border ${
+                          activeBlock === block ? 'border-transparent' : 'border-wonder-purple/10 hover:border-wonder-purple/30'
+                        } ${info.shadow} transition-all duration-300 transform hover:-translate-y-1 
+                        flex flex-col items-center text-center`}
+                        aria-label={`Explore ${info.title}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full ${
+                          activeBlock === block ? 'bg-white/20' : 'bg-wonder-purple/5'
+                        } flex items-center justify-center mb-1`}>
+                          <BlockIcon className={`h-4 w-4 ${
+                            activeBlock === block ? 'text-white' : BlockIcon({}).props.className
+                          }`} />
+                        </div>
+                        <span className={`font-medium text-xs ${
+                          activeBlock === block ? 'text-white' : 'text-foreground'
+                        }`}>{info.title}</span>
+                        <span className={`text-[10px] ${
+                          activeBlock === block ? 'text-white/80' : 'text-muted-foreground'
+                        } mt-0.5 hidden sm:block`}>{info.description}</span>
+                        
+                        {/* Magical sparkle effect for active blocks */}
+                        {activeBlock === block && (
+                          <div className="absolute top-0 right-0 h-6 w-6 pointer-events-none">
+                            <Sparkles className="h-5 w-5 text-white/60 animate-sparkle absolute" />
                           </div>
-                          <span className={`font-medium text-xs ${
-                            activeBlock === block ? 'text-white' : 'text-foreground'
-                          }`}>{info.title}</span>
-                          <span className={`text-[10px] ${
-                            activeBlock === block ? 'text-white/80' : 'text-muted-foreground'
-                          } mt-0.5 hidden sm:block`}>{info.description}</span>
-                          
-                          {/* Magical sparkle effect for active blocks */}
-                          {activeBlock === block && (
-                            <div className="absolute top-0 right-0 h-6 w-6 pointer-events-none">
-                              <Sparkles className="h-5 w-5 text-white/60 animate-sparkle absolute" />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
             </>
           )}
         </div>
       </div>
       
       {/* Navigation controls with improved visual design */}
-      <div ref={navigationRef} className="px-4 pb-4 opacity-0">
+      <div ref={navigationRef} className="px-4 pb-4">
         <div className="flex items-center justify-between gap-3">
           {cleanedPrevSection ? (
             <button 
-              onClick={() => handleNavigation(prevSection!)}
+              onClick={(e) => handleNavigation(prevSection!, e)}
               className="flex-1 p-3 bg-white hover:bg-wonder-purple/5 border border-wonder-purple/20 rounded-xl 
                        shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-left
                        focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 focus:ring-offset-2 group"
@@ -446,7 +431,7 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
           
           {cleanedNextSection ? (
             <button 
-              onClick={() => handleNavigation(nextSection!)}
+              onClick={(e) => handleNavigation(nextSection!, e)}
               className="flex-1 p-3 bg-white hover:bg-wonder-purple/5 border border-wonder-purple/20 rounded-xl 
                        shadow-sm hover:shadow-magical transition-all duration-300 transform hover:-translate-y-1 text-right
                        focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 focus:ring-offset-2 group"

@@ -31,8 +31,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const [copied, setCopied] = useState(false);
   const blockContainerRef = useRef<HTMLDivElement>(null);
   const [isProcessingClick, setIsProcessingClick] = useState(false);
+  const messageId = useRef(`chatmsg-${Date.now()}`).current;
   
-  console.log("[ChatMessage] Rendering with props:", { 
+  console.log(`[ChatMessage][${messageId}] Rendering with props:`, { 
     isUser, 
     messagePreview: message?.substring(0, 30),
     hasBlocks: blocks && blocks.length > 0,
@@ -43,8 +44,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   useEffect(() => {
     // Debug log for blocks visibility
     if (blocks && blocks.length > 0) {
-      console.log(`[ChatMessage] Message has ${blocks.length} blocks:`, blocks);
-      console.log(`[ChatMessage] showBlocks flag is: ${showBlocks}`);
+      console.log(`[ChatMessage][${messageId}] Message has ${blocks.length} blocks:`, blocks);
+      console.log(`[ChatMessage][${messageId}] showBlocks flag is: ${showBlocks}`);
     }
     
     // Add horizontal scroll behavior
@@ -64,7 +65,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         container.removeEventListener('wheel', handleWheel);
       };
     }
-  }, [blocks, showBlocks]);
+  }, [blocks, showBlocks, messageId]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(message);
@@ -74,7 +75,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   const handleBlockClicked = (type: BlockType) => {
-    console.log(`[ChatMessage] Block clicked: ${type}`);
+    console.log(`[ChatMessage][${messageId}] Block clicked: ${type}`);
     
     // Prevent multiple clicks with debounce
     if (isProcessingClick || !onBlockClick) return;
@@ -103,9 +104,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         </div>
       )}
       
-      <div className={`relative px-4 py-3 rounded-xl flex-1 max-w-[95%] sm:max-w-[90%] shadow-sm
+      <div className={`relative px-4 py-3 rounded-xl w-full max-w-[100%] shadow-sm
         ${isUser 
-          ? 'bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-tr-none ml-8' 
+          ? 'bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-tr-none ml-8 max-w-[85%]' 
           : 'bg-white border border-wonder-purple/10 rounded-tl-none'}`}>
         
         {/* Copy button (only for AI messages) */}
@@ -130,7 +131,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           {children}
         </div>
         
-        {/* Learning blocks - Only show in special circumstances, not in regular chat messages */}
+        {/* Learning blocks - Only show on welcome messages, not in regular chat */}
         {!isUser && showBlocks && (
           <div className="mt-4">
             <h3 className="text-xs font-medium mb-3 flex items-center gap-1">
