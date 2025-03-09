@@ -1,4 +1,3 @@
-
 import { Message, MessageProcessingResult } from "@/types/chat";
 import { BlockType } from "@/components/LearningBlock";
 import { toast } from "sonner";
@@ -121,7 +120,7 @@ export const useSectionHandling = (
       }, 500);
     }
   };
-
+  
   const handleRelatedTopicClick = (topic: string) => {
     console.log(`[SectionHandling] Related topic clicked: ${topic}`);
     processMessage(`Tell me about ${topic}`, false, true);
@@ -129,6 +128,7 @@ export const useSectionHandling = (
   
   const handleBlockClickWrapper = (type: BlockType, messageId: string, messageText: string) => {
     console.log(`[SectionHandling] Block clicked: ${type} from message ${messageId}`);
+    // Call the provided handleBlockClick function with the correct parameters
     handleBlockClick(type, messageId, messageText);
   };
 

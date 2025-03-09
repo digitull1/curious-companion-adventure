@@ -64,8 +64,55 @@ const Chat = () => {
     chatState.setPoints,
     chatState.setLearningProgress
   );
+
+  // Create a wrapped version of handleLearningBlockClick to match the expected signature
+  const wrappedHandleBlockClick = useCallback((type: BlockType, messageId: string, messageText: string) => {
+    // Call the original function with all the needed parameters
+    handleLearningBlockClick(
+      type,
+      messageId,
+      messageText,
+      ageRange,
+      language,
+      chatState.setIsProcessing,
+      chatState.setShowTypingIndicator,
+      chatState.setPoints,
+      chatState.setMessages,
+      chatState.generateResponse,
+      async (topic, language) => {
+        try {
+          const response = await chatState.generateResponse(
+            `Create a quiz with 4 options about ${topic}. Format as JSON with question, options array, and correctAnswer index.`,
+            ageRange,
+            language
+          );
+          // Parse the response to extract quiz data
+          try {
+            // Try to parse JSON response
+            return JSON.parse(response);
+          } catch (e) {
+            console.error("Failed to parse quiz JSON", e);
+            // Fallback quiz
+            return {
+              question: `What's interesting about ${topic}?`,
+              options: ["Option 1", "Option 2", "Option 3", "Option 4"],
+              correctAnswer: 0
+            };
+          }
+        } catch (error) {
+          console.error("Error generating quiz:", error);
+          return {
+            question: "Quiz question",
+            options: ["Option 1", "Option 2", "Option 3", "Option 4"],
+            correctAnswer: 0
+          };
+        }
+      }
+    );
+  }, [ageRange, language, chatState.setIsProcessing, chatState.setShowTypingIndicator, 
+      chatState.setPoints, chatState.setMessages, chatState.generateResponse]);
   
-  // Initialize section handling hook with enhanced block click handling
+  // Initialize section handling hook with the wrapped block click handler
   const { handleTocSectionClick, handleRelatedTopicClick, handleBlockClick } = useSectionHandling(
     chatState.messages,
     chatState.selectedTopic,
@@ -75,7 +122,7 @@ const Chat = () => {
     chatState.setCompletedSections,
     chatState.setPoints,
     chatState.setLearningProgress,
-    handleLearningBlockClick
+    wrappedHandleBlockClick
   );
   
   // Initialize chat
