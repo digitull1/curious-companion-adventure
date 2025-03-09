@@ -268,22 +268,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return { prev, next };
   }, [currentSection, messages]);
 
-  // Topic pill instead of a sticky header
-  const renderTopicPill = useCallback(() => {
-    if (!currentSection) return null;
-    
-    return (
-      <div className="sticky top-0 z-10 mx-auto max-w-4xl px-4 pt-2 pb-4">
-        <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-wonder-purple/10">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-purple to-wonder-purple-dark flex items-center justify-center flex-shrink-0">
-            <BookOpen className="h-3 w-3 text-white" />
-          </div>
-          <span className="text-sm font-medium text-wonder-purple">{currentSection}</span>
-          <div className="h-2 w-2 rounded-full bg-wonder-yellow animate-pulse"></div>
-        </div>
-      </div>
-    );
-  }, [currentSection]);
+  // Topic pill is removed
 
   // Handle specific block click within ContentBox
   const handleContentBoxBlockClick = useCallback((block: BlockType) => {
@@ -404,7 +389,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       className="flex-1 overflow-y-auto py-6 scrollbar-thin relative" 
       ref={chatHistoryRef}
     >
-      {currentSection && renderTopicPill()}
+      {/* Removed the topic pill that was here */}
       
       {/* Main chat content */}
       <div className="relative">
