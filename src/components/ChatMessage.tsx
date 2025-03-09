@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Bot, User, Copy, CheckCheck, Sparkles } from "lucide-react";
+import { Bot, User, Copy, CheckCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
@@ -137,29 +137,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           )}
         </div>
         
-        {/* Learning blocks - Only show on welcome messages, not in regular chat */}
-        {!isUser && showBlocks && blocks && blocks.length > 0 && (
-          <div className="mt-4">
-            <h3 className="text-xs font-medium mb-3 flex items-center gap-1">
-              <Sparkles className="h-3.5 w-3.5 text-wonder-yellow" />
-              <span className="text-wonder-purple">Explore More</span>
-            </h3>
-            
-            <div 
-              ref={blockContainerRef}
-              className="flex gap-3 overflow-x-auto pb-2 snap-x scrollbar-thin scrollbar-thumb-wonder-purple/20 scrollbar-track-transparent"
-              data-testid="learning-blocks-container"
-            >
-              {safeBlocks.map((blockType) => (
-                <LearningBlock 
-                  key={blockType} 
-                  type={blockType} 
-                  onClick={() => handleBlockClicked(blockType)} 
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Removed the "Explore More" section that was here */}
       </div>
       
       {isUser && (
