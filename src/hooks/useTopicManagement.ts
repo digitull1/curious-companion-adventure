@@ -13,7 +13,7 @@ export const useTopicManagement = (
   language: string,
   setLearningComplete: (learningComplete: boolean) => void,
   setRelatedTopics: (relatedTopics: string[]) => void,
-  generateRelatedTopics: (topic: string, ageRange: string, language: string) => Promise<string[]>,
+  generateRelatedTopics: (topic: string, ageRange: string, language: string[]) => Promise<string[]>,
   inputValue: string,
   isProcessing: boolean,
   setMessages: (messageSetter: (prev: Message[]) => Message[]) => void,
@@ -97,14 +97,12 @@ export const useTopicManagement = (
         
         setMessages(prev => [...prev, sectionMessage]);
         
-        // Mark the section as completed
-        setCompletedSections(prev => {
-          if (!prev.includes(section)) {
-            console.log(`[TopicManagement] Marking section as completed: ${section}`);
-            return [...prev, section];
-          }
-          return prev;
-        });
+        // Mark the section as completed - FIX: Not using functional update pattern
+        if (!completedSections.includes(section)) {
+          console.log(`[TopicManagement] Marking section as completed: ${section}`);
+          const newCompletedSections = [...completedSections, section];
+          setCompletedSections(newCompletedSections);
+        }
         
         // Award points for completing a section
         setPoints(prev => {
@@ -117,12 +115,18 @@ export const useTopicManagement = (
         setLearningProgress(newProgress);
         
         // Check if all sections are completed
-        const allSectionsCompleted = messages.find(msg => msg.tableOfContents)?.tableOfContents?.every(s => completedSections.includes(s));
-        if (allSectionsCompleted) {
-          console.log("[TopicManagement] All sections completed for this topic!");
-          setLearningComplete(true);
-          setLearningProgress(100);
-          toast.success("Congratulations! You've completed this topic!");
+        const tocMessage = messages.find(msg => msg.tableOfContents);
+        if (tocMessage && tocMessage.tableOfContents) {
+          const allSectionsCompleted = tocMessage.tableOfContents.every(s => 
+            [...completedSections, section].includes(s)
+          );
+          
+          if (allSectionsCompleted) {
+            console.log("[TopicManagement] All sections completed for this topic!");
+            setLearningComplete(true);
+            setLearningProgress(100);
+            toast.success("Congratulations! You've completed this topic!");
+          }
         }
       } catch (error) {
         console.error("[TopicManagement] Error handling section selection:", error);
