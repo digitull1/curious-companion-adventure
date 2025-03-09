@@ -220,10 +220,37 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }, [currentSection, messages, renderId, currentSectionMessage, isNavigating]);
 
   // Apply animations to related topics when they appear
-  // ... keep existing code (related topics animations)
+  useEffect(() => {
+    if (relatedTopicsRef.current) {
+      // Initial state: all topics are invisible and slightly scaled down
+      const topics = Array.from(relatedTopicsRef.current.children);
+      topics.forEach((topic: Element) => {
+        animate(topic, { opacity: 0, scale: 0.8 }, { duration: 0 });
+      });
+
+      // Animate each topic with a slight delay
+      topics.forEach((topic: Element, index: number) => {
+        animate(
+          topic,
+          { opacity: 1, scale: 1 },
+          { duration: 0.3, delay: 0.1 * index, easing: "ease-out" }
+        );
+      });
+    }
+  }, [processedRelatedTopics]);
 
   // Toggle message expansion
-  // ... keep existing code (toggle message expansion)
+  const toggleMessageExpansion = (messageId: string) => {
+    setExpandedMessages(prev => {
+      const newExpandedMessages = new Set(prev);
+      if (newExpandedMessages.has(messageId)) {
+        newExpandedMessages.delete(messageId);
+      } else {
+        newExpandedMessages.add(messageId);
+      }
+      return newExpandedMessages;
+    });
+  };
 
   // Function to get previous and next section based on current section
   const getAdjacentSections = useCallback(() => {
@@ -242,7 +269,21 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }, [currentSection, messages]);
 
   // Topic pill instead of a sticky header
-  // ... keep existing code (topic pill)
+  const renderTopicPill = useCallback(() => {
+    if (!currentSection) return null;
+    
+    return (
+      <div className="sticky top-0 z-10 mx-auto max-w-4xl px-4 pt-2 pb-4">
+        <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-wonder-purple/10">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wonder-purple to-wonder-purple-dark flex items-center justify-center flex-shrink-0">
+            <BookOpen className="h-3 w-3 text-white" />
+          </div>
+          <span className="text-sm font-medium text-wonder-purple">{currentSection}</span>
+          <div className="h-2 w-2 rounded-full bg-wonder-yellow animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }, [currentSection]);
 
   // Handle specific block click within ContentBox
   const handleContentBoxBlockClick = useCallback((block: BlockType) => {
