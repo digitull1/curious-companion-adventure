@@ -17,6 +17,8 @@ let activeSectionRequests: Record<string, boolean> = {};
 
 // Optimized block click handling
 let blockClickTimers: Record<string, number> = {};
+// Track currently active block to prevent double processing
+let activeBlockType: BlockType | null = null;
 
 export const useSectionHandling = (
   messages: Message[],
@@ -161,6 +163,13 @@ export const useSectionHandling = (
   const handleBlockClickWrapper = (type: BlockType, messageId: string, messageText: string) => {
     const blockId = `block-${type}-${Date.now()}`;
     
+    // Prevent double clicks on the same block type
+    if (activeBlockType === type) {
+      console.log(`[SectionHandling] Block click ignored - already processing block type: ${type}`);
+      toast.info(`Already loading ${type} content, please wait...`);
+      return;
+    }
+    
     // Clear any existing timers for this block type
     if (blockClickTimers[type]) {
       clearTimeout(blockClickTimers[type]);
@@ -169,6 +178,9 @@ export const useSectionHandling = (
     
     console.log(`[SectionHandling][START:${blockId}] Block clicked: ${type} from message ${messageId}`);
     
+    // Track the active block type
+    activeBlockType = type;
+    
     // Immediately call the handler to improve responsiveness
     handleBlockClick(type, messageId, messageText);
     
@@ -176,6 +188,16 @@ export const useSectionHandling = (
     blockClickTimers[type] = window.setTimeout(() => {
       console.log(`[SectionHandling][${blockId}] Block click timer cleared for ${type}`);
       delete blockClickTimers[type];
+      
+      // Reset active block type after a delay to allow for repeat clicks
+      if (activeBlockType === type) {
+        setTimeout(() => {
+          if (activeBlockType === type) {
+            activeBlockType = null;
+            console.log(`[SectionHandling] Resetting active block type from ${type} to null`);
+          }
+        }, 2000);
+      }
     }, 1000);
   };
 

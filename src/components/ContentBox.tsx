@@ -343,6 +343,7 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
                       <button
                         key={`${block}-${componentId}`}
                         onClick={(e) => handleBlockButtonClick(block, e)}
+                        type="button"
                         data-block-type={block} // Add data attribute for debugging
                         className={`explore-link group relative p-3 bg-gradient-to-br ${
                           activeBlock === block ? info.color : 'from-white to-white/90'

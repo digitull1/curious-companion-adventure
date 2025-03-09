@@ -103,15 +103,31 @@ export const handleBlockClick = async (
         console.log(`[LearningBlock][${blockId}] Generating quiz for topic: ${messageText.substring(0, 30)}...`);
         blockResponse = "Let's test your knowledge with a quick quiz! Get all answers right to earn bonus points! 🎯";
         try {
+          // Make sure we're retrieving a valid quiz object
           quiz = await generateQuiz(messageText, language);
-          console.log(`[LearningBlock][${blockId}] Quiz generated successfully with ${quiz?.options?.length || 0} options`);
+          console.log(`[LearningBlock][${blockId}] Quiz generated:`, JSON.stringify(quiz));
+          
+          // Validate quiz format
+          if (!quiz || typeof quiz !== 'object' || !quiz.question || !Array.isArray(quiz.options) || quiz.options.length < 2) {
+            console.error(`[LearningBlock][${blockId}] Generated quiz has invalid format:`, quiz);
+            throw new Error("Invalid quiz format");
+          }
+          
+          // Ensure correctAnswer is valid
+          if (typeof quiz.correctAnswer !== 'number' || quiz.correctAnswer < 0 || quiz.correctAnswer >= quiz.options.length) {
+            console.warn(`[LearningBlock][${blockId}] Quiz has invalid correctAnswer (${quiz.correctAnswer}), setting to 0`);
+            quiz.correctAnswer = 0;
+          }
+          
+          console.log(`[LearningBlock][${blockId}] Quiz validated successfully with ${quiz?.options?.length || 0} options`);
         } catch (error) {
           console.error(`[LearningBlock][${blockId}] Error generating quiz:`, error);
           toast.error("There was an issue creating your quiz. Using a simple one instead!");
           quiz = {
-            question: "Which of these is a fact about this topic?",
-            options: ["Option 1", "Option 2", "Option 3", "Option 4"],
-            correctAnswer: 0
+            question: `What is one interesting fact about ${messageText}?`,
+            options: ["It's a fascinating topic", "It has an interesting history", "Scientists are still studying it", "All of the above"],
+            correctAnswer: 3,
+            funFact: "Learning through quizzes helps build stronger memory connections!"
           };
         }
         break;

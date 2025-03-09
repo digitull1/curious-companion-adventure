@@ -13,6 +13,7 @@ interface LearningBlockProps {
 const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
   const blockRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
   
   useEffect(() => {
     if (blockRef.current) {
@@ -96,18 +97,29 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
   
   const toggleExpand = (e: React.MouseEvent) => {
     console.log("Toggle expand clicked for block type:", type);
+    e.preventDefault();
     e.stopPropagation(); // Prevent the click from bubbling up to the block
     setExpanded(!expanded);
   };
 
   const handleExploreClick = (e: React.MouseEvent) => {
     console.log("Explore button clicked for block type:", type);
+    e.preventDefault();
     e.stopPropagation(); // Prevent the click from bubbling up to the block
-    onClick(); // Call the parent-provided onClick handler
+    
+    // Visual feedback that button was clicked
+    setIsClicked(true);
+    
+    // Call the handler
+    onClick();
+    
+    // Reset clicked state after animation completes
+    setTimeout(() => setIsClicked(false), 500);
   };
 
-  const handleBlockClick = () => {
+  const handleBlockClick = (e: React.MouseEvent) => {
     console.log("Block clicked for block type:", type);
+    e.preventDefault();
     if (!expanded) {
       setExpanded(true);
     }
@@ -136,6 +148,7 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
           <h3 className="font-medium text-sm truncate">{title}</h3>
         </div>
         <button 
+          type="button"
           className="text-wonder-purple/70 hover:text-wonder-purple transition-colors"
           onClick={toggleExpand}
           aria-label={expanded ? "Collapse" : "Expand"}
@@ -148,8 +161,11 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
       <div className={`px-3 pb-3 pt-0 ${expanded ? "block" : "hidden"}`}>
         <p className="text-xs text-muted-foreground mb-3">{description}</p>
         <button
+          type="button"
           onClick={handleExploreClick}
-          className="w-full py-2 px-3 text-xs font-medium text-white rounded-lg bg-gradient-to-r from-wonder-purple to-wonder-purple-dark hover:shadow-magical-hover transition-all duration-300 transform hover:scale-102 active:scale-98"
+          className={`w-full py-2 px-3 text-xs font-medium text-white rounded-lg bg-gradient-to-r from-wonder-purple to-wonder-purple-dark transition-all duration-300 transform ${
+            isClicked ? 'scale-95' : 'hover:scale-102 hover:shadow-magical-hover'
+          } active:scale-98`}
         >
           Explore
         </button>
