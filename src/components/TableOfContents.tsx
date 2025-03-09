@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from "react";
 import { CheckCircle, BookOpen, ArrowRight, ChevronRight, Plus, Lightbulb, MessageSquareText, Video, HelpCircle, Sparkles } from "lucide-react";
 import { animate } from "@motionone/dom";
@@ -11,6 +10,7 @@ interface TableOfContentsProps {
   currentSection: string | null;
   onSectionClick: (section: string) => void;
   onBlockClick?: (block: BlockType) => void;
+  relatedTopics?: string[]; // Add relatedTopics prop
 }
 
 // Emoji mapping for different topics
@@ -102,7 +102,8 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   completedSections,
   currentSection,
   onSectionClick,
-  onBlockClick
+  onBlockClick,
+  relatedTopics = [] // Default to empty array
 }) => {
   const tocRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<(HTMLButtonElement | null)[]>([]);
@@ -144,6 +145,55 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   
   // Determine if "Explore More" section is current
   const isExploreMoreCurrent = currentSection === "Explore More";
+  
+  // Map block types to dynamic titles and descriptions based on relatedTopics
+  const getExploreBlocks = (): {type: BlockType, title: string, description: string, icon: React.ReactNode, color: string}[] => {
+    const baseBlocks: {type: BlockType, title: string, description: string, icon: React.ReactNode, color: string}[] = [
+      {
+        type: "did-you-know",
+        title: "Did You Know?",
+        description: "Fascinating facts about this topic",
+        icon: <Lightbulb className="h-4 w-4" />,
+        color: "bg-gradient-to-r from-wonder-yellow/80 to-wonder-yellow-light/40"
+      },
+      {
+        type: "quiz",
+        title: "Test Your Knowledge",
+        description: "Fun quizzes on what you've learned",
+        icon: <HelpCircle className="h-4 w-4" />,
+        color: "bg-gradient-to-r from-wonder-coral/80 to-wonder-coral-light/40"
+      },
+      {
+        type: "see-it",
+        title: "See It In Action",
+        description: "Visual exploration of the topic",
+        icon: <Video className="h-4 w-4" />,
+        color: "bg-gradient-to-r from-wonder-green/80 to-wonder-green-light/40"
+      }
+    ];
+    
+    // Add dynamic related topics if available
+    if (relatedTopics && relatedTopics.length > 0) {
+      // Take up to 2 related topics to display
+      const topicBlocks = relatedTopics.slice(0, 2).map((topic, index) => ({
+        type: index === 0 ? "mind-blowing" : "amazing-stories" as BlockType,
+        title: topic,
+        description: index === 0 ? "Explore this fascinating related topic" : "Discover this connected subject",
+        icon: <BookOpen className="h-4 w-4" />,
+        color: index === 0 
+          ? "bg-gradient-to-r from-wonder-purple/80 to-wonder-purple-light/40"
+          : "bg-gradient-to-r from-wonder-blue/80 to-wonder-blue-light/40"
+      }));
+      
+      // Combine base blocks and topic blocks, keeping to 5 total
+      return [...topicBlocks, ...baseBlocks].slice(0, 5);
+    }
+    
+    return baseBlocks;
+  };
+  
+  // Get dynamic explore blocks based on related topics
+  const exploreBlocks = getExploreBlocks();
   
   useEffect(() => {
     if (tocRef.current) {
@@ -217,45 +267,6 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
     }
   };
 
-  // Block types to show in Explore More section
-  const exploreBlocks: {type: BlockType, title: string, description: string, icon: React.ReactNode, color: string}[] = [
-    {
-      type: "did-you-know",
-      title: "Did You Know?",
-      description: "Fascinating facts about this topic",
-      icon: <Lightbulb className="h-4 w-4" />,
-      color: "bg-gradient-to-r from-wonder-yellow/80 to-wonder-yellow-light/40"
-    },
-    {
-      type: "mind-blowing",
-      title: "Related Topic 1",
-      description: "Explore related fascinating topics",
-      icon: <BookOpen className="h-4 w-4" />,
-      color: "bg-gradient-to-r from-wonder-purple/80 to-wonder-purple-light/40"
-    },
-    {
-      type: "amazing-stories",
-      title: "Related Topic 2",
-      description: "Discover connected subjects",
-      icon: <BookOpen className="h-4 w-4" />,
-      color: "bg-gradient-to-r from-wonder-blue/80 to-wonder-blue-light/40"
-    },
-    {
-      type: "see-it",
-      title: "See It In Action",
-      description: "Visual exploration of the topic",
-      icon: <Video className="h-4 w-4" />,
-      color: "bg-gradient-to-r from-wonder-green/80 to-wonder-green-light/40"
-    },
-    {
-      type: "quiz",
-      title: "Test Your Knowledge",
-      description: "Fun quizzes on what you've learned",
-      icon: <HelpCircle className="h-4 w-4" />,
-      color: "bg-gradient-to-r from-wonder-coral/80 to-wonder-coral-light/40"
-    }
-  ];
-    
   return (
     <div className="mt-4 relative">
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm p-3 border-b border-wonder-purple/10 rounded-t-xl flex items-center justify-between mb-2">

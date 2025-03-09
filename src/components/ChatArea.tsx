@@ -125,6 +125,7 @@ const ChatArea: React.FC<ChatAreaProps> = memo(({
                 onBlockClick(blockType, targetMessage.id, targetMessage.text);
               }
             }}
+            relatedTopics={relatedTopics} // Pass the related topics to the TableOfContents
           />
         )}
         

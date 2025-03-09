@@ -7,7 +7,7 @@ export const useRelatedTopics = (
   const generateRelatedTopics = async (topic: string, ageRange: string, language: string) => {
     try {
       console.log("Generating related topics for:", topic);
-      const relatedTopicsPrompt = `Generate 5 related topics to "${topic}" that might interest a learner aged ${ageRange}. Format as a short comma-separated list.`;
+      const relatedTopicsPrompt = `Generate 5 related topics to "${topic}" that might interest a learner aged ${ageRange}. Each topic should be specific, educational and engaging. Format as a comma-separated list.`;
       const relatedTopicsResponse = await generateResponse(relatedTopicsPrompt, ageRange, language);
       console.log("Raw related topics response:", relatedTopicsResponse);
       
