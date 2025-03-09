@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Bot, User, Copy, CheckCheck } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
 import CodeBlock from "@/components/CodeBlock";
@@ -88,11 +87,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     }, 1000);
   };
 
-  // Create a stable array of block types if blocks is empty
-  const safeBlocks: BlockType[] = blocks && blocks.length > 0 
-    ? blocks 
-    : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
-
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-6 w-full px-1 md:px-2`}>
       {!isUser && (
@@ -119,7 +113,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         
         {/* Message content */}
         <div className="prose prose-sm max-w-none">
-          <p className={`whitespace-pre-line ${isUser ? 'text-white' : 'text-foreground'}`}>{text}</p>
+          <p className={`whitespace-pre-line ${isUser ? 'text-white' : 'text-foreground'}`}>
+            {/* Process text to remove excessive emojis and clean up appearance */}
+            {cleanMessageText(text)}
+          </p>
           
           {/* Code block if provided */}
           {code && <CodeBlock code={code.snippet} language={code.language} />}
@@ -130,14 +127,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               <h4 className="text-sm font-medium mb-2">Table of Contents</h4>
               <ul className="list-disc pl-5 space-y-1">
                 {message.tableOfContents.map((section, idx) => (
-                  <li key={idx} className="text-sm">{section}</li>
+                  <li key={idx} className="text-sm">{cleanSectionText(section)}</li>
                 ))}
               </ul>
             </div>
           )}
         </div>
-        
-        {/* Removed the "Explore More" section that was here */}
       </div>
       
       {isUser && (
@@ -147,6 +142,49 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       )}
     </div>
   );
+};
+
+// Helper function to clean up message text by reducing emojis and improving readability
+const cleanMessageText = (text: string): string => {
+  if (!text) return "";
+  
+  // Remove excessive emoji repetition (keep only one of each emoji in a row)
+  let cleanedText = text.replace(/(\p{Emoji}+)(\1+)/gu, "$1");
+  
+  // Replace excessive exclamation marks (more than 2 in a row)
+  cleanedText = cleanedText.replace(/!{3,}/g, "!");
+  
+  // Replace all-caps words with regular case (preserving proper nouns)
+  cleanedText = cleanedText.replace(/\b[A-Z]{4,}\b/g, (match) => match.toLowerCase());
+  
+  // Remove redundant spaces
+  cleanedText = cleanedText.replace(/\s{2,}/g, " ");
+  
+  return cleanedText;
+};
+
+// Helper function to clean section text by removing excessive emojis
+const cleanSectionText = (text: string): string => {
+  if (!text) return "";
+  
+  // Keep maximum of one emoji at start and one at end
+  const emojiRegex = /^(\p{Emoji}+)(.*?)(\p{Emoji}+)$/gu;
+  let cleanedText = text.replace(emojiRegex, (_, startEmoji, content, endEmoji) => {
+    // Take first emoji from start and end groups
+    const firstEmoji = [...startEmoji][0] || "";
+    const lastEmoji = [...endEmoji][0] || "";
+    return `${firstEmoji} ${content.trim()} ${lastEmoji}`;
+  });
+  
+  // If the pattern didn't match, check for just emojis at the start
+  if (cleanedText === text) {
+    cleanedText = text.replace(/^(\p{Emoji}+)(.*)/gu, (_, emojis, content) => {
+      const firstEmoji = [...emojis][0] || "";
+      return `${firstEmoji} ${content.trim()}`;
+    });
+  }
+  
+  return cleanedText;
 };
 
 export default ChatMessage;
