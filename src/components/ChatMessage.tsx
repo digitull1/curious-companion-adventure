@@ -1,137 +1,157 @@
 
-import React, { useRef, useEffect } from "react";
-import { animate } from "@motionone/dom";
-import { Sparkles, Star, Heart, Lightbulb } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import confetti from "canvas-confetti";
+import React, { useState, useRef, useEffect } from "react";
+import { Bot, User, Copy, CheckCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import LearningBlock, { BlockType } from "@/components/LearningBlock";
+import CodeBlock from "@/components/CodeBlock";
 
 interface ChatMessageProps {
   message: string;
   isUser: boolean;
   children?: React.ReactNode;
+  blocks?: BlockType[];
+  showBlocks?: boolean;
+  code?: {
+    snippet: string;
+    language: string;
+  };
+  onBlockClick?: (type: BlockType) => void;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) => {
-  const messageRef = useRef<HTMLDivElement>(null);
+const ChatMessage: React.FC<ChatMessageProps> = ({
+  message,
+  isUser,
+  children,
+  blocks = [],
+  showBlocks = false,
+  code,
+  onBlockClick
+}) => {
+  const [copied, setCopied] = useState(false);
+  const blockContainerRef = useRef<HTMLDivElement>(null);
   
-  // Function to clean text content by removing asterisks
-  const cleanMessageText = (text: string) => {
-    // Remove all asterisks from text
-    return text.replace(/\*\*/g, "");
-  };
-  
-  // Clean the message text
-  const cleanedMessage = cleanMessageText(message);
+  console.log("[ChatMessage] Rendering with props:", { 
+    isUser, 
+    messagePreview: message?.substring(0, 30),
+    hasBlocks: blocks && blocks.length > 0,
+    showBlocks,
+    blocks
+  });
 
-  // Function to trigger micro-confetti
-  const triggerMicroConfetti = () => {
-    if (messageRef.current && !isUser) {
-      const rect = messageRef.current.getBoundingClientRect();
-      confetti({
-        particleCount: 25,
-        spread: 50,
-        origin: { 
-          x: (rect.left + 30) / window.innerWidth, 
-          y: (rect.top + 30) / window.innerHeight 
-        },
-        gravity: 0.5,
-        colors: ['#7c3aed', '#9d74f8', '#F59E0B', '#14B8A6'],
-        scalar: 0.6,
-        disableForReducedMotion: true
-      });
-    }
-  };
-  
   useEffect(() => {
-    if (messageRef.current) {
-      // Create a staggered animation for text appearing
-      const textElement = messageRef.current.querySelector("p");
-      if (textElement) {
-        animate(
-          messageRef.current,
-          { opacity: [0, 1], y: [20, 0] },
-          { duration: 0.5, easing: [0.25, 1, 0.5, 1] }
-        );
-      }
-      
-      // Add ripple effect to user messages
-      if (isUser && messageRef.current) {
-        const ripple = document.createElement("div");
-        ripple.className = "absolute inset-0 rounded-2xl bg-wonder-purple/20 z-[-1]";
-        messageRef.current.style.position = "relative";
-        messageRef.current.appendChild(ripple);
-        
-        animate(
-          ripple,
-          { opacity: [0.6, 0], scale: [0.85, 1.05] },
-          { duration: 1, easing: "ease-out" }
-        );
-        
-        // Remove ripple after animation
-        setTimeout(() => {
-          ripple.remove();
-        }, 1000);
-      }
+    // Debug log for blocks visibility
+    if (blocks && blocks.length > 0) {
+      console.log(`[ChatMessage] Message has ${blocks.length} blocks:`, blocks);
+      console.log(`[ChatMessage] showBlocks flag is: ${showBlocks}`);
     }
-  }, [isUser]);
+    
+    // Add horizontal scroll behavior
+    if (blockContainerRef.current) {
+      const container = blockContainerRef.current;
+      
+      const handleWheel = (e: WheelEvent) => {
+        if (container.contains(e.target as Node)) {
+          e.preventDefault();
+          container.scrollLeft += e.deltaY;
+        }
+      };
+      
+      container.addEventListener('wheel', handleWheel, { passive: false });
+      
+      return () => {
+        container.removeEventListener('wheel', handleWheel);
+      };
+    }
+  }, [blocks, showBlocks]);
 
-  // Random helper icon selection for AI messages
-  const getRandomIconForAI = () => {
-    const icons = [<Sparkles key="sparkles" />, <Lightbulb key="lightbulb" />, <Star key="star" />];
-    return icons[Math.floor(Math.random() * icons.length)];
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(message);
+    setCopied(true);
+    toast.success("Message copied to clipboard!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleBlockClicked = (type: BlockType) => {
+    console.log(`[ChatMessage] Block clicked: ${type}`);
+    if (onBlockClick) {
+      onBlockClick(type);
+    }
   };
 
   return (
-    <div 
-      ref={messageRef}
-      className={`mb-6 ${isUser ? 'ml-auto max-w-[85%]' : 'mr-auto max-w-[85%]'}`}
-      style={{ opacity: 0 }} // Start with opacity 0 before animation
-      onClick={() => !isUser && triggerMicroConfetti()}
-    >
-      <div 
-        className={isUser 
-          ? 'chat-bubble-user transform transition-transform active:scale-98 relative hover:shadow-magical-hover' 
-          : 'chat-bubble-ai transform transition-transform hover:scale-102 relative hover:shadow-wonder-lg'
-        }
-      >
-        {/* Add subtle sparkle effect to AI responses */}
+    <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-6 max-w-3xl mx-auto`}>
+      {!isUser && (
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-purple to-wonder-purple-dark flex items-center justify-center flex-shrink-0 shadow-magical">
+          <Bot className="h-4 w-4 text-white" />
+        </div>
+      )}
+      
+      <div className={`relative px-4 py-3 rounded-xl flex-1 max-w-[85%] sm:max-w-[75%] shadow-sm
+        ${isUser 
+          ? 'bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-tr-none ml-8' 
+          : 'bg-white border border-wonder-purple/10 rounded-tl-none'}`}>
+        
+        {/* Copy button (only for AI messages) */}
         {!isUser && (
-          <span className="absolute -top-1 -left-1 h-4 w-4 text-wonder-yellow/70 animate-sparkle">
-            {getRandomIconForAI()}
-          </span>
+          <button 
+            onClick={copyToClipboard} 
+            className="absolute top-2 right-2 p-1 text-wonder-purple/60 hover:text-wonder-purple transition-colors"
+            aria-label="Copy message"
+          >
+            {copied ? <CheckCheck className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+          </button>
         )}
         
-        {/* Add heart to user messages */}
-        {isUser && (
-          <Heart 
-            className="absolute -top-1 -right-1 h-4 w-4 text-white/70 animate-pulse-soft" 
-            fill="currentColor"
-          />
-        )}
+        {/* Message content */}
+        <div className="prose prose-sm max-w-none">
+          <p className={`whitespace-pre-line ${isUser ? 'text-white' : 'text-foreground'}`}>{message}</p>
+          
+          {/* Code block if provided */}
+          {code && <CodeBlock code={code.snippet} language={code.language} />}
+          
+          {/* Additional content (e.g., table of contents) */}
+          {children}
+        </div>
         
-        <p className="whitespace-pre-line leading-relaxed text-base font-rounded">
-          {cleanedMessage}
-        </p>
-        {children}
-        
-        {/* Add tooltip for user to know they can tap on non-user messages for more info */}
-        {!isUser && !message.includes("I'd love to teach you about") && (
-          <div className="mt-2 text-xs text-wonder-purple/70 flex items-center opacity-70">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="flex items-center cursor-help">
-                    <Star className="h-3 w-3 mr-1" /> Tap to interact
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Tap on elements to learn more!</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        )}
+        {/* Learning blocks */}
+        <AnimatePresence>
+          {blocks && blocks.length > 0 && showBlocks && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.3 }}
+              className="mt-4"
+            >
+              <h3 className="text-xs font-medium mb-3 flex items-center gap-1">
+                <span className="text-wonder-yellow">✨</span>
+                <span className={isUser ? 'text-white' : 'text-wonder-purple'}>Explore More</span>
+              </h3>
+              
+              <div 
+                ref={blockContainerRef}
+                className="flex gap-3 overflow-x-auto pb-2 snap-x scrollbar-thin scrollbar-thumb-wonder-purple/20 scrollbar-track-transparent"
+                data-testid="learning-blocks-container"
+              >
+                {blocks.map((blockType) => (
+                  <LearningBlock 
+                    key={blockType} 
+                    type={blockType} 
+                    onClick={() => handleBlockClicked(blockType)} 
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+      
+      {isUser && (
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-yellow to-wonder-orange flex items-center justify-center flex-shrink-0 shadow-magical">
+          <User className="h-4 w-4 text-white" />
+        </div>
+      )}
     </div>
   );
 };

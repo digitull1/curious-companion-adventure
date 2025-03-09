@@ -166,6 +166,10 @@ const Chat = () => {
   };
 
   const handleBlockClick = (type: BlockType, messageId: string, messageText: string) => {
+    console.log(`[Chat] Block click handler called with type=${type}, messageId=${messageId}`);
+    console.log(`[Chat] Message text: "${messageText.substring(0, 50)}..."`);
+    
+    // Call the service function with all required parameters
     handleLearningBlockClick(
       type,
       messageId,

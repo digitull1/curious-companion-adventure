@@ -16,6 +16,7 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
   
   useEffect(() => {
     if (blockRef.current) {
+      console.log(`[LearningBlock] Block of type ${type} mounted`);
       // Add hover animation
       blockRef.current.addEventListener('mouseenter', () => {
         animate(
@@ -25,9 +26,14 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
         );
       });
     }
-  }, []);
+    
+    return () => {
+      console.log(`[LearningBlock] Block of type ${type} unmounted`);
+    };
+  }, [type]);
   
   const getBlockContent = () => {
+    console.log(`[LearningBlock] Rendering content for block type: ${type}`);
     switch (type) {
       case "did-you-know":
         return {
@@ -114,6 +120,7 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
       transition-all duration-300 overflow-hidden flex-shrink-0 snap-center 
       ${shadowColor} ${expanded ? "h-auto" : "h-12"} min-w-[180px] sm:min-w-[220px] cursor-pointer`}
       onClick={handleBlockClick}
+      style={{ opacity: 1, display: 'block' }} /* Explicitly set visible styles */
     >
       {/* Subtle background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5 rounded-xl z-0`}></div>

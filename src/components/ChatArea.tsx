@@ -1,8 +1,7 @@
-
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
-import LearningBlock, { BlockType } from "@/components/LearningBlock";
+import { BlockType } from "@/components/LearningBlock";
 import TypingIndicator from "@/components/TypingIndicator";
 import TableOfContents from "@/components/TableOfContents";
 import ContentBox from "@/components/ContentBox";
@@ -116,6 +115,25 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     console.log(`[ChatArea][render:${renderId}] Messages updated, scrolling to bottom`);
     scrollToBottom();
   }, [messages, showTypingIndicator, scrollToBottom, renderId]);
+
+  // Log all messages with their blocks for debugging
+  useEffect(() => {
+    console.log('[ChatArea] All messages with blocks:');
+    messages.forEach(msg => {
+      if (msg.blocks && msg.blocks.length > 0) {
+        console.log(`- Message ${msg.id}: isIntroduction=${msg.isIntroduction}, showBlocks=${msg.showBlocks}, blocks=`, msg.blocks);
+      }
+    });
+  }, [messages]);
+
+  // Handle block click from ChatMessage
+  const handleMessageBlockClick = useCallback((type: BlockType, messageId: string) => {
+    console.log(`[ChatArea] Message block clicked: ${type} from message ${messageId}`);
+    const message = messages.find(m => m.id === messageId);
+    if (message) {
+      onBlockClick(type, messageId, message.text);
+    }
+  }, [messages, onBlockClick]);
 
   // Find block message (with image or quiz) in a stable way to prevent unnecessary re-renders
   useEffect(() => {
@@ -304,7 +322,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   console.log(`[ChatArea][render:${renderId}] Filtered user messages: ${userMessages.length}`);
   
   // Filter AI messages that are not special (TOC, welcome, etc.)
-  // FIXED: Properly exclude messages that are currently displayed in the content box
   const aiMessages = messages.filter(m => {
     const isRegularAIMessage = !m.isUser && 
                               !m.isIntroduction && 
@@ -321,7 +338,27 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   });
   
   console.log(`[ChatArea][render:${renderId}] Filtered AI messages: ${aiMessages.length}`);
-  console.log(`[ChatArea][render:${renderId}] Current content box blocks:`, contentBoxBlocks);
+  
+  // Always update ContentBox blocks when messages change
+  useEffect(() => {
+    // Find all blocks from all messages to ensure we have a complete set
+    const allBlocks = messages
+      .filter(m => m.blocks && m.blocks.length > 0)
+      .flatMap(m => m.blocks || []);
+    
+    // Deduplicate blocks
+    const uniqueBlocks = [...new Set(allBlocks)];
+    
+    if (uniqueBlocks.length > 0) {
+      console.log(`[ChatArea] Found ${uniqueBlocks.length} unique blocks across all messages:`, uniqueBlocks);
+      setContentBoxBlocks(uniqueBlocks as BlockType[]);
+    } else {
+      // Default blocks if none found
+      const defaultBlocks: BlockType[] = ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
+      console.log(`[ChatArea] No blocks found in messages, using default blocks:`, defaultBlocks);
+      setContentBoxBlocks(defaultBlocks);
+    }
+  }, [messages]);
 
   // Check if a message should be truncated
   const shouldTruncate = useCallback((text: string) => text.length > 300, []);
@@ -347,7 +384,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           {/* Display welcome message first */}
           {welcomeMessage && (
             <div className="fade-scale-in mb-6 px-4">
-              <ChatMessage message={welcomeMessage.text} isUser={welcomeMessage.isUser} />
+              <ChatMessage 
+                message={welcomeMessage.text} 
+                isUser={welcomeMessage.isUser} 
+                blocks={welcomeMessage.blocks || ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"]}
+                showBlocks={welcomeMessage.showBlocks !== false} // Default to true if not specified
+                onBlockClick={(type) => handleMessageBlockClick(type, welcomeMessage.id)}
+              />
             </div>
           )}
           
@@ -380,31 +423,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               </div>
               {aiMessages[index] && (
                 <div className="fade-scale-in px-4">
-                  <div className="relative">
-                    <ChatMessage 
-                      message={expandedMessages.has(aiMessages[index].id) ? 
-                        aiMessages[index].text : 
-                        shouldTruncate(aiMessages[index].text) ? 
-                          truncateText(aiMessages[index].text) : 
-                          aiMessages[index].text
-                      } 
-                      isUser={false} 
-                    />
-                    
-                    {/* Show expand/collapse button for long messages */}
-                    {shouldTruncate(aiMessages[index].text) && (
-                      <button 
-                        onClick={() => toggleMessageExpansion(aiMessages[index].id)}
-                        className="mt-2 flex items-center text-xs text-wonder-purple/70 hover:text-wonder-purple transition-colors"
-                      >
-                        {expandedMessages.has(aiMessages[index].id) ? (
-                          <>Show less <ChevronDown className="h-3 w-3 ml-1 transform rotate-180" /></>
-                        ) : (
-                          <>Read more <ChevronDown className="h-3 w-3 ml-1" /></>
-                        )}
-                      </button>
-                    )}
-                  </div>
+                  <ChatMessage 
+                    message={aiMessages[index].text} 
+                    isUser={false} 
+                    blocks={aiMessages[index].blocks}
+                    showBlocks={aiMessages[index].showBlocks}
+                    onBlockClick={(type) => handleMessageBlockClick(type, aiMessages[index].id)}
+                  />
                 </div>
               )}
             </React.Fragment>
@@ -417,10 +442,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 key={`content-${currentSection}-${currentBlockMessage?.id || 'none'}-${activeBlock || 'none'}-${renderId}`}
                 title={currentSection}
                 content={currentSectionMessage.text}
-                prevSection={prev}
-                nextSection={next}
+                prevSection={null}
+                nextSection={null}
                 blocks={contentBoxBlocks.length > 0 ? contentBoxBlocks : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"]}
-                onBlockClick={handleContentBoxBlockClick}
+                onBlockClick={(block) => {
+                  console.log(`[ChatArea] Content box block clicked: ${block}`);
+                  if (currentSectionMessage) {
+                    onBlockClick(block, currentSectionMessage.id, currentSectionMessage.text);
+                  }
+                }}
                 onNavigate={onTocSectionClick}
                 activeBlock={activeBlock}
                 imagePrompt={currentBlockMessage?.imagePrompt}
