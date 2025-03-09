@@ -2,10 +2,11 @@
 import { BlockType, Message } from "@/types/chat";
 import { toast } from "sonner";
 
-// Ensure we have a single instance of this flag across the application
+// Tracking system for block processing
 let isBlockProcessing = false;
 let activeBlockType: BlockType | null = null;
 let blockRequestId: string | null = null;
+let processingTimeout: number | null = null;
 
 export const handleBlockClick = async (
   type: BlockType,
@@ -24,27 +25,42 @@ export const handleBlockClick = async (
   console.log(`[LearningBlock][START:${blockId}] Processing ${type} block for message: ${messageId.substring(0, 8)}...`);
   console.log(`[LearningBlock][${blockId}] Message text: "${messageText.substring(0, 50)}..."`);
   
-  // Check for existing block processing - specifically checking for same block type
+  // Clear any existing processing timeout
+  if (processingTimeout) {
+    clearTimeout(processingTimeout);
+    processingTimeout = null;
+  }
+  
+  // If we're already processing this block type, show a notification and return
+  if (isBlockProcessing && activeBlockType === type) {
+    console.log(`[LearningBlock][${blockId}] Already processing ${type} block, ignoring this request`);
+    toast.info(`Already loading ${type} content, please wait...`);
+    return;
+  }
+  
+  // If we're processing a different block type, cancel it and continue with the new one
   if (isBlockProcessing) {
-    if (activeBlockType === type) {
-      console.log(`[LearningBlock][${blockId}] Already processing ${type} block, ignoring this request`);
-      toast.info(`Already processing ${type} content, please wait...`);
-      return;
-    } else {
-      console.log(`[LearningBlock][${blockId}] Processing different block type: current=${activeBlockType}, new=${type}`);
-      // Continue processing new block type, replacing the previous one
-    }
+    console.log(`[LearningBlock][${blockId}] Switching block processing from ${activeBlockType} to ${type}`);
+    // Continue with the new block, but don't set flags yet
   }
   
   try {
-    // Set processing flag immediately to prevent multiple clicks
+    // Set processing flags
     isBlockProcessing = true;
     activeBlockType = type;
     blockRequestId = blockId;
     console.log(`[LearningBlock][${blockId}] Setting isBlockProcessing flag to true for type: ${type}`);
     
+    // Update UI state to show loading
     setIsProcessing(true);
     setShowTypingIndicator(true);
+    
+    // Show immediate visual feedback for better UX
+    toast.info(`Loading ${type.replace(/-/g, ' ')} content...`, { 
+      duration: 2000,
+      position: 'bottom-center'
+    });
+    
     let blockResponse = "";
     let imagePrompt = "";
     let quiz = undefined;
@@ -110,16 +126,11 @@ export const handleBlockClick = async (
       return;
     }
 
-    // Simulate typing delay
+    // Simulate typing delay for better UX
     console.log(`[LearningBlock][${blockId}] Simulating typing delay before showing response`);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 300));
     
-    // Check again after delay if this operation is still current
-    if (blockRequestId !== blockId) {
-      console.log(`[LearningBlock][${blockId}] This operation has been superseded after delay, abandoning`);
-      return;
-    }
-    
+    // Hide typing indicator
     setShowTypingIndicator(false);
 
     // Create the block message with the correct structure
@@ -152,6 +163,13 @@ export const handleBlockClick = async (
     
     // Add the message to the chat
     setMessages(prev => [...prev, blockMessage]);
+    
+    // Show success toast
+    toast.success(`${type.replace(/-/g, ' ')} content loaded successfully!`, {
+      duration: 2000,
+      position: 'bottom-center'
+    });
+    
   } catch (error) {
     console.error(`[LearningBlock][${blockId}] Critical error processing block:`, error);
     setShowTypingIndicator(false);
@@ -168,30 +186,26 @@ export const handleBlockClick = async (
     console.log(`[LearningBlock][${blockId}][END] Finished processing ${type} block`);
     setIsProcessing(false);
     
-    // Clear the processing flag
-    console.log(`[LearningBlock][${blockId}] Resetting isBlockProcessing flag to false`);
-    
-    // Use a longer timeout to ensure all operations are complete
-    setTimeout(() => {
+    // Clear the processing flags after a delay to prevent immediate re-clicks
+    processingTimeout = window.setTimeout(() => {
       if (blockRequestId === blockId) {
         isBlockProcessing = false;
         activeBlockType = null;
         blockRequestId = null;
+        console.log(`[LearningBlock][${blockId}] Released block processing lock`);
       } else {
         console.log(`[LearningBlock][${blockId}] Not clearing flags as this operation is no longer active`);
       }
-    }, 1000);
+      processingTimeout = null;
+    }, 1500);
   }
 };
 
-// Clean up global window property access
-declare global {
-  interface Window {
-    _isBlockProcessing?: boolean;
-  }
-}
-
-// Clear any hanging state on page load
+// Clean up global window property
 if (typeof window !== 'undefined') {
-  window._isBlockProcessing = false;
+  window.addEventListener('unload', () => {
+    if (processingTimeout) {
+      clearTimeout(processingTimeout);
+    }
+  });
 }

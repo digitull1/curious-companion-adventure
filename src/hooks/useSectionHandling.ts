@@ -15,10 +15,8 @@ let currentSectionId = '';
 let canceledSections = new Set<string>();
 let activeSectionRequests: Record<string, boolean> = {};
 
-// Track block click processing
-let isBlockBeingProcessed = false;
-let currentBlockId = '';
-let lastBlockType: BlockType | null = null;
+// Optimized block click handling
+let blockClickTimers: Record<string, number> = {};
 
 export const useSectionHandling = (
   messages: Message[],
@@ -161,31 +159,24 @@ export const useSectionHandling = (
   };
   
   const handleBlockClickWrapper = (type: BlockType, messageId: string, messageText: string) => {
-    const blockId = `block-${Date.now()}`;
-    console.log(`[SectionHandling][START:${blockId}] Block clicked: ${type} from message ${messageId}`);
+    const blockId = `block-${type}-${Date.now()}`;
     
-    // Prevent multiple clicks of the same block type
-    if (isBlockBeingProcessed && lastBlockType === type) {
-      console.log(`[SectionHandling][${blockId}] Already processing block type ${type}, ignoring this request`);
-      return;
+    // Clear any existing timers for this block type
+    if (blockClickTimers[type]) {
+      clearTimeout(blockClickTimers[type]);
+      delete blockClickTimers[type];
     }
     
-    // Set processing flags
-    isBlockBeingProcessed = true;
-    currentBlockId = blockId;
-    lastBlockType = type;
+    console.log(`[SectionHandling][START:${blockId}] Block clicked: ${type} from message ${messageId}`);
     
-    // Call the provided handleBlockClick function with the correct parameters
+    // Immediately call the handler to improve responsiveness
     handleBlockClick(type, messageId, messageText);
     
-    // Clear processing flags after a delay
-    setTimeout(() => {
-      if (currentBlockId === blockId) {
-        isBlockBeingProcessed = false;
-        lastBlockType = null;
-        console.log(`[SectionHandling][${blockId}] Released block processing lock`);
-      }
-    }, 2000); // Longer timeout to ensure request completes
+    // Set a debounce timer to prevent rapid clicks of the same block type
+    blockClickTimers[type] = window.setTimeout(() => {
+      console.log(`[SectionHandling][${blockId}] Block click timer cleared for ${type}`);
+      delete blockClickTimers[type];
+    }, 1000);
   };
 
   return {
