@@ -1,11 +1,11 @@
-
 import { Message, MessageProcessingStatus, MessageProcessingResult } from "@/types/chat";
 import { toast } from "sonner";
 
-// Use module-level variable for more reliable tracking
+// Use module-level variables for more reliable tracking
 let isMessageBeingProcessed = false;
 let processingStartTime = 0;
 let processingId = '';
+let canceledOperations = new Set<string>();
 
 export const useMessageHandling = (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
@@ -65,6 +65,12 @@ export const useMessageHandling = (
     }
 
     try {
+      // Check if this operation was canceled before generating response
+      if (canceledOperations.has(currentProcessingId)) {
+        console.log(`[MessageHandler][${currentProcessingId}][CANCELED] Operation was canceled before response generation`);
+        return { status: "error", error: { message: "Operation was canceled" } };
+      }
+      
       // Generate response
       console.log(`[MessageHandler][${currentProcessingId}] Generating response for age: ${ageRange}, language: ${language}`);
       const response = await generateResponse(prompt, ageRange, language);
@@ -73,9 +79,9 @@ export const useMessageHandling = (
       // Small delay for typing effect
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Verify we're still the active processing operation
-      if (processingId !== currentProcessingId) {
-        console.log(`[MessageHandler][${currentProcessingId}][CANCELED] This operation is no longer active`);
+      // Check if this operation was canceled after generating response
+      if (canceledOperations.has(currentProcessingId) || processingId !== currentProcessingId) {
+        console.log(`[MessageHandler][${currentProcessingId}][CANCELED] Operation was canceled or superseded after response generation`);
         return { status: "error", error: { message: "Operation was superseded by another request" } };
       }
       
@@ -86,7 +92,7 @@ export const useMessageHandling = (
         text: response,
         isUser: false,
         blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
-        showBlocks: true
+        showBlocks: false // Only show blocks in content box, not in regular messages
       };
       
       console.log(`[MessageHandler][${currentProcessingId}] Adding AI message to chat: ${aiMessage.id}`);
@@ -155,5 +161,19 @@ export const useMessageHandling = (
     }
   };
 
-  return { processMessage };
+  // Add a function to cancel current operation
+  const cancelCurrentOperation = () => {
+    if (processingId) {
+      canceledOperations.add(processingId);
+      console.log(`[MessageHandler] Canceling current operation: ${processingId}`);
+      
+      // Clean up old canceled operations (keep set small)
+      if (canceledOperations.size > 10) {
+        const oldestOperations = Array.from(canceledOperations).slice(0, 5);
+        oldestOperations.forEach(opId => canceledOperations.delete(opId));
+      }
+    }
+  };
+
+  return { processMessage, cancelCurrentOperation };
 };

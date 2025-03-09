@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -27,7 +26,7 @@ const Chat = () => {
   const { generateRelatedTopics } = useRelatedTopics(chatState.generateResponse);
   
   // Initialize message handling hook
-  const { processMessage } = useMessageHandling(
+  const { processMessage, cancelCurrentOperation } = useMessageHandling(
     chatState.generateResponse,
     ageRange,
     language,
@@ -66,8 +65,8 @@ const Chat = () => {
     chatState.setLearningProgress
   );
   
-  // Initialize section handling hook
-  const { handleTocSectionClick, handleRelatedTopicClick } = useSectionHandling(
+  // Initialize section handling hook with enhanced block click handling
+  const { handleTocSectionClick, handleRelatedTopicClick, handleBlockClick } = useSectionHandling(
     chatState.messages,
     chatState.selectedTopic,
     chatState.completedSections,
@@ -75,7 +74,8 @@ const Chat = () => {
     chatState.setCurrentSection,
     chatState.setCompletedSections,
     chatState.setPoints,
-    chatState.setLearningProgress
+    chatState.setLearningProgress,
+    handleLearningBlockClick
   );
   
   // Initialize chat
@@ -165,24 +165,15 @@ const Chat = () => {
     }
   };
 
-  const handleBlockClick = (type: BlockType, messageId: string, messageText: string) => {
+  const handleBlockClickWrapper = (type: BlockType, messageId: string, messageText: string) => {
     console.log(`[Chat] Block click handler called with type=${type}, messageId=${messageId}`);
     console.log(`[Chat] Message text: "${messageText.substring(0, 50)}..."`);
     
-    // Call the service function with all required parameters
-    handleLearningBlockClick(
-      type,
-      messageId,
-      messageText,
-      ageRange,
-      language,
-      chatState.setIsProcessing,
-      chatState.setShowTypingIndicator,
-      chatState.setPoints,
-      chatState.setMessages,
-      chatState.generateResponse,
-      chatState.generateQuiz
-    );
+    // Cancel any ongoing message processing to prevent race conditions
+    cancelCurrentOperation();
+    
+    // Call the handler from useSectionHandling
+    handleBlockClick(type, messageId, messageText);
   };
 
   const handleSuggestedPromptClick = (prompt: string) => {
@@ -258,7 +249,7 @@ const Chat = () => {
             currentSection={chatState.currentSection}
             relatedTopics={chatState.relatedTopics}
             learningComplete={chatState.learningComplete}
-            onBlockClick={handleBlockClick}
+            onBlockClick={handleBlockClickWrapper}
             onTocSectionClick={handleTocSectionClick}
             onRelatedTopicClick={handleRelatedTopicClick}
             learningProgress={chatState.learningProgress}

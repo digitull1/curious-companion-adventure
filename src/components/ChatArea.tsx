@@ -380,10 +380,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       
       {/* Main chat content */}
       <div className="relative">
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
           {/* Display welcome message first */}
           {welcomeMessage && (
-            <div className="fade-scale-in mb-6 px-4">
+            <div className="fade-scale-in mb-6 w-full">
               <ChatMessage 
                 message={welcomeMessage.text} 
                 isUser={welcomeMessage.isUser} 
@@ -396,7 +396,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           
           {/* Display the intro message with Table of Contents */}
           {introMessage && (
-            <div className="fade-scale-in mb-6 px-4">
+            <div className="fade-scale-in mb-6 w-full">
               <ChatMessage message={introMessage.text} isUser={introMessage.isUser}>
                 <TableOfContents 
                   sections={introMessage.tableOfContents || []} 
@@ -410,7 +410,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           
           {/* Place typing indicator within the message flow, right after the last message */}
           {showTypingIndicator && (
-            <div className="px-4 mb-2">
+            <div className="w-full mb-2">
               <TypingIndicator />
             </div>
           )}
@@ -418,16 +418,16 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           {/* Display user and AI message pairs in sequence */}
           {userMessages.map((message, index) => (
             <React.Fragment key={message.id}>
-              <div className="fade-scale-in px-4">
+              <div className="fade-scale-in w-full">
                 <ChatMessage message={message.text} isUser={true} />
               </div>
               {aiMessages[index] && (
-                <div className="fade-scale-in px-4">
+                <div className="fade-scale-in w-full">
                   <ChatMessage 
                     message={aiMessages[index].text} 
                     isUser={false} 
                     blocks={aiMessages[index].blocks}
-                    showBlocks={aiMessages[index].showBlocks}
+                    showBlocks={false} // Don't show blocks in regular messages
                     onBlockClick={(type) => handleMessageBlockClick(type, aiMessages[index].id)}
                   />
                 </div>

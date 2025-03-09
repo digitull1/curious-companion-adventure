@@ -96,14 +96,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
 
   return (
-    <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-6 max-w-3xl mx-auto`}>
+    <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-6 w-full px-4`}>
       {!isUser && (
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wonder-purple to-wonder-purple-dark flex items-center justify-center flex-shrink-0 shadow-magical">
           <Bot className="h-4 w-4 text-white" />
         </div>
       )}
       
-      <div className={`relative px-4 py-3 rounded-xl flex-1 max-w-[85%] sm:max-w-[75%] shadow-sm
+      <div className={`relative px-4 py-3 rounded-xl flex-1 max-w-[95%] sm:max-w-[90%] shadow-sm
         ${isUser 
           ? 'bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-tr-none ml-8' 
           : 'bg-white border border-wonder-purple/10 rounded-tl-none'}`}>
@@ -130,8 +130,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           {children}
         </div>
         
-        {/* Learning blocks - Force display for AI messages */}
-        {!isUser && (
+        {/* Learning blocks - Only show in special circumstances, not in regular chat messages */}
+        {!isUser && showBlocks && (
           <div className="mt-4">
             <h3 className="text-xs font-medium mb-3 flex items-center gap-1">
               <Sparkles className="h-3.5 w-3.5 text-wonder-yellow" />
