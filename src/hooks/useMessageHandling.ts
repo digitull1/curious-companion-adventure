@@ -1,4 +1,3 @@
-
 import { Message, MessageProcessingStatus, MessageProcessingResult } from "@/types/chat";
 import { toast } from "sonner";
 
@@ -12,8 +11,11 @@ export const useMessageHandling = (
   setInputValue: (value: string) => void,
   setPoints: (pointsSetter: (prev: number) => number) => void
 ) => {
-  // Use this flag to prevent multiple messages from being processed simultaneously
+  // Store the flag in a module-level variable for more reliable tracking
   let isMessageBeingProcessed = false;
+  
+  // For debugging only - keep track of when the flag was set
+  let processingStartTime = 0;
   
   const processMessage = async (
     prompt: string, 
@@ -23,21 +25,29 @@ export const useMessageHandling = (
     console.log(`[MessageHandler][START] Processing message: "${prompt.substring(0, 30)}..."`, 
       `isUserMessage: ${isUserMessage}`, `skipUserMessage: ${skipUserMessage}`);
     
+    // Add debug information about the current state of the flag
+    console.log(`[MessageHandler][DEBUG] Current isMessageBeingProcessed flag: ${isMessageBeingProcessed}`, 
+      isMessageBeingProcessed ? `Set ${Date.now() - processingStartTime}ms ago` : '');
+    
     // Prevent multiple concurrent message processing
     if (isMessageBeingProcessed) {
-      console.log(`[MessageHandler] Already processing another message, ignoring this request`);
+      console.log(`[MessageHandler][BLOCKED] Already processing another message, ignoring this request`);
+      toast.error("Please wait for the current message to be processed");
       return { status: "error", error: { message: "Another message is already being processed" } };
     }
     
+    // Set the flag and record the time for debugging
     isMessageBeingProcessed = true;
-    
-    // Generate unique IDs for user and AI messages to prevent collisions
-    const userMessageId = `user-${Date.now()}`;
-    const aiMessageId = `ai-${Date.now() + 1}`;
+    processingStartTime = Date.now();
+    console.log(`[MessageHandler][FLAG] Set isMessageBeingProcessed = true at ${new Date().toISOString()}`);
     
     setIsProcessing(true);
     setShowTypingIndicator(true);
 
+    // Generate unique IDs for user and AI messages to prevent collisions
+    const userMessageId = `user-${Date.now()}`;
+    const aiMessageId = `ai-${Date.now() + 1}`;
+    
     // If it's a user message and we're not skipping user message display
     if (isUserMessage && !skipUserMessage) {
       const userMessage: Message = {
@@ -117,16 +127,21 @@ export const useMessageHandling = (
         }
       };
     } finally {
-      console.log(`[MessageHandler] Cleaning up after processing message`);
+      console.log(`[MessageHandler][CLEANUP] Resetting state after processing`);
       setIsProcessing(false);
       setInputValue("");
+      
+      // Add a unique identifier to track when the flag is cleared
+      const cleanupId = `cleanup-${Date.now()}`;
+      console.log(`[MessageHandler][FLAG] Scheduled reset of isMessageBeingProcessed flag (${cleanupId})`);
+      
       // Release the processing lock after a short delay to prevent immediate re-submissions
       setTimeout(() => {
         isMessageBeingProcessed = false;
-      }, 300);
+        console.log(`[MessageHandler][FLAG] Reset isMessageBeingProcessed = false (${cleanupId}) after ${Date.now() - processingStartTime}ms`);
+      }, 500);
     }
   };
 
   return { processMessage };
 };
-
