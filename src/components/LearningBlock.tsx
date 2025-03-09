@@ -14,6 +14,7 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
   const blockRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
+  const clickTimeoutRef = useRef<number | null>(null);
   
   useEffect(() => {
     if (blockRef.current) {
@@ -30,6 +31,10 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
     
     return () => {
       console.log(`[LearningBlock] Block of type ${type} unmounted`);
+      // Clear any timeouts to prevent memory leaks
+      if (clickTimeoutRef.current) {
+        window.clearTimeout(clickTimeoutRef.current);
+      }
     };
   }, [type]);
   
@@ -95,17 +100,30 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
 
   const { icon, title, description, className, gradient, shadowColor } = getBlockContent();
   
+  // Prevent page refreshes and propagation
   const toggleExpand = (e: React.MouseEvent) => {
     console.log("Toggle expand clicked for block type:", type);
+    
+    // Prevent default browser behavior and stop event propagation
     e.preventDefault();
-    e.stopPropagation(); // Prevent the click from bubbling up to the block
+    e.stopPropagation();
+    
     setExpanded(!expanded);
   };
 
+  // Debounced handler to prevent double clicks
   const handleExploreClick = (e: React.MouseEvent) => {
-    console.log("Explore button clicked for block type:", type);
+    // Prevent default browser behavior and stop event propagation
     e.preventDefault();
-    e.stopPropagation(); // Prevent the click from bubbling up to the block
+    e.stopPropagation();
+    
+    console.log("Explore button clicked for block type:", type);
+    
+    // Prevent multiple rapid clicks
+    if (isClicked) {
+      console.log("Click ignored - already processing");
+      return;
+    }
     
     // Visual feedback that button was clicked
     setIsClicked(true);
@@ -114,12 +132,22 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
     onClick();
     
     // Reset clicked state after animation completes
-    setTimeout(() => setIsClicked(false), 500);
+    if (clickTimeoutRef.current) {
+      window.clearTimeout(clickTimeoutRef.current);
+    }
+    
+    clickTimeoutRef.current = window.setTimeout(() => {
+      setIsClicked(false);
+      clickTimeoutRef.current = null;
+    }, 1000);
   };
 
   const handleBlockClick = (e: React.MouseEvent) => {
-    console.log("Block clicked for block type:", type);
+    // Prevent default browser behavior
     e.preventDefault();
+    
+    console.log("Block clicked for block type:", type);
+    
     if (!expanded) {
       setExpanded(true);
     }
@@ -163,11 +191,12 @@ const LearningBlock: React.FC<LearningBlockProps> = ({ type, onClick }) => {
         <button
           type="button"
           onClick={handleExploreClick}
+          disabled={isClicked}
           className={`w-full py-2 px-3 text-xs font-medium text-white rounded-lg bg-gradient-to-r from-wonder-purple to-wonder-purple-dark transition-all duration-300 transform ${
-            isClicked ? 'scale-95' : 'hover:scale-102 hover:shadow-magical-hover'
-          } active:scale-98`}
+            isClicked ? 'scale-95 opacity-80' : 'hover:scale-102 hover:shadow-magical-hover'
+          } active:scale-98 focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 focus:ring-offset-2`}
         >
-          Explore
+          {isClicked ? 'Loading...' : 'Explore'}
         </button>
       </div>
       

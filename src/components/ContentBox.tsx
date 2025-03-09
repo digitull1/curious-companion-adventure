@@ -97,7 +97,6 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
 }) => {
   // Use refs to store DOM elements
   const contentBoxRef = useRef<HTMLDivElement>(null);
-  const exploreMoreRef = useRef<HTMLDivElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   
@@ -107,7 +106,6 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
   // Local state management
   const [isContentLoading, setIsContentLoading] = useState(false);
   const [expandedContent, setExpandedContent] = useState(true);
-  const [isExploreVisible, setIsExploreVisible] = useState(true);
   
   // Clean and prepare displayed content
   const cleanedTitle = cleanText(title);
@@ -121,11 +119,6 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
     console.log(`[ContentBox][${componentId}] Mounted/Updated with title: "${cleanedTitle.substring(0, 30)}..."`);
     console.log(`[ContentBox][${componentId}] activeBlock: ${activeBlock}, imagePrompt: ${imagePrompt ? "present" : "none"}, quiz: ${quiz ? "present" : "none"}`);
     console.log(`[ContentBox][${componentId}] blocks provided:`, blocks);
-    
-    // Force explore section visibility if blocks are provided
-    if (blocks && blocks.length > 0) {
-      setIsExploreVisible(true);
-    }
     
     return () => {
       console.log(`[ContentBox][${componentId}] Component unmounting`);
@@ -160,20 +153,6 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
       );
     }
     
-    if (exploreMoreRef.current) {
-      // Staggered animation for explore more links
-      const links = exploreMoreRef.current.querySelectorAll('.explore-link');
-      console.log(`[ContentBox][${componentId}] Found ${links.length} explore links to animate`);
-      
-      links.forEach((link, index) => {
-        animate(
-          link,
-          { opacity: [0, 1], scale: [0.95, 1] },
-          { duration: 0.3, delay: 0.3 + (index * 0.1), easing: "ease-out" }
-        );
-      });
-    }
-    
     if (navigationRef.current) {
       // Fade in navigation buttons
       animate(
@@ -200,18 +179,6 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
       });
     }
   }, [isContentLoading, componentId]);
-  
-  // Stable handler for block buttons with debounce to prevent double clicks
-  const handleBlockButtonClick = useCallback((blockType: BlockType, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log(`[ContentBox][${componentId}] Block button clicked: ${blockType}`);
-    
-    // Call the handler immediately with improved click tracking
-    onBlockClick(blockType);
-    
-  }, [onBlockClick, componentId]);
   
   // Handle navigation with debounce - prevent page refreshes
   const handleNavigation = useCallback((section: string, e?: React.MouseEvent) => {
@@ -243,13 +210,6 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
       console.log(`[ContentBox][${componentId}] Displaying quiz with question: ${quiz.question.substring(0, 50)}...`);
     }
   }, [activeBlock, imagePrompt, quiz, componentId]);
-  
-  // Ensure blocks is an array with default values if not provided
-  const safeBlocks = Array.isArray(blocks) && blocks.length > 0 
-    ? blocks 
-    : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"] as BlockType[];
-
-  console.log(`[ContentBox][${componentId}] Using safe blocks:`, safeBlocks);
   
   return (
     <div 
@@ -324,60 +284,7 @@ const ContentBox: React.FC<ContentBoxProps> = memo(({
                 </div>
               )}
               
-              {/* Explore More section - always show this section now */}
-              <div ref={exploreMoreRef} className="mt-8 pt-4 border-t border-wonder-purple/10">
-                <h3 className="text-sm font-medium text-wonder-purple mb-3 flex items-center">
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-wonder-yellow" />
-                  Explore More
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
-                  {safeBlocks.map((block) => {
-                    const info = blockInfo[block];
-                    if (!info) {
-                      console.error(`[ContentBox] Unknown block type: ${block}`);
-                      return null;
-                    }
-                    
-                    const BlockIcon = info.icon;
-                    return (
-                      <button
-                        key={`${block}-${componentId}`}
-                        onClick={(e) => handleBlockButtonClick(block, e)}
-                        type="button"
-                        data-block-type={block} // Add data attribute for debugging
-                        className={`explore-link group relative p-3 bg-gradient-to-br ${
-                          activeBlock === block ? info.color : 'from-white to-white/90'
-                        } rounded-lg border ${
-                          activeBlock === block ? 'border-transparent' : 'border-wonder-purple/10 hover:border-wonder-purple/30'
-                        } ${info.shadow} transition-all duration-300 transform hover:-translate-y-1 
-                        flex flex-col items-center text-center cursor-pointer`}
-                        aria-label={`Explore ${info.title}`}
-                      >
-                        <div className={`w-8 h-8 rounded-full ${
-                          activeBlock === block ? 'bg-white/20' : 'bg-wonder-purple/5'
-                        } flex items-center justify-center mb-1`}>
-                          <BlockIcon className={`h-4 w-4 ${
-                            activeBlock === block ? 'text-white' : BlockIcon({}).props.className
-                          }`} />
-                        </div>
-                        <span className={`font-medium text-xs ${
-                          activeBlock === block ? 'text-white' : 'text-foreground'
-                        }`}>{info.title}</span>
-                        <span className={`text-[10px] ${
-                          activeBlock === block ? 'text-white/80' : 'text-muted-foreground'
-                        } mt-0.5 hidden sm:block`}>{info.description}</span>
-                        
-                        {/* Magical sparkle effect for active blocks */}
-                        {activeBlock === block && (
-                          <div className="absolute top-0 right-0 h-6 w-6 pointer-events-none">
-                            <Sparkles className="h-5 w-5 text-white/60 animate-sparkle absolute" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              {/* Removed Explore More section */}
             </>
           )}
         </div>
