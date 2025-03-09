@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Bot, User, Copy, CheckCheck } from "lucide-react";
+import { Bot, User, Copy, CheckCheck, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
@@ -30,13 +30,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const blockContainerRef = useRef<HTMLDivElement>(null);
+  const [isProcessingClick, setIsProcessingClick] = useState(false);
   
   console.log("[ChatMessage] Rendering with props:", { 
     isUser, 
     messagePreview: message?.substring(0, 30),
     hasBlocks: blocks && blocks.length > 0,
     showBlocks,
-    blocks
+    blocksData: blocks
   });
 
   useEffect(() => {
@@ -74,10 +75,25 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
   const handleBlockClicked = (type: BlockType) => {
     console.log(`[ChatMessage] Block clicked: ${type}`);
-    if (onBlockClick) {
-      onBlockClick(type);
-    }
+    
+    // Prevent multiple clicks with debounce
+    if (isProcessingClick || !onBlockClick) return;
+    
+    setIsProcessingClick(true);
+    
+    // Call the handler with debounce protection
+    onBlockClick(type);
+    
+    // Reset after a short delay to prevent rapid clicking
+    setTimeout(() => {
+      setIsProcessingClick(false);
+    }, 1000);
   };
+
+  // Create a stable array of block types if blocks is empty
+  const safeBlocks: BlockType[] = blocks && blocks.length > 0 
+    ? blocks 
+    : ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"];
 
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-6 max-w-3xl mx-auto`}>
@@ -114,37 +130,29 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           {children}
         </div>
         
-        {/* Learning blocks */}
-        <AnimatePresence>
-          {blocks && blocks.length > 0 && showBlocks && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.3 }}
-              className="mt-4"
+        {/* Learning blocks - Force display for AI messages */}
+        {!isUser && (
+          <div className="mt-4">
+            <h3 className="text-xs font-medium mb-3 flex items-center gap-1">
+              <Sparkles className="h-3.5 w-3.5 text-wonder-yellow" />
+              <span className="text-wonder-purple">Explore More</span>
+            </h3>
+            
+            <div 
+              ref={blockContainerRef}
+              className="flex gap-3 overflow-x-auto pb-2 snap-x scrollbar-thin scrollbar-thumb-wonder-purple/20 scrollbar-track-transparent"
+              data-testid="learning-blocks-container"
             >
-              <h3 className="text-xs font-medium mb-3 flex items-center gap-1">
-                <span className="text-wonder-yellow">✨</span>
-                <span className={isUser ? 'text-white' : 'text-wonder-purple'}>Explore More</span>
-              </h3>
-              
-              <div 
-                ref={blockContainerRef}
-                className="flex gap-3 overflow-x-auto pb-2 snap-x scrollbar-thin scrollbar-thumb-wonder-purple/20 scrollbar-track-transparent"
-                data-testid="learning-blocks-container"
-              >
-                {blocks.map((blockType) => (
-                  <LearningBlock 
-                    key={blockType} 
-                    type={blockType} 
-                    onClick={() => handleBlockClicked(blockType)} 
-                  />
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {safeBlocks.map((blockType) => (
+                <LearningBlock 
+                  key={blockType} 
+                  type={blockType} 
+                  onClick={() => handleBlockClicked(blockType)} 
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       
       {isUser && (

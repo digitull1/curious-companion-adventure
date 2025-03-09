@@ -2,6 +2,9 @@
 import { BlockType, Message } from "@/types/chat";
 import { toast } from "sonner";
 
+// Ensure we have a single instance of this flag across the application
+let isBlockProcessing = false;
+
 export const handleBlockClick = async (
   type: BlockType,
   messageId: string,
@@ -19,16 +22,17 @@ export const handleBlockClick = async (
   console.log(`[LearningBlock][START:${blockId}] Processing ${type} block for message: ${messageId.substring(0, 8)}...`);
   console.log(`[LearningBlock][${blockId}] Message text: "${messageText.substring(0, 50)}..."`);
   
+  // Check for existing block processing - return early to prevent race conditions
+  if (isBlockProcessing) {
+    console.log(`[LearningBlock][${blockId}] Already processing another block, ignoring this request`);
+    toast.info("Already processing a request, please wait...");
+    return;
+  }
+  
   try {
-    // Prevent multiple concurrent processing
-    if (window._isBlockProcessing) {
-      console.log(`[LearningBlock][${blockId}] Already processing another block, ignoring this request`);
-      return;
-    }
-    
-    // Set a global flag to prevent concurrent processing
-    window._isBlockProcessing = true;
-    console.log(`[LearningBlock][${blockId}] Setting _isBlockProcessing flag to true`);
+    // Set processing flag immediately to prevent multiple clicks
+    isBlockProcessing = true;
+    console.log(`[LearningBlock][${blockId}] Setting isBlockProcessing flag to true`);
     
     setIsProcessing(true);
     setShowTypingIndicator(true);
@@ -121,7 +125,6 @@ export const handleBlockClick = async (
       blockType: blockMessage.blockType,
       text: blockMessage.text.substring(0, 50) + "...",
       hasImagePrompt: !!blockMessage.imagePrompt,
-      imagePrompt: blockMessage.imagePrompt?.substring(0, 50) + "...",
       hasQuiz: !!blockMessage.quiz
     });
     
@@ -142,17 +145,25 @@ export const handleBlockClick = async (
   } finally {
     console.log(`[LearningBlock][${blockId}][END] Finished processing ${type} block`);
     setIsProcessing(false);
-    // Clear the processing flag after a short delay to prevent immediate re-clicks
+    
+    // Clear the processing flag
+    console.log(`[LearningBlock][${blockId}] Resetting isBlockProcessing flag to false`);
+    
+    // Use a longer timeout to ensure all operations are complete
     setTimeout(() => {
-      console.log(`[LearningBlock][${blockId}] Resetting _isBlockProcessing flag to false`);
-      window._isBlockProcessing = false;
-    }, 300);
+      isBlockProcessing = false;
+    }, 1000);
   }
 };
 
-// Declare global flag for TypeScript
+// Clean up global window property access
 declare global {
   interface Window {
     _isBlockProcessing?: boolean;
   }
+}
+
+// Clear any hanging state on page load
+if (typeof window !== 'undefined') {
+  window._isBlockProcessing = false;
 }
