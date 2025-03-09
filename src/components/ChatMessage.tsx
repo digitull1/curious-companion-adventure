@@ -5,27 +5,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import LearningBlock, { BlockType } from "@/components/LearningBlock";
 import CodeBlock from "@/components/CodeBlock";
+import { Message } from "@/types/chat";
 
 interface ChatMessageProps {
-  message: string;
-  isUser: boolean;
-  children?: React.ReactNode;
-  blocks?: BlockType[];
-  showBlocks?: boolean;
-  code?: {
-    snippet: string;
-    language: string;
-  };
+  message: Message;
   onBlockClick?: (type: BlockType) => void;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
   message,
-  isUser,
-  children,
-  blocks = [],
-  showBlocks = false,
-  code,
   onBlockClick
 }) => {
   const [copied, setCopied] = useState(false);
@@ -33,9 +21,18 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const [isProcessingClick, setIsProcessingClick] = useState(false);
   const messageId = useRef(`chatmsg-${Date.now()}`).current;
   
+  const { 
+    id, 
+    text, 
+    isUser, 
+    blocks = [], 
+    showBlocks = false,
+    code
+  } = message;
+  
   console.log(`[ChatMessage][${messageId}] Rendering with props:`, { 
     isUser, 
-    messagePreview: message?.substring(0, 30),
+    messagePreview: text?.substring(0, 30),
     hasBlocks: blocks && blocks.length > 0,
     showBlocks,
     blocksData: blocks
@@ -68,7 +65,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   }, [blocks, showBlocks, messageId]);
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(message);
+    navigator.clipboard.writeText(text);
     setCopied(true);
     toast.success("Message copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
@@ -122,13 +119,22 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         
         {/* Message content */}
         <div className="prose prose-sm max-w-none">
-          <p className={`whitespace-pre-line ${isUser ? 'text-white' : 'text-foreground'}`}>{message}</p>
+          <p className={`whitespace-pre-line ${isUser ? 'text-white' : 'text-foreground'}`}>{text}</p>
           
           {/* Code block if provided */}
           {code && <CodeBlock code={code.snippet} language={code.language} />}
           
           {/* Additional content (e.g., table of contents) */}
-          {children}
+          {message.tableOfContents && (
+            <div className="mt-2">
+              <h4 className="text-sm font-medium mb-2">Table of Contents</h4>
+              <ul className="list-disc pl-5 space-y-1">
+                {message.tableOfContents.map((section, idx) => (
+                  <li key={idx} className="text-sm">{section}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         
         {/* Learning blocks - Only show on welcome messages, not in regular chat */}
