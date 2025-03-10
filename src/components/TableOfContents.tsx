@@ -220,13 +220,6 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         className="bg-white/90 backdrop-blur-sm rounded-xl p-5 shadow-sm hover:shadow-magical transition-all duration-300 relative overflow-hidden"
         ref={tocRef}
       >
-        {/* Debug info - remove in production */}
-        <div className="border border-yellow-200 bg-yellow-50 p-2 rounded mb-3 text-xs text-yellow-800">
-          <p>Sections count: {sections.length}</p>
-          <p>Processed sections: {processedSections.length}</p>
-          <p>Completed sections: {completedSections.length}</p>
-        </div>
-        
         {/* Decorative background elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-wonder-purple/5 to-transparent pointer-events-none"></div>
         <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-gradient-radial from-wonder-purple/10 to-transparent rounded-full"></div>

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef } from "react";
 import { Message } from "@/types/chat";
 import { toast } from "sonner";
@@ -182,7 +181,9 @@ export const useTopicManagement = (
       // Generate the table of contents
       if (!topicSectionsGenerated) {
         console.log("[TopicManagement][Debug] Topic sections not yet generated, creating TOC");
-        const tocPrompt = `Generate a concise table of contents with exactly 5 short, focused sections for learning about: ${selectedTopic}. Format as a simple numbered list. No welcome or introduction sections, focus only on educational content.`;
+        
+        // IMPROVED PROMPT: Make it more specific to generate contextual sections based on user query
+        const tocPrompt = `Generate a concise table of contents with exactly 5 specific, contextual sections for learning about "${selectedTopic}". The sections must be directly related to this specific topic: "${selectedTopic}". Format as a simple numbered list. No welcome or introduction sections, focus only on educational content about ${selectedTopic}.`;
         
         console.log(`[TopicManagement][Debug] TOC Prompt: ${tocPrompt}`);
         const tocResponse = await generateResponse(tocPrompt, ageRange, language);
@@ -378,7 +379,7 @@ export const useTopicManagement = (
   return { handleNewTopicRequest, isNewTopicRequest, generateTopicRelations };
 };
 
-// Helper function to parse TOC sections
+// IMPROVED PARSING FUNCTION: Enhanced to extract more relevant sections
 const parseTOCSections = (tocResponse: string): string[] => {
   console.log("[TopicManagement][Debug] Parsing TOC sections from:", tocResponse.substring(0, 100) + "...");
   

@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -312,15 +313,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       ref={chatHistoryRef}
     >
       {currentSection && renderTopicPill()}
-      
-      {/* Debug panel for development (remove in production) */}
-      <div className="p-2 bg-yellow-100 border border-yellow-300 text-xs text-yellow-800 mx-4 mb-4 rounded-lg">
-        <p>Debug Info:</p>
-        <p>Total Messages: {messages.length}</p>
-        <p>TOC Messages: {messages.filter(m => m.tableOfContents).length}</p>
-        <p>TOC Sections: {introMessage?.tableOfContents?.length || 0}</p>
-        <p>Current Section: {currentSection || "None"}</p>
-      </div>
       
       {/* Main chat content */}
       <div className="relative">
