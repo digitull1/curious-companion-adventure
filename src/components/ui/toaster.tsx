@@ -14,8 +14,8 @@ export function Toaster() {
         error: <Lightbulb className="h-5 w-5 text-wonder-coral" />,
         info: <Star className="h-5 w-5 text-wonder-yellow" />,
         warning: <Sparkles className="h-5 w-5 text-wonder-purple" />,
-        // Fix: Rename 'default' to a supported icon type
-        normal: <Award className="h-5 w-5 text-wonder-blue" />,
+        // Fix: Use a supported icon type instead of 'normal'
+        default: <Award className="h-5 w-5 text-wonder-blue" />,
       }}
       toastOptions={{
         classNames: {
@@ -30,7 +30,7 @@ export function Toaster() {
           warning: "group-[.toast]:bg-gradient-to-br group-[.toast]:from-wonder-purple/10 group-[.toast]:to-wonder-purple-light/5 group-[.toast]:border-wonder-purple/20",
         },
         duration: 4000,
-        // Fix: Remove unsupported 'animationDuration' property
+        // Removed unsupported 'animationDuration' property
       }}
     />
   );
