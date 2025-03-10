@@ -75,10 +75,11 @@ const Index = () => {
     e.preventDefault();
     
     if (!isEmailValid) {
-      // Fix: Update toast to use the correct Sonner format
+      // Fix: Update toast to use the correct Sonner format without 'variant'
+      // Sonner uses 'error' type for destructive toasts
       toast("Invalid email", {
         description: "Please enter a valid email address.",
-        variant: "destructive"
+        type: "error"
       });
       return;
     }
