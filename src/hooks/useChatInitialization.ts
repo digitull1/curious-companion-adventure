@@ -55,14 +55,33 @@ export const useChatInitialization = (
         
         setSuggestedTopics(finalTopics);
         
+        // Get previous topics from localStorage if available
+        const previousTopicsJson = localStorage.getItem("wonderwhiz_previous_topics");
+        const previousTopics = previousTopicsJson ? JSON.parse(previousTopicsJson) : [];
+        
         // Create personalized welcome message with name
         let welcomeText = "";
         
         if (language === "en") {
-          welcomeText = `Hi ${userName}! I'm your WonderWhiz assistant, created by leading IB educationalists and Cambridge University child psychologists. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`;
+          if (previousTopics.length > 0) {
+            // Returning user with previous topics
+            const lastTopic = previousTopics[previousTopics.length - 1];
+            const suggestedTopic = finalTopics[0]; // Use the first topic as a suggestion
+            
+            welcomeText = `Hey ${userName}! 👋 Last time we learned about "${lastTopic}". Would you like to explore "${suggestedTopic}" today? Or ask me anything else you're curious about!`;
+          } else {
+            // New user or no previous topics
+            welcomeText = `Hey ${userName}! 👋 I'm your WonderWhiz assistant. Ask me anything you're curious about, get help with homework, or use me as a dictionary. What would you like to learn today?`;
+          }
         } else {
           // This will be translated by the API for other languages
-          welcomeText = `Hi ${userName}! I'm your WonderWhiz assistant. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`;
+          // Using simpler message for translation purposes
+          if (previousTopics.length > 0) {
+            const lastTopic = previousTopics[previousTopics.length - 1];
+            welcomeText = `Hey ${userName}! Last time we learned about "${lastTopic}". What would you like to explore today?`;
+          } else {
+            welcomeText = `Hey ${userName}! I'm your WonderWhiz assistant. What would you like to learn today?`;
+          }
         }
         
         const welcomeMessage: Message = {
@@ -90,7 +109,7 @@ export const useChatInitialization = (
         // Fallback welcome message
         const welcomeMessage: Message = {
           id: "welcome",
-          text: `Hi ${userName}! I'm your WonderWhiz assistant. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`,
+          text: `Hey ${userName}! 👋 I'm your WonderWhiz assistant. Ask me anything you're curious about! What would you like to learn today?`,
           isUser: false,
           blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
           showBlocks: true,

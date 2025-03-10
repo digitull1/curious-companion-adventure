@@ -38,6 +38,14 @@ const Chat = () => {
     chatState.setPoints
   );
   
+  // Save completed topics to localStorage when they change
+  useEffect(() => {
+    if (chatState.previousTopics.length > 0) {
+      localStorage.setItem("wonderwhiz_previous_topics", JSON.stringify(chatState.previousTopics));
+      console.log("Saved previous topics to localStorage:", chatState.previousTopics);
+    }
+  }, [chatState.previousTopics]);
+  
   // Initialize topic management hook
   const { handleNewTopicRequest, isNewTopicRequest, generateTopicRelations } = useTopicManagement(
     chatState.selectedTopic,
