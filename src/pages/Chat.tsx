@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -317,19 +316,6 @@ const Chat = () => {
           onClose={() => chatState.setShowAgeSelector(false)}
         />
       )}
-      
-      {/* Footer - Now with a link for suggested prompts */}
-      <div className="bg-white/80 backdrop-blur-sm border-t border-wonder-purple/10 py-2 px-4 flex justify-between items-center z-10">
-        <span className="text-xs text-muted-foreground">
-          <span className="bg-gradient-to-r from-wonder-purple to-wonder-purple-light bg-clip-text text-transparent font-medium font-bubbly">WonderWhiz</span> by leading IB educationalists & Cambridge University child psychologists
-        </span>
-        <button 
-          onClick={() => chatState.setShowSuggestedPrompts(true)}
-          className="text-xs text-wonder-purple hover:text-wonder-purple-dark transition-colors"
-        >
-          Need ideas?
-        </button>
-      </div>
     </div>
   );
 };

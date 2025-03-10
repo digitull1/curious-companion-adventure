@@ -85,7 +85,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-t from-white/95 via-white/90 to-white/70 backdrop-blur-lg pt-6 pb-4 px-4 md:px-8 z-20">
+    <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-t from-white/95 via-white/90 to-white/70 backdrop-blur-lg pt-8 pb-6 px-4 md:px-8 z-20">
       {/* Suggested topics overlay */}
       {showSuggestedPrompts && (
         <SuggestedTopics
@@ -108,10 +108,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onBlur={() => setIsFocused(false)}
             placeholder={getPlaceholder()}
             disabled={isProcessing}
-            className={`w-full pl-12 pr-16 py-4 rounded-full border focus:outline-none focus:ring-2 shadow-magical bg-white/90 backdrop-blur-sm placeholder:text-slate-400 text-foreground font-comic text-base transition-all duration-300 ${
+            className={`w-full pl-12 pr-20 py-5 rounded-2xl border-2 focus:outline-none focus:ring-2 shadow-magical bg-white/90 backdrop-blur-sm placeholder:text-slate-400 text-foreground font-comic text-base transition-all duration-300 ${
               isFocused 
-                ? 'border-wonder-purple/50 focus:ring-wonder-purple/30 shadow-magical-hover' 
-                : 'border-wonder-purple/20 focus:ring-wonder-purple/30 shadow-wonder'
+                ? 'border-wonder-purple/60 focus:ring-wonder-purple/40 shadow-magical-hover' 
+                : 'border-wonder-purple/30 focus:ring-wonder-purple/30 shadow-wonder'
             }`}
           />
           
@@ -123,6 +123,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
             )}
           </div>
           
+          {/* Lightbulb for ideas inside the input */}
+          <button
+            onClick={() => setShowSuggestedPrompts(true)}
+            className="absolute right-16 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full flex items-center justify-center transition-all duration-300 bg-wonder-yellow/10 text-wonder-yellow hover:bg-wonder-yellow/20 hover:scale-110"
+            aria-label="Need ideas?"
+          >
+            <Lightbulb className="h-5 w-5 animate-pulse-soft" />
+            <span className="absolute -top-8 bg-wonder-yellow/90 text-white text-xs py-1 px-2 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+              Need ideas?
+            </span>
+          </button>
+          
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
             {/* Voice Input Button */}
             <button
@@ -130,7 +142,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
               className={`w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 
                 ${isListening 
                   ? "bg-wonder-coral text-white animate-pulse shadow-magical" 
-                  : "bg-white border border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-wonder-purple"}`}
+                  : "bg-white border-2 border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-wonder-purple"}`}
+              aria-label={isListening ? "Stop listening" : "Start voice input"}
             >
               {isListening ? (
                 <>
@@ -152,16 +165,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 }
               }}
               disabled={!inputValue.trim() || isProcessing}
-              className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 ${
+              className={`w-11 h-11 flex items-center justify-center rounded-full transition-all duration-300 ${
                 inputValue.trim() && !isProcessing
                   ? "bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white shadow-magical hover:shadow-magical-hover transform hover:-translate-y-0.5 hover:scale-105"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
               } relative overflow-hidden`}
+              aria-label="Send message"
             >
               {isProcessing ? (
                 <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
-                <Send className="h-4 w-4" />
+                <Send className="h-5 w-5" />
               )}
               
               {/* Ripple effect on send */}
@@ -171,16 +185,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
             </button>
           </div>
         </div>
-        
-        {/* Ideas button with enhanced appearance */}
-        <button
-          onClick={() => setShowSuggestedPrompts(true)}
-          className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/20 text-wonder-purple hover:bg-wonder-purple/20 transition-colors shadow-sm hover:shadow-magical"
-        >
-          <Lightbulb className="h-3 w-3 animate-pulse-soft" />
-          <span>Need ideas?</span>
-          <Sparkles className="h-3 w-3 ml-1 text-wonder-yellow animate-sparkle" />
-        </button>
       </div>
     </div>
   );
