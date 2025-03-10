@@ -1,6 +1,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
-import { MessageCircle, Send, Sparkles, Lightbulb, Search, Mic, MicOff } from "lucide-react";
+import { MessageCircle, Send, Sparkles, Lightbulb, Search, Mic, MicOff, Image, Camera } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import VoiceInput from "@/components/VoiceInput";
 import SuggestedTopics from "@/components/SuggestedTopics";
 
@@ -18,6 +19,8 @@ interface ChatInputProps {
   toggleListening: () => void;
   onSuggestedPromptClick: (prompt: string) => void;
   setShowSuggestedPrompts: (show: boolean) => void;
+  onImageUpload?: (file: File) => void;
+  generateFreshTopics?: () => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -33,12 +36,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onVoiceInput,
   toggleListening,
   onSuggestedPromptClick,
-  setShowSuggestedPrompts
+  setShowSuggestedPrompts,
+  onImageUpload,
+  generateFreshTopics
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isRippling, setIsRippling] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   
   const placeholders = [
     "Ask me anything...",
@@ -71,7 +78,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   // Handle send button ripple effect
   const triggerRipple = () => {
-    if (!isRippling && inputValue.trim() && !isProcessing) {
+    if (!isRippling && (inputValue.trim() || selectedImage) && !isProcessing) {
       setIsRippling(true);
       setTimeout(() => setIsRippling(false), 500);
     }
@@ -82,6 +89,33 @@ const ChatInput: React.FC<ChatInputProps> = ({
       return `Ask me about ${selectedTopic} or explore a section...`;
     }
     return placeholders[placeholderIndex];
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setSelectedImage(file);
+      
+      // If there's an image upload handler, call it
+      if (onImageUpload) {
+        onImageUpload(file);
+      }
+    }
+  };
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleIdeasClick = () => {
+    // If generateFreshTopics is provided, call it first to get fresh topics
+    if (generateFreshTopics) {
+      generateFreshTopics();
+    }
+    // Then show the suggested prompts
+    setShowSuggestedPrompts(true);
   };
 
   return (
@@ -137,78 +171,155 @@ const ChatInput: React.FC<ChatInputProps> = ({
               className="flex-1 bg-transparent border-none outline-none focus:outline-none focus:ring-0 
                 text-foreground font-comic text-lg placeholder:text-slate-400/80"
             />
+
+            {/* Hidden file input for image upload */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={isProcessing}
+            />
           </div>
           
           {/* Action buttons container with proper spacing - Apple-inspired clean layout */}
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+            {/* Image upload button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={triggerFileInput}
+                    className="h-10 w-10 mr-3 rounded-full flex items-center justify-center 
+                      bg-wonder-teal text-white hover:bg-wonder-teal-dark 
+                      shadow-[0_4px_10px_rgba(45,212,191,0.3)] hover:shadow-[0_4px_15px_rgba(45,212,191,0.4)]
+                      transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    aria-label="Upload an image"
+                    disabled={isProcessing}
+                  >
+                    <Camera className="h-5 w-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-wonder-teal text-white font-comic text-sm py-2 px-3 rounded-xl">
+                  <p>Upload a picture of your homework!</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
             {/* Ideas button - inspired by Chupa Chups colorful design */}
-            <button
-              onClick={() => setShowSuggestedPrompts(true)}
-              className="h-10 w-10 mr-3 rounded-full flex items-center justify-center 
-                bg-wonder-yellow text-white hover:bg-wonder-yellow-dark 
-                shadow-[0_4px_10px_rgba(250,204,21,0.3)] hover:shadow-[0_4px_15px_rgba(250,204,21,0.4)]
-                transition-all duration-300 hover:scale-105 active:scale-95 group"
-              aria-label="Need ideas?"
-            >
-              <Lightbulb className="h-5 w-5" />
-              <span className="absolute -top-12 bg-wonder-yellow text-white text-xs py-2 px-3 rounded-xl 
-                opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap
-                shadow-[0_4px_10px_rgba(0,0,0,0.1)]">
-                Need ideas?
-              </span>
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleIdeasClick}
+                    className="h-10 w-10 mr-3 rounded-full flex items-center justify-center 
+                      bg-wonder-yellow text-white hover:bg-wonder-yellow-dark 
+                      shadow-[0_4px_10px_rgba(250,204,21,0.3)] hover:shadow-[0_4px_15px_rgba(250,204,21,0.4)]
+                      transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    aria-label="Need ideas?"
+                  >
+                    <Lightbulb className="h-5 w-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-wonder-yellow text-white font-comic text-sm py-2 px-3 rounded-xl">
+                  <p>Click for fun learning topics!</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             
             {/* Voice Input Button - inspired by Apple's clean design */}
-            <button
-              onClick={toggleListening}
-              className={`h-10 w-10 mr-3 flex items-center justify-center rounded-full transition-all duration-300 
-                ${isListening 
-                  ? "bg-wonder-coral text-white shadow-[0_4px_10px_rgba(248,113,158,0.4)]" 
-                  : "bg-white border-2 border-gray-200 text-gray-400 hover:border-wonder-purple/30 hover:text-wonder-purple"}`}
-              aria-label={isListening ? "Stop listening" : "Start voice input"}
-            >
-              {isListening ? (
-                <>
-                  <MicOff className="h-5 w-5" />
-                  {/* Ripple animation for active recording */}
-                  <span className="absolute inset-0 rounded-full animate-ripple bg-wonder-coral/30"></span>
-                </>
-              ) : (
-                <Mic className="h-5 w-5" />
-              )}
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={toggleListening}
+                    className={`h-10 w-10 mr-3 flex items-center justify-center rounded-full transition-all duration-300 
+                      ${isListening 
+                        ? "bg-wonder-coral text-white shadow-[0_4px_10px_rgba(248,113,158,0.4)]" 
+                        : "bg-white border-2 border-gray-200 text-gray-400 hover:border-wonder-purple/30 hover:text-wonder-purple"}`}
+                    aria-label={isListening ? "Stop listening" : "Start voice input"}
+                  >
+                    {isListening ? (
+                      <>
+                        <MicOff className="h-5 w-5" />
+                        {/* Ripple animation for active recording */}
+                        <span className="absolute inset-0 rounded-full animate-ripple bg-wonder-coral/30"></span>
+                      </>
+                    ) : (
+                      <Mic className="h-5 w-5" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-wonder-coral text-white font-comic text-sm py-2 px-3 rounded-xl">
+                  <p>{isListening ? "Stop talking" : "Talk to me!"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             
             {/* Send Button - inspired by Pixar's dimensional style */}
-            <button
-              onClick={() => {
-                if (inputValue.trim() && !isProcessing) {
-                  triggerRipple();
-                  onSendMessage();
-                }
-              }}
-              disabled={!inputValue.trim() || isProcessing}
-              className={`w-12 h-12 flex items-center justify-center rounded-full transition-all duration-300 ${
-                inputValue.trim() && !isProcessing
-                  ? "bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white shadow-[0_8px_20px_rgba(124,58,237,0.3)] hover:shadow-[0_10px_25px_rgba(124,58,237,0.4)] transform hover:-translate-y-0.5 hover:scale-105"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              } relative overflow-hidden`}
-              aria-label="Send message"
-            >
-              {isProcessing ? (
-                <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-              
-              {/* Ripple effect on send */}
-              {isRippling && (
-                <span className="absolute inset-0 bg-white/30 animate-ripple rounded-full"></span>
-              )}
-              
-              {/* 3D effect for the button - Pixar style */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/10 to-transparent opacity-30"></div>
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => {
+                      if ((inputValue.trim() || selectedImage) && !isProcessing) {
+                        triggerRipple();
+                        onSendMessage();
+                        setSelectedImage(null);
+                      }
+                    }}
+                    disabled={(!inputValue.trim() && !selectedImage) || isProcessing}
+                    className={`w-12 h-12 flex items-center justify-center rounded-full transition-all duration-300 ${
+                      (inputValue.trim() || selectedImage) && !isProcessing
+                        ? "bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white shadow-[0_8px_20px_rgba(124,58,237,0.3)] hover:shadow-[0_10px_25px_rgba(124,58,237,0.4)] transform hover:-translate-y-0.5 hover:scale-105"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    } relative overflow-hidden`}
+                    aria-label="Send message"
+                  >
+                    {isProcessing ? (
+                      <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Send className="h-5 w-5" />
+                    )}
+                    
+                    {/* Ripple effect on send */}
+                    {isRippling && (
+                      <span className="absolute inset-0 bg-white/30 animate-ripple rounded-full"></span>
+                    )}
+                    
+                    {/* 3D effect for the button - Pixar style */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/10 to-transparent opacity-30"></div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-wonder-purple text-white font-comic text-sm py-2 px-3 rounded-xl">
+                  <p>Send your question!</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
+
+          {/* Display selected image preview if any */}
+          {selectedImage && (
+            <div className="absolute bottom-full left-0 mb-2 p-2 bg-white/90 rounded-lg shadow-md border border-wonder-purple/20 flex items-center space-x-2">
+              <div className="w-10 h-10 bg-gray-100 rounded-md overflow-hidden">
+                <img 
+                  src={URL.createObjectURL(selectedImage)} 
+                  alt="Selected" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="text-sm text-gray-700 font-medium">{selectedImage.name}</span>
+              <button 
+                onClick={() => setSelectedImage(null)} 
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Playful decorative elements - inspired by Disney's magical worlds */}

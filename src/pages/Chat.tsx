@@ -14,6 +14,7 @@ import { useMessageHandling } from "@/hooks/useMessageHandling";
 import { useTopicManagement } from "@/hooks/useTopicManagement";
 import { useSectionHandling } from "@/hooks/useSectionHandling";
 import { handleBlockClick as handleLearningBlockClick } from "@/services/learningBlockService";
+import { supabase } from "@/integrations/supabase/client";
 
 const Chat = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const Chat = () => {
   const [avatar, setAvatar] = useState(localStorage.getItem("wonderwhiz_avatar") || "explorer");
   const [userName, setUserName] = useState(localStorage.getItem("wonderwhiz_username") || "Explorer");
   const [language, setLanguage] = useState(localStorage.getItem("wonderwhiz_language") || "en");
+  const [processingImage, setProcessingImage] = useState(false);
   
   // Use our custom hooks to manage state and logic
   const chatState = useChatState(userName, ageRange, avatar, language);
@@ -129,6 +131,154 @@ const Chat = () => {
     clearChat();
   }, []);
 
+  // Generate fresh topics for the ideas feature
+  const generateFreshTopics = useCallback(async () => {
+    try {
+      chatState.setIsProcessing(true);
+      const prompt = "Generate 6 fascinating educational topics for children aged " + ageRange + 
+                     ". Topics should be diverse and cover different subject areas. Return just the list of topics with no numbering or introduction.";
+      
+      const response = await chatState.generateResponse(prompt, ageRange, language);
+      
+      // Process the response to extract topics
+      const topics = response
+        .split(/\n+/)
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith("Here") && !line.includes("topics") && !line.includes("Topics"))
+        .map(line => line.replace(/^\d+\.\s*/, '').replace(/^-\s*/, ''))
+        .slice(0, 6);
+      
+      console.log("Generated fresh topics:", topics);
+      
+      if (topics.length > 0) {
+        chatState.setSuggestedTopics(topics);
+      } else {
+        // Fallback if no valid topics were extracted
+        chatState.setSuggestedTopics(chatState.defaultSuggestedPrompts);
+      }
+    } catch (error) {
+      console.error("Error generating fresh topics:", error);
+      toast.error("Couldn't generate new topics. Try again later!");
+      chatState.setSuggestedTopics(chatState.defaultSuggestedPrompts);
+    } finally {
+      chatState.setIsProcessing(false);
+    }
+  }, [ageRange, language, chatState]);
+
+  // Handle image upload
+  const handleImageUpload = useCallback(async (file: File) => {
+    if (!file) return;
+    
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Image too large! Please upload an image smaller than 5MB.");
+      return;
+    }
+    
+    // Valid image types
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Please upload a valid image (JPEG, PNG, GIF, WEBP).");
+      return;
+    }
+    
+    try {
+      setProcessingImage(true);
+      chatState.setIsProcessing(true);
+      
+      // Create a unique ID for the image
+      const imageId = Date.now().toString();
+      const userMessageId = `user-image-${imageId}`;
+      
+      // Add image message from user
+      chatState.setMessages(prev => [
+        ...prev, 
+        {
+          id: userMessageId,
+          text: "[Image uploaded]",
+          isUser: true,
+          imageUrl: URL.createObjectURL(file)
+        }
+      ]);
+      
+      // Show typing indicator
+      chatState.setShowTypingIndicator(true);
+      
+      // Convert image to base64
+      const base64Image = await readFileAsBase64(file);
+      
+      // Call the process-image edge function
+      const { data, error } = await supabase.functions.invoke('process-image', {
+        body: { 
+          image: base64Image,
+          ageRange,
+          language
+        }
+      });
+      
+      if (error) {
+        throw new Error(`Error processing image: ${error.message}`);
+      }
+      
+      // Hide typing indicator
+      chatState.setShowTypingIndicator(false);
+      
+      // Add AI response message
+      const aiMessageId = `ai-image-${imageId}`;
+      chatState.setMessages(prev => [
+        ...prev,
+        {
+          id: aiMessageId,
+          text: data.content,
+          isUser: false,
+          blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
+          showBlocks: true
+        }
+      ]);
+      
+      // Award points for image processing
+      chatState.setPoints(prev => prev + 15);
+      
+      toast.success("Image analyzed successfully!");
+    } catch (error) {
+      console.error("Error processing image:", error);
+      chatState.setShowTypingIndicator(false);
+      toast.error("Failed to process image. Please try again.");
+      
+      // Add error message
+      chatState.setMessages(prev => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          text: "I had trouble understanding that image. Could you try another one or describe what you wanted to know?",
+          isUser: false,
+          error: {
+            message: error instanceof Error ? error.message : "Unknown error processing image"
+          }
+        }
+      ]);
+    } finally {
+      setProcessingImage(false);
+      chatState.setIsProcessing(false);
+    }
+  }, [ageRange, language, chatState]);
+
+  // Helper function to read file as base64
+  const readFileAsBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to convert image to base64'));
+        }
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSendMessage = async () => {
     if (!chatState.inputValue.trim() || chatState.isProcessing) return;
 
@@ -200,12 +350,27 @@ const Chat = () => {
 
   const handleSuggestedPromptClick = useCallback((prompt: string) => {
     console.log("Suggested prompt clicked:", prompt);
-    chatState.setInputValue(prompt);
-    // Auto-send the suggestion
-    setTimeout(() => {
-      handleSendMessage();
-    }, 100);
-  }, [chatState.setInputValue]);
+    
+    // Directly process the suggested topic instead of putting it in the input field
+    chatState.setIsProcessing(true);
+    
+    // Add user message
+    const userMessageId = `user-${Date.now()}`;
+    chatState.setMessages(prev => [
+      ...prev,
+      {
+        id: userMessageId,
+        text: prompt,
+        isUser: true
+      }
+    ]);
+    
+    // Process the prompt
+    processMessage(prompt, false, true).then(() => {
+      // Add points for using a suggested prompt
+      chatState.setPoints(prev => prev + 5);
+    });
+  }, [chatState, processMessage]);
 
   const handleVoiceInput = useCallback((transcript: string) => {
     chatState.setInputValue(transcript);
@@ -290,7 +455,7 @@ const Chat = () => {
           {/* Chat Input */}
           <ChatInput 
             inputValue={chatState.inputValue}
-            isProcessing={chatState.isProcessing}
+            isProcessing={chatState.isProcessing || processingImage}
             selectedTopic={chatState.selectedTopic}
             suggestedPrompts={chatState.suggestedTopics.length > 0 ? chatState.suggestedTopics : chatState.defaultSuggestedPrompts}
             isListening={chatState.isListening}
@@ -302,6 +467,8 @@ const Chat = () => {
             toggleListening={toggleListening}
             onSuggestedPromptClick={handleSuggestedPromptClick}
             setShowSuggestedPrompts={chatState.setShowSuggestedPrompts}
+            onImageUpload={handleImageUpload}
+            generateFreshTopics={generateFreshTopics}
           />
         </div>
       </main>
