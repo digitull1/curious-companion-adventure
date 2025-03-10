@@ -9,6 +9,7 @@ export const useRelatedTopics = (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>
 ) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   
   const generateRelatedTopics = useCallback(
     async (topic: string, ageRange: string, language: string): Promise<string[]> => {
@@ -23,9 +24,13 @@ export const useRelatedTopics = (
       
       console.log(`[RelatedTopics] Generating related topics for: ${topic} with language: ${language}`);
       setIsGenerating(true);
+      setGenerationError(null);
       
       try {
-        const prompt = `Generate 5 related topics that would interest someone learning about "${topic}". Return these as a simple comma-separated list with no numbering, introduction or explanation. Make each suggestion brief (2-5 words).`;
+        // Create a more engaging prompt for kids that will generate interesting related topics
+        const prompt = `Generate 5 fascinating related topics that would spark a child's curiosity about "${topic}". 
+                        Return these as a simple comma-separated list with no numbering, introduction or explanation. 
+                        Make each suggestion brief (2-5 words), fun and intriguing to a ${ageRange} year old.`;
         
         const response = await generateResponse(prompt, ageRange, language);
         
@@ -33,13 +38,25 @@ export const useRelatedTopics = (
         const topics = parseTopicsFromResponse(response);
         console.log(`[RelatedTopics] Generated ${topics.length} topics:`, topics);
         
+        // Show a fun success message if topics were generated
+        if (topics.length > 0) {
+          toast.success("Discovered exciting new adventures!", {
+            description: "Check out these amazing related topics!",
+            duration: 3000,
+          });
+        }
+        
         // Cache the results
         topicsCache.set(cacheKey, topics);
         
         return topics;
       } catch (error) {
         console.error("[RelatedTopics] Error generating related topics:", error);
-        toast.error("Couldn't generate related topics right now.");
+        const errorMessage = "Couldn't find new adventures right now. Let's try again later!";
+        setGenerationError(errorMessage);
+        toast.error("Oops! Adventure Detour!", {
+          description: errorMessage,
+        });
         return [];
       } finally {
         setIsGenerating(false);
@@ -50,7 +67,8 @@ export const useRelatedTopics = (
 
   return {
     generateRelatedTopics,
-    isGenerating
+    isGenerating,
+    generationError
   };
 };
 
@@ -78,8 +96,26 @@ const parseTopicsFromResponse = (response: string): string[] => {
     return lineList.slice(0, 5);
   }
   
-  // If all else fails, just return a partial list or empty list
-  return commaList.length > 0 ? commaList.slice(0, 5) : ['More about ' + response.slice(0, 20)];
+  // Try to parse as semicolon-separated list
+  const semicolonList = response
+    .split(';')
+    .map(item => item.trim())
+    .filter(item => item.length > 0 && item.length < 50);
+    
+  if (semicolonList.length >= 3) {
+    return semicolonList.slice(0, 5);
+  }
+  
+  // If all else fails, create some default related topics based on the original topic
+  const defaultTopics = [
+    `More about ${response.slice(0, 20)}`,
+    `Fun facts about ${response.slice(0, 15)}`,
+    `Amazing ${response.slice(0, 15)} adventures`,
+    `${response.slice(0, 15)} experiments`,
+    `${response.slice(0, 15)} mysteries`
+  ];
+  
+  return commaList.length > 0 ? commaList.slice(0, 5) : defaultTopics;
 };
 
 export default useRelatedTopics;

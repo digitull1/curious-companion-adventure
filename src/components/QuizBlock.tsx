@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { launchConfetti } from "@/utils/confetti";
-import { Check, X, Trophy, LightbulbIcon } from "lucide-react";
-import { animate } from "@motionone/dom";
+import { Check, X, Trophy, LightbulbIcon, Star, Award, PartyPopper } from "lucide-react";
+import { animate, stagger } from "@motionone/dom";
 import { toast } from "sonner";
 
 interface QuizBlockProps {
@@ -17,15 +17,33 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [showFunFact, setShowFunFact] = useState<boolean>(false);
+  const [score, setScore] = useState<number>(0);
+  const [streak, setStreak] = useState<number>(0);
   const quizRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<(HTMLDivElement | null)[]>([]);
   const funFactRef = useRef<HTMLDivElement>(null);
+  const correctSoundRef = useRef<HTMLAudioElement | null>(null);
+  const incorrectSoundRef = useRef<HTMLAudioElement | null>(null);
   
   // Debug log to verify quiz data
   useEffect(() => {
     console.log("QuizBlock rendered with data:", { question, options, correctAnswer, funFact });
   }, [question, options, correctAnswer, funFact]);
   
+  // Initialize sound effects (in a real app, these would be actual audio files)
+  useEffect(() => {
+    if (typeof Audio !== 'undefined') {
+      try {
+        // These would be replaced with actual sound files in a production app
+        correctSoundRef.current = new Audio();
+        incorrectSoundRef.current = new Audio();
+      } catch (e) {
+        console.log("Audio not supported in this environment");
+      }
+    }
+  }, []);
+  
+  // Animate the quiz when it appears
   useEffect(() => {
     if (quizRef.current) {
       animate(
@@ -33,8 +51,17 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
         { opacity: [0, 1], y: [20, 0] },
         { duration: 0.5, easing: [0.25, 1, 0.5, 1] }
       );
+      
+      // Animate options with stagger
+      if (optionsRef.current.filter(Boolean).length) {
+        animate(
+          optionsRef.current.filter(Boolean) as HTMLElement[],
+          { opacity: [0, 1], x: [-10, 0] },
+          { duration: 0.3, delay: stagger(0.1), easing: "ease-out" }
+        );
+      }
     }
-  }, []);
+  }, [options]);
 
   // Animate fun fact when it appears
   useEffect(() => {
@@ -69,11 +96,28 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
       setIsSubmitted(true);
       
       if (correct) {
+        // Update score and streak
+        setScore(prev => prev + 10);
+        setStreak(prev => prev + 1);
+        
+        // Play success sound effect
+        if (correctSoundRef.current) {
+          try {
+            correctSoundRef.current.play().catch(e => console.log("Could not play sound", e));
+          } catch (e) {
+            console.log("Error playing sound", e);
+          }
+        }
+        
         // Launch confetti animation on correct answer
         launchConfetti();
         
-        // Show toast for correct answer
-        toast.success("Great job! That's correct! 🎉");
+        // Show toast for correct answer with streak info
+        const streakText = streak >= 1 ? `🔥 ${streak + 1} answer streak!` : '';
+        toast.success(`Great job! That's correct! 🎉`, {
+          description: streakText ? streakText : "You earned 10 points!",
+          duration: 4000,
+        });
         
         // Show fun fact after a short delay
         setTimeout(() => {
@@ -104,23 +148,42 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
           }, 3000);
         }
       } else {
+        // Reset streak on wrong answer
+        setStreak(0);
+        
+        // Play error sound effect
+        if (incorrectSoundRef.current) {
+          try {
+            incorrectSoundRef.current.play().catch(e => console.log("Could not play sound", e));
+          } catch (e) {
+            console.log("Error playing sound", e);
+          }
+        }
+        
         // Show toast for incorrect answer
-        toast.error("Not quite right. Try again next time!");
+        toast.error("Not quite right. Try again next time!", {
+          description: "Don't worry, learning is about trying!",
+          duration: 4000,
+        });
       }
     }
   };
 
   const getOptionClassName = (index: number) => {
-    let className = "quiz-answer flex items-center mb-3 cursor-pointer transition-all duration-300";
+    let className = "quiz-answer flex items-center mb-3 cursor-pointer transition-all duration-300 p-3 rounded-lg relative overflow-hidden";
     
     if (isSubmitted) {
       if (index === correctAnswer) {
-        className += " quiz-answer-correct";
+        className += " bg-gradient-to-r from-wonder-green/20 to-wonder-green/5 border border-wonder-green/30 shadow-sm";
       } else if (index === selectedAnswer) {
-        className += " quiz-answer-incorrect";
+        className += " bg-gradient-to-r from-wonder-coral/20 to-wonder-coral/5 border border-wonder-coral/30 shadow-sm";
+      } else {
+        className += " opacity-60";
       }
     } else if (index === selectedAnswer) {
-      className += " quiz-answer-selected";
+      className += " bg-wonder-purple/10 border border-wonder-purple/20 shadow-sm";
+    } else {
+      className += " hover:bg-wonder-purple/5 border border-transparent hover:border-wonder-purple/10";
     }
     
     return className;
@@ -131,7 +194,7 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
     return (
       <div className="mt-4 bg-white rounded-xl p-5 shadow-pixar">
         <div className="text-center p-4">
-          <LightbulbIcon className="h-8 w-8 mx-auto text-wonder-yellow mb-3" />
+          <LightbulbIcon className="h-8 w-8 mx-auto text-wonder-yellow mb-3 animate-pulse-glow" />
           <h3 className="font-bold text-lg mb-2">Quiz Coming Soon!</h3>
           <p className="text-muted-foreground">We're preparing an exciting quiz for you. Check back in a moment!</p>
         </div>
@@ -149,12 +212,30 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
         }}>
       </div>
       
-      <h3 className="font-bold text-lg mb-4 relative">
-        {question}
-        {/* Decorative element */}
-        <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-wonder-purple to-wonder-purple-light rounded-full opacity-70"></div>
-      </h3>
+      {/* Quiz header */}
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-bold text-lg relative flex items-center">
+          <div className="w-7 h-7 rounded-full bg-wonder-purple/20 flex items-center justify-center mr-2 flex-shrink-0">
+            <Trophy className="h-4 w-4 text-wonder-purple" />
+          </div>
+          <span>Quiz Time!</span>
+        </h3>
+        
+        {/* Score display */}
+        {score > 0 && (
+          <div className="flex items-center">
+            <Star className="h-4 w-4 text-wonder-yellow mr-1" />
+            <span className="text-sm font-medium">{score} points</span>
+          </div>
+        )}
+      </div>
       
+      {/* Question */}
+      <div className="mt-3 mb-4 p-3 bg-wonder-purple/5 rounded-lg border border-wonder-purple/10">
+        <p className="font-medium text-foreground">{question}</p>
+      </div>
+      
+      {/* Options */}
       <div className="mb-4 relative z-10">
         {options.map((option, index) => (
           <div 
@@ -181,6 +262,13 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
               </div>
             )}
             <span>{option}</span>
+            
+            {/* Show sparkle animation on correct answer */}
+            {isSubmitted && index === correctAnswer && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                <PartyPopper className="h-4 w-4 text-wonder-yellow animate-bounce-subtle" />
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -189,12 +277,13 @@ const QuizBlock: React.FC<QuizBlockProps> = ({ question, options, correctAnswer,
         <button
           onClick={handleSubmit}
           disabled={selectedAnswer === null}
-          className={`w-full py-3 rounded-lg font-medium transition-all duration-300 btn-bounce ${
+          className={`w-full py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center ${
             selectedAnswer !== null 
-              ? 'bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white shadow-magical hover:shadow-magical-hover'
+              ? 'bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white shadow-magical hover:shadow-magical-hover hover:-translate-y-0.5'
               : 'bg-gray-200 text-gray-500 cursor-not-allowed'
           }`}
         >
+          <Award className={`h-4 w-4 mr-2 ${selectedAnswer !== null ? 'animate-pulse-soft' : ''}`} />
           Check Answer
         </button>
       ) : (

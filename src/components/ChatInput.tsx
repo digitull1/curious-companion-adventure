@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect } from "react";
-import { MessageCircle, Send, Sparkles, Lightbulb, Search } from "lucide-react";
+import { MessageCircle, Send, Sparkles, Lightbulb, Search, Mic, MicOff } from "lucide-react";
 import VoiceInput from "@/components/VoiceInput";
 import SuggestedTopics from "@/components/SuggestedTopics";
 
@@ -38,6 +38,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [isRippling, setIsRippling] = useState(false);
   
   const placeholders = [
     "Ask me anything...",
@@ -67,6 +68,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
       inputRef.current.focus();
     }
   }, []);
+
+  // Handle send button ripple effect
+  const triggerRipple = () => {
+    if (!isRippling && inputValue.trim() && !isProcessing) {
+      setIsRippling(true);
+      setTimeout(() => setIsRippling(false), 500);
+    }
+  };
 
   const getPlaceholder = () => {
     if (selectedTopic) {
@@ -115,37 +124,62 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </div>
           
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            <VoiceInput 
-              onTranscript={onVoiceInput}
-              isListening={isListening}
-              toggleListening={toggleListening}
-            />
-            
+            {/* Voice Input Button */}
             <button
-              onClick={onSendMessage}
+              onClick={toggleListening}
+              className={`w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 
+                ${isListening 
+                  ? "bg-wonder-coral text-white animate-pulse shadow-magical" 
+                  : "bg-white border border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-wonder-purple"}`}
+            >
+              {isListening ? (
+                <>
+                  <MicOff className="h-4 w-4" />
+                  {/* Ripple animation for active recording */}
+                  <span className="absolute inset-0 rounded-full animate-ripple bg-wonder-coral/30"></span>
+                </>
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </button>
+            
+            {/* Send Button */}
+            <button
+              onClick={() => {
+                if (inputValue.trim() && !isProcessing) {
+                  triggerRipple();
+                  onSendMessage();
+                }
+              }}
               disabled={!inputValue.trim() || isProcessing}
               className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 ${
                 inputValue.trim() && !isProcessing
                   ? "bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white shadow-magical hover:shadow-magical-hover transform hover:-translate-y-0.5 hover:scale-105"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}
+              } relative overflow-hidden`}
             >
               {isProcessing ? (
                 <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <Send className="h-4 w-4" />
               )}
+              
+              {/* Ripple effect on send */}
+              {isRippling && (
+                <span className="absolute inset-0 bg-white/30 animate-ripple rounded-full"></span>
+              )}
             </button>
           </div>
         </div>
         
-        {/* Ideas button */}
+        {/* Ideas button with enhanced appearance */}
         <button
           onClick={() => setShowSuggestedPrompts(true)}
-          className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs flex items-center gap-1 px-3 py-1.5 rounded-full bg-wonder-purple/10 text-wonder-purple hover:bg-wonder-purple/20 transition-colors"
+          className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-wonder-purple/10 to-wonder-purple/20 text-wonder-purple hover:bg-wonder-purple/20 transition-colors shadow-sm hover:shadow-magical"
         >
-          <Lightbulb className="h-3 w-3" />
+          <Lightbulb className="h-3 w-3 animate-pulse-soft" />
           <span>Need ideas?</span>
+          <Sparkles className="h-3 w-3 ml-1 text-wonder-yellow animate-sparkle" />
         </button>
       </div>
     </div>
