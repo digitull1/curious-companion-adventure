@@ -27,15 +27,26 @@ export const useRelatedTopics = (
       setGenerationError(null);
       
       try {
-        // Create a more engaging prompt for kids that will generate interesting related topics
-        const prompt = `Generate 5 fascinating related topics that would spark a child's curiosity about "${topic}". 
-                        Return these as a simple comma-separated list with no numbering, introduction or explanation. 
-                        Make each suggestion brief (2-5 words), fun and intriguing to a ${ageRange} year old.`;
+        // Improved prompt to generate more contextual related topics
+        const prompt = `
+          As an engaging educator, generate 5 fascinating related topics that would spark a ${ageRange} year old child's curiosity after learning about "${topic}".
+          
+          Make your suggestions:
+          1. Directly related to aspects of "${topic}"
+          2. Interesting and age-appropriate for a ${ageRange} year old
+          3. Brief (2-5 words)
+          4. Phrased in an intriguing way
+          
+          Return ONLY a simple comma-separated list with no numbering, introduction or explanation.
+          
+          For example, if the topic was "Dinosaurs", you might return:
+          "Prehistoric Plants, Fossil Discovery, Ancient Oceans, Extinction Theories, Modern Dinosaur Relatives"
+        `;
         
         const response = await generateResponse(prompt, ageRange, language);
         
         // Process the response to get a clean array of topics
-        const topics = parseTopicsFromResponse(response);
+        const topics = parseTopicsFromResponse(response, topic);
         console.log(`[RelatedTopics] Generated ${topics.length} topics:`, topics);
         
         // Show a fun success message if topics were generated
@@ -57,7 +68,7 @@ export const useRelatedTopics = (
         toast.error("Oops! Adventure Detour!", {
           description: errorMessage,
         });
-        return [];
+        return generateContextualFallbackTopics(topic);
       } finally {
         setIsGenerating(false);
       }
@@ -73,7 +84,7 @@ export const useRelatedTopics = (
 };
 
 // Helper function to parse topics from the API response
-const parseTopicsFromResponse = (response: string): string[] => {
+const parseTopicsFromResponse = (response: string, originalTopic: string): string[] => {
   // Try different parsing strategies
   
   // First, try to parse as comma-separated list (most likely format)
@@ -106,16 +117,115 @@ const parseTopicsFromResponse = (response: string): string[] => {
     return semicolonList.slice(0, 5);
   }
   
-  // If all else fails, create some default related topics based on the original topic
-  const defaultTopics = [
-    `More about ${response.slice(0, 20)}`,
-    `Fun facts about ${response.slice(0, 15)}`,
-    `Amazing ${response.slice(0, 15)} adventures`,
-    `${response.slice(0, 15)} experiments`,
-    `${response.slice(0, 15)} mysteries`
-  ];
+  // If all else fails, create contextual fallback topics
+  return generateContextualFallbackTopics(originalTopic);
+};
+
+// Generate context-aware fallback related topics
+const generateContextualFallbackTopics = (topic: string): string[] => {
+  const lowerTopic = topic.toLowerCase();
   
-  return commaList.length > 0 ? commaList.slice(0, 5) : defaultTopics;
+  // History and landmarks fallbacks
+  if (
+    lowerTopic.includes("taj mahal") || 
+    lowerTopic.includes("monument") || 
+    lowerTopic.includes("temple") ||
+    lowerTopic.includes("building") ||
+    lowerTopic.includes("wonder") ||
+    lowerTopic.includes("pyramid") ||
+    lowerTopic.includes("palace")
+  ) {
+    return [
+      "Famous Landmarks",
+      "Architectural Wonders",
+      "Ancient Buildings",
+      "World Heritage Sites",
+      "Historical Monuments"
+    ];
+  }
+  
+  // Space related fallbacks
+  if (
+    lowerTopic.includes("space") || 
+    lowerTopic.includes("planet") || 
+    lowerTopic.includes("star") || 
+    lowerTopic.includes("moon") || 
+    lowerTopic.includes("rocket") ||
+    lowerTopic.includes("galaxy") ||
+    lowerTopic.includes("astronaut")
+  ) {
+    return [
+      "Planet Exploration",
+      "Space Missions",
+      "Astronaut Adventures",
+      "Galaxy Discoveries",
+      "Space Technology"
+    ];
+  }
+  
+  // Animal related fallbacks
+  if (
+    lowerTopic.includes("animal") || 
+    lowerTopic.includes("tiger") || 
+    lowerTopic.includes("lion") || 
+    lowerTopic.includes("elephant") || 
+    lowerTopic.includes("wildlife") ||
+    lowerTopic.includes("zoo") ||
+    lowerTopic.includes("pet")
+  ) {
+    return [
+      "Animal Habitats",
+      "Wildlife Protection",
+      "Amazing Creatures",
+      "Animal Families",
+      "Endangered Species"
+    ];
+  }
+  
+  // Science related fallbacks
+  if (
+    lowerTopic.includes("science") || 
+    lowerTopic.includes("experiment") || 
+    lowerTopic.includes("laboratory") || 
+    lowerTopic.includes("chemical") || 
+    lowerTopic.includes("biology") ||
+    lowerTopic.includes("physics")
+  ) {
+    return [
+      "Fun Experiments",
+      "Scientific Discoveries",
+      "Famous Scientists",
+      "Science in Action",
+      "Everyday Science"
+    ];
+  }
+  
+  // Technology related fallbacks
+  if (
+    lowerTopic.includes("robot") || 
+    lowerTopic.includes("computer") || 
+    lowerTopic.includes("technology") || 
+    lowerTopic.includes("internet") || 
+    lowerTopic.includes("gadget") ||
+    lowerTopic.includes("machine")
+  ) {
+    return [
+      "Robot Helpers",
+      "Future Technology",
+      "Amazing Inventions",
+      "Smart Machines",
+      "Coding Adventures"
+    ];
+  }
+  
+  // Generic but somewhat related fallbacks
+  return [
+    `The History of ${topic}`,
+    `${topic} Adventures`,
+    `Amazing ${topic} Facts`,
+    `${topic} Around the World`,
+    `Fun with ${topic}`
+  ];
 };
 
 export default useRelatedTopics;

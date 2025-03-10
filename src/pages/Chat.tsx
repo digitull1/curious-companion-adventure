@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -24,15 +25,6 @@ const Chat = () => {
   // Use our custom hooks to manage state and logic
   const chatState = useChatState(userName, ageRange, avatar, language);
   const { generateRelatedTopics } = useRelatedTopics(chatState.generateResponse);
-  
-  // For debugging the TOC issue
-  useEffect(() => {
-    console.log("[Chat][Debug] Current messages:", chatState.messages.length);
-    console.log("[Chat][Debug] Messages with TOC:", 
-      chatState.messages.filter(m => m.tableOfContents).length);
-    console.log("[Chat][Debug] Selected topic:", chatState.selectedTopic);
-    console.log("[Chat][Debug] Topic sections generated:", chatState.topicSectionsGenerated);
-  }, [chatState.messages, chatState.selectedTopic, chatState.topicSectionsGenerated]);
   
   // Initialize message handling hook
   const { processMessage } = useMessageHandling(
@@ -86,7 +78,7 @@ const Chat = () => {
     chatState.setLearningProgress
   );
   
-  // Initialize chat
+  // Initialize chat - optimized to reduce rerenders
   useChatInitialization(
     ageRange,
     avatar,
@@ -102,32 +94,32 @@ const Chat = () => {
     chatState.defaultSuggestedPrompts
   );
 
-  // Event handlers
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Memoized event handlers to reduce rerenders
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     chatState.setInputValue(e.target.value);
-  };
+  }, [chatState.setInputValue]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && chatState.inputValue.trim() && !chatState.isProcessing) {
       handleSendMessage();
     }
-  };
+  }, [chatState.inputValue, chatState.isProcessing]);
 
-  const handleAgeRangeChange = (newRange: string) => {
+  const handleAgeRangeChange = useCallback((newRange: string) => {
     setAgeRange(newRange);
     localStorage.setItem("wonderwhiz_age_range", newRange);
     chatState.setShowAgeSelector(false);
     toast.success(`Learning content will now be tailored for age ${newRange}!`);
-  };
+  }, [chatState.setShowAgeSelector]);
 
-  const handleLanguageChange = (newLanguage: string) => {
+  const handleLanguageChange = useCallback((newLanguage: string) => {
     setLanguage(newLanguage);
     localStorage.setItem("wonderwhiz_language", newLanguage);
     toast.success(`Language changed to ${newLanguage}!`);
     
     // Clear chat and generate new welcome message in selected language
     clearChat();
-  };
+  }, []);
 
   const handleSendMessage = async () => {
     if (!chatState.inputValue.trim() || chatState.isProcessing) return;
@@ -166,27 +158,6 @@ const Chat = () => {
     // If it's a new topic, generate table of contents
     if (isTopicRequest) {
       await handleNewTopicRequest();
-      
-      // Add debug logic: Check if TOC was generated
-      setTimeout(() => {
-        console.log("[Chat][Debug] After handleNewTopicRequest:");
-        console.log("[Chat][Debug] Messages with TOC:", 
-          chatState.messages.filter(m => m.tableOfContents).length);
-        console.log("[Chat][Debug] topicSectionsGenerated:", chatState.topicSectionsGenerated);
-        
-        const tocMessage = chatState.messages.find(m => m.tableOfContents);
-        if (!tocMessage) {
-          console.error("[Chat][Error] No TOC message was added to messages!");
-          
-          // Force generate TOC if it wasn't created
-          if (chatState.selectedTopic && !chatState.topicSectionsGenerated) {
-            console.log("[Chat][Debug] Forcing TOC generation for:", chatState.selectedTopic);
-            generateTopicRelations().catch(err => 
-              console.error("[Chat][Error] Force TOC generation failed:", err)
-            );
-          }
-        }
-      }, 500);
     } else {
       // Handle regular messages
       console.log("Handling regular message (not a new topic)");
@@ -194,7 +165,7 @@ const Chat = () => {
     }
   };
 
-  const handleBlockClick = (type: BlockType, messageId: string, messageText: string) => {
+  const handleBlockClick = useCallback((type: BlockType, messageId: string, messageText: string) => {
     handleLearningBlockClick(
       type,
       messageId,
@@ -208,26 +179,35 @@ const Chat = () => {
       chatState.generateResponse,
       chatState.generateQuiz
     );
-  };
+  }, [
+    ageRange, 
+    language, 
+    chatState.setIsProcessing, 
+    chatState.setShowTypingIndicator, 
+    chatState.setPoints, 
+    chatState.setMessages, 
+    chatState.generateResponse, 
+    chatState.generateQuiz
+  ]);
 
-  const handleSuggestedPromptClick = (prompt: string) => {
+  const handleSuggestedPromptClick = useCallback((prompt: string) => {
     console.log("Suggested prompt clicked:", prompt);
     chatState.setInputValue(prompt);
     // Auto-send the suggestion
     setTimeout(() => {
       handleSendMessage();
     }, 100);
-  };
+  }, [chatState.setInputValue]);
 
-  const handleVoiceInput = (transcript: string) => {
+  const handleVoiceInput = useCallback((transcript: string) => {
     chatState.setInputValue(transcript);
-  };
+  }, [chatState.setInputValue]);
   
-  const toggleListening = () => {
+  const toggleListening = useCallback(() => {
     chatState.setIsListening(prev => !prev);
-  };
+  }, [chatState.setIsListening]);
   
-  const clearChat = () => {
+  const clearChat = useCallback(() => {
     console.log("Clearing chat");
     chatState.setMessages([
       {
@@ -248,7 +228,17 @@ const Chat = () => {
     chatState.setRelatedTopics([]);
     chatState.setPreviousTopics([]);
     toast.success("Chat cleared! Ready for a new adventure!");
-  };
+  }, [
+    chatState.setMessages,
+    chatState.setSelectedTopic,
+    chatState.setTopicSectionsGenerated,
+    chatState.setCompletedSections,
+    chatState.setCurrentSection,
+    chatState.setLearningProgress,
+    chatState.setLearningComplete,
+    chatState.setRelatedTopics,
+    chatState.setPreviousTopics
+  ]);
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white overflow-hidden relative">
