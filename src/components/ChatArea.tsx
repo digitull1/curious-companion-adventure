@@ -100,8 +100,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   console.log("Processed related topics:", processedRelatedTopics);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, showTypingIndicator]);
+    // Only scroll to bottom when the user sends a message, not for automatic section selection
+    if (messages.length > 0 && messages[messages.length - 1].isUser) {
+      scrollToBottom();
+    }
+  }, [messages]);
 
   // Debug log messages to track table of contents
   useEffect(() => {
@@ -312,12 +315,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       className="flex-1 overflow-y-auto py-6 scrollbar-thin relative" 
       ref={chatHistoryRef}
     >
-      {/* Position topic pill at the top with proper spacing */}
-      <div className="sticky top-0 z-10 mb-4 bg-gradient-to-b from-wonder-background via-wonder-background to-transparent pb-2">
+      {/* Topic pill - NOT sticky anymore */}
+      <div className="mb-4 pb-2">
         {currentSection && renderTopicPill()}
       </div>
       
-      {/* Main chat content - removed the overlapping journey section */}
+      {/* Main chat content */}
       <div className="relative">
         <div className="space-y-6">
           {/* Display welcome message first */}
