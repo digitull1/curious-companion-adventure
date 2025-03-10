@@ -210,6 +210,8 @@ const Chat = () => {
       // Convert image to base64
       const base64Image = await readFileAsBase64(file);
       
+      console.log("Sending image for processing. Image size:", base64Image.length);
+      
       // Call the process-image edge function
       const { data, error } = await supabase.functions.invoke('process-image', {
         body: { 
@@ -220,8 +222,11 @@ const Chat = () => {
       });
       
       if (error) {
+        console.error("Error from process-image edge function:", error);
         throw new Error(`Error processing image: ${error.message}`);
       }
+      
+      console.log("Received response from process-image:", data);
       
       // Hide typing indicator
       chatState.setShowTypingIndicator(false);

@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 
 // Define generateTopicRelations function
@@ -47,7 +48,7 @@ export const generateTopicRelations = async (
   }
 };
 
-export const useTopicManagement = (
+const useTopicManagement = (
   selectedTopic: string | null,
   topicSectionsGenerated: boolean,
   messages: any[],
