@@ -14,8 +14,6 @@ export function Toaster() {
         error: <Lightbulb className="h-5 w-5 text-wonder-coral" />,
         info: <Star className="h-5 w-5 text-wonder-yellow" />,
         warning: <Sparkles className="h-5 w-5 text-wonder-purple" />,
-        // Fix: Use a supported icon type instead of 'normal'
-        default: <Award className="h-5 w-5 text-wonder-blue" />,
       }}
       toastOptions={{
         classNames: {
