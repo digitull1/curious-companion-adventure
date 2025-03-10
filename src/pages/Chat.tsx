@@ -127,6 +127,7 @@ const Chat = () => {
   // Input handling
   const { 
     handleInputChange, 
+    handleKeyDown, 
     handleSubmit, 
     handleVoiceInput, 
     handleBlockClick, 

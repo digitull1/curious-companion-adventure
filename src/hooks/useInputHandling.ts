@@ -59,7 +59,8 @@ export const useInputHandling = (
   };
   
   const toggleListening = () => {
-    setIsListening(prev => !prev);
+    // Fix: Pass a boolean directly instead of a function
+    setIsListening(!isListening);
   };
 
   const handleSuggestedPromptClick = (prompt: string) => {
