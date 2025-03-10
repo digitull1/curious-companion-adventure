@@ -75,8 +75,8 @@ const Index = () => {
     e.preventDefault();
     
     if (!isEmailValid) {
-      toast({
-        title: "Invalid email",
+      // Fix: Update toast to use the correct Sonner format
+      toast("Invalid email", {
         description: "Please enter a valid email address.",
         variant: "destructive"
       });
