@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -339,6 +338,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   completedSections={completedSections}
                   currentSection={currentSection}
                   onSectionClick={onTocSectionClick}
+                  progress={learningProgress} // Add the missing progress prop
                 />
               </ChatMessage>
             </div>

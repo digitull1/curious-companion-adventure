@@ -1,8 +1,7 @@
-
 import { useCallback } from "react";
 
 // Define generateTopicRelations function
-const generateTopicRelations = async (
+export const generateTopicRelations = async (
   topic: string,
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
   ageRange: string,
@@ -338,7 +337,10 @@ export const useTopicManagement = (
     ];
   };
 
-  return { isNewTopicRequest, handleNewTopicRequest };
+  return { 
+    isNewTopicRequest, 
+    handleNewTopicRequest 
+  };
 };
 
 export default useTopicManagement;

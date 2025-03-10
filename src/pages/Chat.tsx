@@ -11,7 +11,7 @@ import { useChatState } from "@/hooks/useChatState";
 import { useChatInitialization } from "@/hooks/useChatInitialization";
 import { useRelatedTopics } from "@/hooks/useRelatedTopics";
 import { useMessageHandling } from "@/hooks/useMessageHandling";
-import useTopicManagement from "@/hooks/useTopicManagement";
+import useTopicManagement, { generateTopicRelations } from "@/hooks/useTopicManagement";
 import { useSectionHandling } from "@/hooks/useSectionHandling";
 import { handleBlockClick as handleLearningBlockClick } from "@/services/learningBlockService";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +49,7 @@ const Chat = () => {
   }, [chatState.previousTopics]);
   
   // Initialize topic management hook
-  const { handleNewTopicRequest, isNewTopicRequest, generateTopicRelations } = useTopicManagement(
+  const { handleNewTopicRequest, isNewTopicRequest } = useTopicManagement(
     chatState.selectedTopic,
     chatState.topicSectionsGenerated,
     chatState.messages,
@@ -60,7 +60,10 @@ const Chat = () => {
     language,
     chatState.setLearningComplete,
     chatState.setRelatedTopics,
-    generateRelatedTopics,
+    (topic) => {
+      // Wrapper function to match the expected signature
+      generateRelatedTopics(topic, ageRange, language);
+    },
     chatState.inputValue,
     chatState.isProcessing,
     chatState.setMessages,
