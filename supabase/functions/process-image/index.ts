@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -109,8 +110,9 @@ serve(async (req) => {
   }
 
   try {
+    console.log("[process-image] Received image processing request");
     const { image, ageRange = '8-12', language = 'en' } = await req.json();
-    console.log(`[DEBUG] Processing image for age: ${ageRange}, language: ${language}`);
+    console.log(`[process-image] Processing image for age: ${ageRange}, language: ${language}`);
     
     // Check API key
     if (!groqApiKey) {
@@ -122,7 +124,7 @@ serve(async (req) => {
     const systemMessage = getSystemPromptForImageAnalysis(ageRange, language);
     
     try {
-      console.log("[DEBUG] Sending image to Groq for analysis...");
+      console.log("[process-image] Sending image to Groq for analysis...");
       
       // Use Groq's llama3-70b-8192 model which has vision capabilities
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -149,7 +151,7 @@ serve(async (req) => {
       });
       
       const data = await response.json();
-      console.log("[DEBUG] Received response from Groq");
+      console.log("[process-image] Received response from Groq");
       
       // Add error logging and check for expected response structure
       if (!data) {
@@ -169,7 +171,7 @@ serve(async (req) => {
       
       // Apply content formatting guidelines to clean up the response
       const formattedContent = formatLLMResponse(data.choices[0].message.content);
-      console.log("[DEBUG] Formatted image analysis content:", formattedContent.substring(0, 100) + "...");
+      console.log("[process-image] Formatted image analysis content:", formattedContent.substring(0, 100) + "...");
       
       return new Response(JSON.stringify({ content: formattedContent }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

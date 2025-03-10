@@ -1,466 +1,291 @@
-import { useState, useCallback, useRef } from "react";
-import { Message } from "@/types/chat";
-import { toast } from "sonner";
+import { useCallback } from "react";
+import { useChatState } from "@/hooks/useChatState";
 
-export const useTopicManagement = (
+const useTopicManagement = (
   selectedTopic: string | null,
   topicSectionsGenerated: boolean,
-  messages: Message[],
-  completedSections: string[],
-  relatedTopics: string[],
+  messages: any[],
+  completedSections: any[],
+  relatedTopics: any[],
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
   ageRange: string,
   language: string,
-  setLearningComplete: (learningComplete: boolean) => void,
-  setRelatedTopics: (relatedTopics: string[]) => void,
-  generateRelatedTopics: (topic: string, ageRange: string, language: string) => Promise<string[]>,
+  setLearningComplete: (complete: boolean) => void,
+  setRelatedTopics: (topics: string[]) => void,
+  generateRelatedTopics: (topic: string) => void,
   inputValue: string,
   isProcessing: boolean,
-  setMessages: (messageSetter: (prev: Message[]) => Message[]) => void,
+  setMessages: (messages: any[]) => void,
   setInputValue: (value: string) => void,
   setIsProcessing: (isProcessing: boolean) => void,
   setShowTypingIndicator: (show: boolean) => void,
   setSelectedTopic: (topic: string | null) => void,
-  setTopicSectionsGenerated: (topicSectionsGenerated: boolean) => void,
-  setCompletedSections: (completedSections: string[]) => void,
-  setCurrentSection: (currentSection: string | null) => void,
-  setPreviousTopics: (previousTopics: string[]) => void,
-  setPoints: (pointsSetter: (prev: number) => number) => void,
-  setLearningProgress: (learningProgress: number) => void
+  setTopicSectionsGenerated: (generated: boolean) => void,
+  setCompletedSections: (sections: any[]) => void,
+  setCurrentSection: (section: any) => void,
+  setPreviousTopics: (topics: any[]) => void,
+  setPoints: (points: number) => void,
+  setLearningProgress: (progress: number) => void
 ) => {
-  const tocGeneratedRef = useRef<Set<string>>(new Set());
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const debounce = (fn: Function, ms = 300) => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    debounceTimeoutRef.current = setTimeout(() => {
-      fn();
-      debounceTimeoutRef.current = null;
-    }, ms);
-  };
-  
-  const isNewTopicRequest = (input: string, currentTopic: string | null, sectionsGenerated: boolean): boolean => {
-    const trimmedInput = input.trim().toLowerCase();
+  // Add improved logging for topic detection and TOC generation
+  const isNewTopicRequest = useCallback((inputText: string, currentTopic: string | null, topicGenerated: boolean) => {
+    console.log("[TopicManagement] Checking if new topic:", {
+      inputText,
+      currentTopic,
+      topicGenerated,
+      inputLength: inputText.length
+    });
     
-    if (!currentTopic) {
-      return true;
+    // Skip if already processing a topic
+    if (topicGenerated) {
+      console.log("[TopicManagement] Already generated sections for the current topic");
+      return false;
     }
     
-    if (!sectionsGenerated) {
-      return true;
+    // If the input is longer than a topic request or contains questions, it's likely not a topic
+    if (inputText.length > 100 || inputText.includes("?")) {
+      console.log("[TopicManagement] Input appears to be a question, not a topic request");
+      return false;
     }
     
-    const isFollowUp = trimmedInput.includes(currentTopic.toLowerCase()) || 
-                       trimmedInput.startsWith("tell me more") ||
-                       trimmedInput.startsWith("can you explain") ||
-                       trimmedInput.startsWith("what about") ||
-                       trimmedInput.includes("how about");
-                       
-    return !isFollowUp;
-  };
-  
-  const handleSectionSelection = useCallback(
-    async (section: string, sectionIndex: number) => {
-      if (isProcessing) {
-        return;
-      }
-      
-      if (completedSections.includes(section)) {
-        toast.info("You've already explored this section!");
-        return;
-      }
-      
-      setIsProcessing(true);
-      setShowTypingIndicator(true);
-      setCurrentSection(section);
-      
-      try {
-        const sectionPrompt = `
-          Create an educational, age-appropriate explanation about "${section}" in the context of "${selectedTopic}" for a ${ageRange} year old child.
-          Be specific to this exact topic and section.
-          Include interesting facts, engaging examples, and make it fun to read.
-          Keep your explanation concise but comprehensive, focusing specifically on ${section} as it relates to ${selectedTopic}.
-        `;
-        
-        const result = await generateResponse(sectionPrompt, ageRange, language);
-        
-        await new Promise(resolve => setTimeout(resolve, 400));
-        setShowTypingIndicator(false);
-        
-        const sectionMessage: Message = {
-          id: `ai-${Date.now()}`,
-          text: result,
-          isUser: false,
-          blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
-          showBlocks: true
-        };
-        
-        setMessages(prev => [...prev, sectionMessage]);
-        
-        debounce(() => {
-          if (!completedSections.includes(section)) {
-            setCompletedSections([...completedSections, section]);
-            setPoints(prev => prev + 25);
-            
-            const tocMessage = messages.find(msg => msg.tableOfContents);
-            const totalSections = tocMessage?.tableOfContents?.length || 5;
-            const completedCount = completedSections.length + 1;
-            const progress = Math.min(100, Math.round((completedCount / totalSections) * 100));
-            
-            setLearningProgress(progress);
-            
-            if (tocMessage && tocMessage.tableOfContents) {
-              const allSectionsCompleted = tocMessage.tableOfContents.every(s => 
-                [...completedSections, section].includes(s)
-              );
-              
-              if (allSectionsCompleted) {
-                setLearningComplete(true);
-                setLearningProgress(100);
-                toast.success("Congratulations! You've completed this topic!");
-              }
-            }
-          }
-        }, 200);
-      } catch (error) {
-        toast.error("I had trouble loading this section. Let's try another one!");
-      } finally {
-        setIsProcessing(false);
-        setShowTypingIndicator(false);
-      }
-    },
-    [
-      ageRange,
-      completedSections,
-      generateResponse,
-      isProcessing,
-      language,
-      messages,
-      selectedTopic,
-      setCompletedSections,
-      setCurrentSection,
-      setIsProcessing,
-      setLearningComplete,
-      setLearningProgress,
-      setMessages,
-      setPoints,
-      setShowTypingIndicator
-    ]
-  );
-  
-  const generateTopicRelations = useCallback(async () => {
-    if (!selectedTopic) {
+    // Check if it's a simple topic phrase (3-5 words)
+    const wordCount = inputText.split(/\s+/).filter(word => word.length > 0).length;
+    const isTopic = wordCount >= 1 && wordCount <= 7;
+    
+    console.log("[TopicManagement] Topic detection result:", {
+      wordCount,
+      isTopic
+    });
+    
+    return isTopic;
+  }, []);
+
+  const handleNewTopicRequest = useCallback(async () => {
+    console.log("[TopicManagement] Starting new topic request process");
+    
+    if (isProcessing) {
+      console.log("[TopicManagement] Can't handle new topic, already processing");
       return;
     }
     
-    const cacheKey = `${selectedTopic}-${ageRange}-${language}`;
-    if (tocGeneratedRef.current.has(cacheKey)) {
-      return;
-    }
-    
+    // Reset states for new topic
     setIsProcessing(true);
     setShowTypingIndicator(true);
     
     try {
-      if (!topicSectionsGenerated) {
-        const tocPrompt = `
-          You are an expert educator tasked with creating a contextual, educational learning path for "${selectedTopic}".
-          
-          Generate exactly 5 specific, highly relevant educational sections for a ${ageRange} year old learning about "${selectedTopic}".
-          
-          Your response must:
-          1. Be SPECIFICALLY about "${selectedTopic}" with NO generic sections.
-          2. Include sections that directly address different aspects of "${selectedTopic}".
-          3. Be presented as a simple numbered list (1. Section Name).
-          4. Be age-appropriate for a ${ageRange} year old.
-          5. NOT include any welcome messages, introductions, or explanations.
-          6. NOT include "Introduction", "Welcome", "Let's explore", or other generic titles.
-          
-          Example format:
-          1. The Building of the Taj Mahal
-          2. The Love Story Behind the Monument
-          3. Architecture and Design Features
-          4. Mughal Artistic Influences
-          5. Preservation and Challenges Today
-          
-          Remember: All sections must be DIRECTLY about "${selectedTopic}" and not generic.
-        `;
+      // Get the user's topic text
+      const userTopic = inputValue.trim();
+      console.log("[TopicManagement] User topic:", userTopic);
+      
+      // Add user message to chat
+      const userMessageId = `user-${Date.now()}`;
+      setMessages(prev => [...prev, {
+        id: userMessageId,
+        text: userTopic,
+        isUser: true
+      }]);
+
+      console.log("[TopicManagement] Setting selected topic:", userTopic);
+      setSelectedTopic(userTopic);
+      
+      // Generate table of contents from the topic
+      console.log("[TopicManagement] Generating TOC for topic:", userTopic);
+      
+      // Special prompt for TOC generation
+      const tocPrompt = `For the topic "${userTopic}", generate a table of contents with 4-6 sections that would be interesting and educational for children aged ${ageRange}. 
+      Return ONLY a numbered list with no additional text. Each section should be clear and concise.
+      Example:
+      1. What are planets?
+      2. How planets form
+      3. The types of planets in our solar system
+      4. Could life exist on other planets?
+      5. Future of planet exploration`;
+      
+      const tocResponse = await generateResponse(tocPrompt, ageRange, language);
+      console.log("[TopicManagement] TOC response received:", tocResponse);
+      
+      // Extract sections from the response
+      const sections = extractTOCSections(tocResponse);
+      console.log("[TopicManagement] Extracted TOC sections:", sections);
+      
+      if (sections.length === 0) {
+        console.error("[TopicManagement] Failed to extract valid TOC sections");
+        // If extraction failed, create fallback sections
+        const fallbackSections = generateFallbackTOC(userTopic);
+        console.log("[TopicManagement] Using fallback TOC:", fallbackSections);
         
-        const tocResponse = await generateResponse(tocPrompt, ageRange, language);
-        const sections = parseTOCSections(tocResponse, selectedTopic);
-        
-        if (sections.length === 0) {
-          throw new Error("Failed to generate table of contents sections");
-        }
-        
-        const tocMessage: Message = {
-          id: `toc-${Date.now()}`,
-          text: `I'd love to teach you about ${selectedTopic}! Here's what we'll cover:`,
+        // Create AI message with TOC
+        const aiMessageId = `ai-toc-${Date.now()}`;
+        setMessages(prev => [...prev, {
+          id: aiMessageId,
+          text: `Let's explore "${userTopic}"! Here's what we'll cover:`,
           isUser: false,
-          tableOfContents: sections
-        };
-        
-        setMessages(prev => {
-          const hasTOC = prev.some(msg => 
-            msg.tableOfContents && 
-            msg.text.includes(`I'd love to teach you about ${selectedTopic}`)
-          );
-          
-          if (hasTOC) {
-            return prev;
-          }
-          
-          return [...prev, tocMessage];
-        });
+          tableOfContents: fallbackSections,
+          isIntroduction: true
+        }]);
         
         setTopicSectionsGenerated(true);
-        tocGeneratedRef.current.add(cacheKey);
+      } else {
+        // Create AI message with TOC
+        const aiMessageId = `ai-toc-${Date.now()}`;
+        setMessages(prev => [...prev, {
+          id: aiMessageId,
+          text: `Let's explore "${userTopic}"! Here's what we'll cover:`,
+          isUser: false,
+          tableOfContents: sections,
+          isIntroduction: true
+        }]);
+        
+        console.log("[TopicManagement] Setting topicSectionsGenerated to true");
+        setTopicSectionsGenerated(true);
+        
+        // Update learning progress
+        setLearningProgress(0);
       }
       
-      if (relatedTopics.length === 0) {
-        const newRelatedTopics = await generateRelatedTopics(selectedTopic, ageRange, language);
-        setRelatedTopics(newRelatedTopics);
-      }
-      
-      setLearningProgress(10);
+      // Generate related topics in the background
+      generateTopicRelations(userTopic);
     } catch (error) {
-      toast.error("Oops! Something went wrong while creating your learning path. Let's try again!");
+      console.error("[TopicManagement] Error in handleNewTopicRequest:", error);
+      // Create error message
+      setMessages(prev => [...prev, {
+        id: `error-${Date.now()}`,
+        text: "I had trouble creating a learning plan for that topic. Can you try another one?",
+        isUser: false,
+        error: {
+          message: error instanceof Error ? error.message : "Unknown error in topic processing"
+        }
+      }]);
     } finally {
-      setIsProcessing(false);
       setShowTypingIndicator(false);
-    }
-  }, [
-    selectedTopic, 
-    ageRange, 
-    language, 
-    topicSectionsGenerated, 
-    relatedTopics.length,
-    generateResponse, 
-    generateRelatedTopics, 
-    messages,
-    setMessages, 
-    setTopicSectionsGenerated, 
-    setIsProcessing, 
-    setShowTypingIndicator, 
-    setRelatedTopics,
-    setLearningProgress
-  ]);
-  
-  const handleNewTopicRequest = useCallback(async () => {
-    if (!inputValue.trim() || isProcessing) return;
-    
-    try {
-      setIsProcessing(true);
-      setShowTypingIndicator(true);
-      
-      const cleanedTopic = inputValue.trim().replace(/^(tell me about|what is|show me|explain) /i, '');
-      setSelectedTopic(cleanedTopic);
-      
-      const userMessage: Message = {
-        id: `user-${Date.now()}`,
-        text: inputValue,
-        isUser: true
-      };
-      
-      setMessages(prev => [...prev, userMessage]);
+      setIsProcessing(false);
       setInputValue("");
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      tocGeneratedRef.current.delete(`${cleanedTopic}-${ageRange}-${language}`);
-      setTopicSectionsGenerated(false);
-      setCompletedSections([]);
-      setCurrentSection(null);
-      
-      await generateTopicRelations();
-      
-      await new Promise(resolve => setTimeout(resolve, 400));
-      
-      const messages = await new Promise<Message[]>(resolve => {
-        setMessages(prev => {
-          resolve(prev);
-          return prev;
-        });
-      });
-      
-      toast.info("Choose a section to explore!", {
-        duration: 5000,
-        icon: "👆"
-      });
-      
-    } catch (error) {
-      toast.error("I had trouble processing that topic. Let's try something else!");
-    } finally {
-      setIsProcessing(false);
-      setShowTypingIndicator(false);
     }
   }, [
-    inputValue,
-    isProcessing,
-    generateTopicRelations,
-    ageRange,
-    language,
-    setMessages,
-    setInputValue,
-    setIsProcessing,
-    setShowTypingIndicator,
-    setSelectedTopic,
-    setTopicSectionsGenerated,
-    setCompletedSections,
-    setCurrentSection
+    ageRange, 
+    generateResponse, 
+    inputValue, 
+    isProcessing, 
+    language, 
+    setInputValue, 
+    setIsProcessing, 
+    setMessages, 
+    setSelectedTopic, 
+    setShowTypingIndicator, 
+    setTopicSectionsGenerated, 
+    setLearningProgress,
+    generateTopicRelations
   ]);
-  
-  return { handleNewTopicRequest, isNewTopicRequest, generateTopicRelations };
-};
 
-const parseTOCSections = (tocResponse: string, topicContext: string): string[] => {
-  const numberedRegex = /\d+\.\s+\*?\*?([^*\n]+)\*?\*?/g;
-  const numberedMatches = [...tocResponse.matchAll(numberedRegex)].map(match => match[1].trim());
-  
-  if (numberedMatches.length >= 3) {
-    return filterTopicSections(numberedMatches, topicContext);
-  }
-  
-  const simpleNumberedRegex = /\d+\.\s+([^\n]+)/g;
-  const simpleNumberedMatches = [...tocResponse.matchAll(simpleNumberedRegex)].map(match => match[1].trim());
-  
-  if (simpleNumberedMatches.length >= 3) {
-    return filterTopicSections(simpleNumberedMatches, topicContext);
-  }
-  
-  const bulletRegex = /[•*-]\s+\*?\*?([^*\n]+)\*?\*?/g;
-  const bulletMatches = [...tocResponse.matchAll(bulletRegex)].map(match => match[1].trim());
-  
-  if (bulletMatches.length >= 3) {
-    return filterTopicSections(bulletMatches, topicContext);
-  }
-  
-  const headerRegex = /\*\*([^*]+)\*\*/g;
-  const headerMatches = [...tocResponse.matchAll(headerRegex)].map(match => match[1].trim());
-  
-  if (headerMatches.length >= 3) {
-    return filterTopicSections(headerMatches, topicContext);
-  }
-  
-  const lines = tocResponse.split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 10 && line.length < 100)
-    .slice(0, 5);
-  
-  if (lines.length >= 3) {
-    return filterTopicSections(lines, topicContext);
-  }
-  
-  return generateContextualFallbackSections(topicContext);
-};
-
-const filterTopicSections = (sections: string[], context: string): string[] => {
-  const lowercaseContext = context.toLowerCase();
-  const filteredSections = sections.filter(section => {
-    const lowercaseSection = section.toLowerCase();
-    return !(
-      lowercaseSection.includes("welcome") ||
-      lowercaseSection.includes("introduction") ||
-      lowercaseSection.includes("get started") ||
-      lowercaseSection.includes("conclusion") ||
-      lowercaseSection.includes("summary") ||
-      lowercaseSection.includes("let's explore") ||
-      lowercaseSection.includes("what we'll cover") ||
-      lowercaseSection.includes("table of content")
+  // Improved function to extract TOC sections
+  const extractTOCSections = (text: string): string[] => {
+    console.log("[TopicManagement] Raw TOC text to parse:", text);
+    
+    // Try multiple parsing approaches
+    let sections: string[] = [];
+    
+    // Method 1: Look for numbered list (1. Item)
+    const numberedRegex = /\d+\.\s*([^\n]+)/g;
+    let match;
+    while ((match = numberedRegex.exec(text)) !== null) {
+      if (match[1] && match[1].trim().length > 0) {
+        sections.push(match[1].trim());
+      }
+    }
+    
+    // Log the results of method 1
+    console.log("[TopicManagement] Sections from numbered regex:", sections);
+    
+    // If numbering extraction failed, try line-by-line approach
+    if (sections.length === 0) {
+      sections = text.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => line.replace(/^\d+[\.\)]\s*/, '').trim()) // Remove any numbering
+        .filter(line => 
+          line.length > 5 && 
+          !line.toLowerCase().includes('table of contents') &&
+          !line.toLowerCase().includes('here') &&
+          !line.toLowerCase().includes('topic') &&
+          !line.toLowerCase().includes('section') &&
+          !line.toLowerCase().includes('introduction') &&
+          !line.toLowerCase().includes('conclusion')
+        );
+      
+      console.log("[TopicManagement] Sections from line-by-line approach:", sections);
+    }
+    
+    // Remove any descriptions after colons if they exist
+    sections = sections.map(section => {
+      const colonIndex = section.indexOf(':');
+      return colonIndex > 0 ? section.substring(0, colonIndex).trim() : section;
+    });
+    
+    // Truncate sections to ensure they're not too long
+    sections = sections.map(section => 
+      section.length > 50 ? section.substring(0, 50) + '...' : section
     );
-  });
-  
-  if (filteredSections.length < 3) {
-    return generateContextualFallbackSections(context);
-  }
-  
-  return filteredSections.slice(0, 5);
-};
+    
+    // Take only a reasonable number of sections (4-6)
+    if (sections.length > 6) {
+      sections = sections.slice(0, 6);
+    }
+    
+    console.log("[TopicManagement] Final processed TOC sections:", sections);
+    return sections;
+  };
 
-const generateContextualFallbackSections = (topic: string): string[] => {
-  const lowerTopic = topic.toLowerCase();
-  
-  if (
-    lowerTopic.includes("taj mahal") || 
-    lowerTopic.includes("pyramid") || 
-    lowerTopic.includes("colosseum") || 
-    lowerTopic.includes("monument") || 
-    lowerTopic.includes("castle") ||
-    lowerTopic.includes("palace")
-  ) {
+  // Add a fallback TOC generator
+  const generateFallbackTOC = (topic: string): string[] => {
+    const lowerTopic = topic.toLowerCase();
+    
+    // Space/Astronomy related topics
+    if (lowerTopic.includes('space') || lowerTopic.includes('planet') || 
+        lowerTopic.includes('star') || lowerTopic.includes('universe')) {
+      return [
+        "What is in our solar system?",
+        "How planets form and evolve",
+        "The different types of planets",
+        "Amazing facts about space",
+        "Space exploration history"
+      ];
+    }
+    
+    // Animals/Nature related topics
+    else if (lowerTopic.includes('animal') || lowerTopic.includes('wildlife') || 
+             lowerTopic.includes('nature') || lowerTopic.includes('ocean')) {
+      return [
+        "Introduction to the topic",
+        "Where they live and what they eat",
+        "Amazing adaptations",
+        "Interesting facts and behaviors",
+        "Conservation and protection"
+      ];
+    }
+    
+    // History related topics
+    else if (lowerTopic.includes('history') || lowerTopic.includes('ancient') || 
+             lowerTopic.includes('civilization') || lowerTopic.includes('war')) {
+      return [
+        "Background and timeline",
+        "Important people and events",
+        "Daily life during this period",
+        "Inventions and discoveries",
+        "Legacy and impact today"
+      ];
+    }
+    
+    // Default generic sections
     return [
-      `History of the ${topic}`,
-      `Architecture and Design of the ${topic}`,
-      `Cultural Significance of the ${topic}`,
-      `Interesting Facts about the ${topic}`,
-      `Fun Activities and Experiments`
+      "Introduction to " + topic,
+      "Key concepts and ideas",
+      "Interesting facts and discoveries",
+      "Real-world applications",
+      "Fun activities to try"
     ];
-  }
-  
-  if (
-    lowerTopic.includes("animal") || 
-    lowerTopic.includes("tiger") || 
-    lowerTopic.includes("lion") || 
-    lowerTopic.includes("elephant") || 
-    lowerTopic.includes("dog") || 
-    lowerTopic.includes("cat") ||
-    lowerTopic.includes("fish") ||
-    lowerTopic.includes("bird")
-  ) {
-    return [
-      `What is a ${topic}?`,
-      `Where do ${topic}s live?`,
-      `How do ${topic}s survive?`,
-      `Amazing facts about ${topic}s`,
-      `How humans interact with ${topic}s`
-    ];
-  }
-  
-  if (
-    lowerTopic.includes("space") || 
-    lowerTopic.includes("planet") || 
-    lowerTopic.includes("star") || 
-    lowerTopic.includes("galaxy") || 
-    lowerTopic.includes("moon") || 
-    lowerTopic.includes("sun") ||
-    lowerTopic.includes("universe") ||
-    lowerTopic.includes("mars")
-  ) {
-    return [
-      `What is ${topic}?`,
-      `Discovery of ${topic}`,
-      `Scientific facts about ${topic}`,
-      `Exploration of ${topic}`,
-      `Fun activities about ${topic}`
-    ];
-  }
-  
-  if (
-    lowerTopic.includes("robot") || 
-    lowerTopic.includes("computer") || 
-    lowerTopic.includes("technology") || 
-    lowerTopic.includes("internet") || 
-    lowerTopic.includes("ai") || 
-    lowerTopic.includes("machine")
-  ) {
-    return [
-      `What is ${topic}?`,
-      `How ${topic}s work`,
-      `Different types of ${topic}s`,
-      `${topic}s in our daily lives`,
-      `Future of ${topic}s`
-    ];
-  }
-  
-  return [
-    `What is ${topic}?`,
-    `History of ${topic}`,
-    `Important facts about ${topic}`,
-    `${topic} in the real world`,
-    `Fun activities with ${topic}`
-  ];
+  };
+
+  return { isNewTopicRequest, handleNewTopicRequest };
 };
 
 export default useTopicManagement;

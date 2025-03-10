@@ -116,60 +116,132 @@ serve(async (req) => {
     let response;
     
     if (requestType === 'text') {
-      // Define a system message with updated content guidelines
-      let systemMessage = getSystemPromptForAge(ageRange, language);
-      
-      try {
-        // Use Groq API instead of OpenAI
-        response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${groqApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'llama3-8b-8192',  // Using Llama3 model
-            messages: [
-              { role: 'system', content: systemMessage },
-              { role: 'user', content: prompt }
-            ],
-            temperature: 0.7,
-            max_tokens: 600
-          }),
-        });
+      // Special handling for TOC generation
+      if (prompt.includes('generate a table of contents') || prompt.includes('TOC for topic')) {
+        console.log("[generate-response] Detected TOC generation request");
         
-        const data = await response.json();
+        // Define a system message optimized for TOC generation
+        const tocSystemMessage = `You are an educational content organizer for children aged ${ageRange}. 
+        Your task is to create a clear, organized table of contents for a children's educational topic.
         
-        // Add error logging and check for expected response structure
-        if (!data) {
-          console.error("Empty response from Groq");
-          throw new Error("Empty response from Groq");
+        Guidelines:
+        - Create 4-6 concise section titles
+        - Keep section titles short (1-7 words)
+        - Make section titles informative and interesting
+        - Ensure sections flow logically from introduction to advanced concepts
+        - Return ONLY a simple numbered list with no additional text
+        - Don't include introductory text, explanations, or fancy formatting
+
+        Example format:
+        1. Introduction to [Topic]
+        2. How [Topic] works
+        3. Types of [Topic]
+        4. Fun facts about [Topic]
+        5. [Topic] in everyday life`;
+        
+        try {
+          console.log("[generate-response] Generating TOC content");
+          
+          // Use Groq API for TOC generation
+          response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'llama3-8b-8192',
+              messages: [
+                { role: 'system', content: tocSystemMessage },
+                { role: 'user', content: prompt }
+              ],
+              temperature: 0.4, // More focused for TOC generation
+              max_tokens: 300
+            }),
+          });
+          
+          const data = await response.json();
+          
+          if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
+            console.error("Invalid TOC response from Groq:", data);
+            throw new Error("Invalid TOC response");
+          }
+          
+          // Simplify the TOC response - just return the raw content
+          // Let the client-side parsing handle the extraction
+          const tocContent = data.choices[0].message.content;
+          console.log("[generate-response] TOC content generated:", tocContent);
+          
+          return new Response(JSON.stringify({ content: tocContent }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (tocError) {
+          console.error("TOC generation error:", tocError);
+          
+          // Provide a fallback TOC response
+          const fallbackTOC = generateFallbackTOC(prompt, language);
+          console.log("[generate-response] Using fallback TOC:", fallbackTOC);
+          
+          return new Response(JSON.stringify({ content: fallbackTOC }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
         }
+      } else {
+        // Regular text generation
+        let systemMessage = getSystemPromptForAge(ageRange, language);
         
-        if (data.error) {
-          console.error("Groq API error:", data.error);
-          throw new Error(`Groq API error: ${data.error.message || JSON.stringify(data.error)}`);
+        try {
+          // Use Groq API instead of OpenAI
+          response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'llama3-8b-8192',  // Using Llama3 model
+              messages: [
+                { role: 'system', content: systemMessage },
+                { role: 'user', content: prompt }
+              ],
+              temperature: 0.7,
+              max_tokens: 600
+            }),
+          });
+          
+          const data = await response.json();
+          
+          // Add error logging and check for expected response structure
+          if (!data) {
+            console.error("Empty response from Groq");
+            throw new Error("Empty response from Groq");
+          }
+          
+          if (data.error) {
+            console.error("Groq API error:", data.error);
+            throw new Error(`Groq API error: ${data.error.message || JSON.stringify(data.error)}`);
+          }
+          
+          if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            console.error("Unexpected response from Groq:", JSON.stringify(data));
+            throw new Error("Invalid response from Groq");
+          }
+          
+          // Apply content formatting guidelines to clean up the response
+          const formattedContent = formatLLMResponse(data.choices[0].message.content);
+          console.log("[generate-response] Formatted content with guidelines:", formattedContent.substring(0, 100) + "...");
+          
+          return new Response(JSON.stringify({ content: formattedContent }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (textError) {
+          console.error("Text generation error:", textError);
+          // Return a fallback response instead of an error
+          const fallbackResponse = generateFallbackTextResponse(prompt, language);
+          return new Response(JSON.stringify({ content: fallbackResponse }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
         }
-        
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-          console.error("Unexpected response from Groq:", JSON.stringify(data));
-          throw new Error("Invalid response from Groq");
-        }
-        
-        // Apply content formatting guidelines to clean up the response
-        const formattedContent = formatLLMResponse(data.choices[0].message.content);
-        console.log("[DEBUG] Formatted content with guidelines:", formattedContent.substring(0, 100) + "...");
-        
-        return new Response(JSON.stringify({ content: formattedContent }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (textError) {
-        console.error("Text generation error:", textError);
-        // Return a fallback response instead of an error
-        const fallbackResponse = generateFallbackTextResponse(prompt, language);
-        return new Response(JSON.stringify({ content: fallbackResponse }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
       }
     } 
     
@@ -554,25 +626,3 @@ function generateFallbackQuiz(topic: string, language: string = "en") {
     };
   }
 }
-
-// Improved helper function to enhance image prompts for better results
-const enhanceImagePrompt = (prompt: string, ageRange: string): string => {
-  const lowerPrompt = prompt.toLowerCase();
-  
-  // Base enhancement with child-friendly and educational aspects
-  let enhancedPrompt = `Create a high-quality, child-friendly, educational illustration of: ${prompt.substring(0, 250)}. The image should be colorful, engaging, suitable for children aged ${ageRange}, with a detailed art style.`;
-  
-  // Add topic-specific enhancements
-  if (lowerPrompt.includes("dinosaur") && (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater"))) {
-    enhancedPrompt = `Create a scientifically accurate, child-friendly illustration of carnivorous dinosaurs. Show dinosaur predators with their hunting adaptations like sharp teeth and claws. Detailed, educational style suitable for ${ageRange} year olds.`;
-  } else if (lowerPrompt.includes("dinosaur")) {
-    enhancedPrompt = `Create a scientifically accurate, child-friendly illustration of dinosaurs. Detailed, colorful, educational style suitable for ${ageRange} year olds.`;
-  } else if (lowerPrompt.includes("carnivore") || lowerPrompt.includes("meat-eater")) {
-    enhancedPrompt = `Create an educational illustration of carnivorous animals showing their predatory adaptations. The image should be colorful, detailed, suitable for children aged ${ageRange}, with a professional art style.`;
-  } else if (lowerPrompt.includes("planet") || lowerPrompt.includes("space")) {
-    enhancedPrompt = `Create a detailed, educational illustration of space or planets. The image should be colorful, scientifically accurate, suitable for children aged ${ageRange}.`;
-  }
-  
-  // Trim to prevent overly long prompts
-  return enhancedPrompt.substring(0, 500);
-};
