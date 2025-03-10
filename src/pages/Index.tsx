@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import WonderWhizLogo from "@/components/WonderWhizLogo";
@@ -74,7 +75,6 @@ const Index = () => {
     e.preventDefault();
     
     if (!isEmailValid) {
-      // Fix: Using the correct Sonner toast API format
       toast.error("Invalid email", {
         description: "Please enter a valid email address."
       });
@@ -565,4 +565,155 @@ const Index = () => {
             
             {/* Testimonial 3 */}
             <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6">
-              <div className
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-wonder-blue/20 rounded-full flex items-center justify-center">
+                  <span className="text-xl">👩‍💻</span>
+                </div>
+                <div className="ml-4">
+                  <h4 className="text-white font-bold">Jennifer L.</h4>
+                  <p className="text-gray-400 text-sm">Education Technologist</p>
+                </div>
+              </div>
+              <p className="text-gray-300">"This is what AI in education should look like! WonderWhiz balances fun with educational value perfectly. Kids don't even realize they're learning because they're having so much fun exploring new topics."</p>
+              <div className="mt-4 flex">
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-gray-300 text-lg max-w-3xl mx-auto">
+              Got questions? We've got answers!
+            </p>
+          </div>
+          
+          <div className="max-w-3xl mx-auto space-y-6">
+            {/* FAQ Item 1 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-white mb-3">Is WonderWhiz safe for my child?</h3>
+              <p className="text-gray-300">Absolutely! Safety is our top priority. WonderWhiz is fully COPPA compliant, with built-in content filtering and age-appropriate responses. Parents can monitor all interactions and set custom safety guardrails.</p>
+            </div>
+            
+            {/* FAQ Item 2 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-white mb-3">What age range is WonderWhiz designed for?</h3>
+              <p className="text-gray-300">WonderWhiz is perfect for curious minds ages 5-13. The AI automatically adjusts its language and content complexity based on the child's age and learning level, growing with them as they advance.</p>
+            </div>
+            
+            {/* FAQ Item 3 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-white mb-3">How does WonderWhiz handle privacy?</h3>
+              <p className="text-gray-300">We take privacy seriously! We collect minimal personal information, never sell data to third parties, and employ enterprise-grade encryption. Parents have full control over data retention and can request deletion at any time.</p>
+            </div>
+            
+            {/* FAQ Item 4 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-white mb-3">Can WonderWhiz replace traditional learning?</h3>
+              <p className="text-gray-300">WonderWhiz is designed to complement traditional education, not replace it. It's an incredible supplementary tool that reinforces school lessons while encouraging curiosity beyond the curriculum.</p>
+            </div>
+            
+            {/* FAQ Item 5 */}
+            <div className="bg-white/5 backdrop-blur-sm border border-wonder-purple/10 rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-white mb-3">When will WonderWhiz be available?</h3>
+              <p className="text-gray-300">WonderWhiz is currently in private beta. Sign up for the waitlist to be notified when we launch! Early waitlist members will receive special early access and founding member benefits.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Waitlist Section */}
+      <section id="waitlist" className="py-24 relative z-10 bg-gradient-to-b from-[#0B0B1A] to-[#1A1A3A]">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Join the WonderWhiz Waitlist
+            </h2>
+            <p className="text-gray-300 text-lg mb-10">
+              Be among the first to experience the future of learning. Sign up now for exclusive early access and special founding member benefits!
+            </p>
+            
+            <form onSubmit={handleWaitlistSubmit} className="flex flex-col sm:flex-row max-w-xl mx-auto gap-4">
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email address" 
+                className="flex-grow px-4 py-3 rounded-lg bg-gray-800 border border-wonder-purple/30 text-white focus:outline-none focus:ring-2 focus:ring-wonder-purple/50"
+                required
+              />
+              <button 
+                type="submit" 
+                disabled={isSubmitting || !isEmailValid}
+                className={`px-6 py-3 rounded-lg font-medium flex items-center justify-center transition-all ${
+                  isEmailValid ? 'bg-gradient-to-r from-[#FF5B7F] to-[#FC9C6C] hover:from-[#FF4670] hover:to-[#FC8C5C] text-white' : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                }`}
+              >
+                {isSubmitting ? (
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <>
+                    <span>Join Waitlist</span>
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </>
+                )}
+              </button>
+            </form>
+            
+            <div className="mt-8 flex items-center justify-center">
+              <div className="flex items-center text-gray-400 text-sm">
+                <CheckCircle className="h-4 w-4 text-wonder-green mr-2" />
+                <span>No spam, ever. Unsubscribe anytime.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Footer */}
+      <footer className="py-12 bg-[#08081A] relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+            <WonderWhizLogo size="md" />
+            
+            <div className="mt-6 md:mt-0 flex space-x-6">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Contact Us</a>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 pt-8 mt-8 text-center md:text-left">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <p className="text-gray-500 text-sm">
+                © {new Date().getFullYear()} WonderWhiz, Inc. All rights reserved.
+              </p>
+              
+              <div className="mt-4 md:mt-0">
+                <p className="text-gray-500 text-sm">
+                  Building the future of learning with AI
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Index;
