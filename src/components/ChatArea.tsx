@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -17,19 +18,6 @@ interface ChatAreaProps {
   onTocSectionClick: (section: string) => void;
   onRelatedTopicClick: (topic: string) => void;
   learningProgress: number;
-}
-
-interface TableOfContentsProps {
-  sections: string[];
-  completedSections: string[];
-  currentSection: string | null;
-  onSectionClick: (section: string) => void;
-  progress: number;
-}
-
-interface RelatedTopicsCardProps {
-  topics: string[];
-  onTopicClick: (topic: string) => void;
 }
 
 const ChatArea = ({
@@ -79,6 +67,9 @@ const ChatArea = ({
     return message.suggestedPrompts && message.suggestedPrompts.length > 0;
   };
 
+  console.log("[ChatArea] Rendering ChatArea with messages:", messages);
+  console.log("[ChatArea] Learning progress:", learningProgress);
+
   return (
     <div className="chat-area flex-1 overflow-y-auto pb-4 px-4 sm:px-6" ref={chatContainerRef}>
       {/* Welcome message and suggestions */}
@@ -117,6 +108,9 @@ const ChatArea = ({
             return null;
           }
           
+          // Debug log to check message structure
+          console.log(`[ChatArea] Rendering message ${index}:`, message);
+          
           return (
             <div 
               key={message.id} 
@@ -124,7 +118,7 @@ const ChatArea = ({
             >
               <ChatMessage
                 message={message}
-                showBlocks={message.showBlocks || false}
+                isUser={message.isUser}
                 onBlockClick={(type) => onBlockClick(type, message.id, message.text)}
               />
             </div>
@@ -134,7 +128,10 @@ const ChatArea = ({
         {/* Display TOC message if it exists */}
         {tocMessage && (
           <div key={tocMessage.id} className="flex justify-start items-start">
-            <ChatMessage message={tocMessage}>
+            <ChatMessage
+              message={tocMessage}
+              isUser={false}
+            >
               <TableOfContents 
                 sections={tocMessage.tableOfContents || []}
                 completedSections={completedSections}

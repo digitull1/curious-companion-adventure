@@ -45,6 +45,14 @@ export const generateTopicRelations = async (
     }
   } catch (error) {
     console.error("[TopicManagement] Error generating related topics:", error);
+    // Set fallback topics in case of error
+    setRelatedTopics([
+      "Related Science Topics",
+      "Fun Experiments",
+      "Historical Facts",
+      "Similar Concepts",
+      "Practical Applications"
+    ]);
   }
 };
 
@@ -234,6 +242,11 @@ const useTopicManagement = (
   const extractTOCSections = (text: string): string[] => {
     console.log("[TopicManagement] Raw TOC text to parse:", text);
     
+    if (!text || typeof text !== 'string') {
+      console.error("[TopicManagement] Invalid text input for TOC extraction:", text);
+      return [];
+    }
+    
     // Try multiple parsing approaches
     let sections: string[] = [];
     
@@ -340,7 +353,8 @@ const useTopicManagement = (
 
   return { 
     isNewTopicRequest, 
-    handleNewTopicRequest 
+    handleNewTopicRequest,
+    generateTopicRelations
   };
 };
 

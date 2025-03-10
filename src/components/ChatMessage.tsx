@@ -1,134 +1,85 @@
 
-import React, { useRef, useEffect } from "react";
-import { animate } from "@motionone/dom";
-import { Sparkles, Star, Heart, Lightbulb } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import confetti from "canvas-confetti";
+import React, { ReactNode } from "react";
+import CodeBlock from "./CodeBlock";
+import LearningBlock from "./LearningBlock";
+import { BlockType } from "@/types/chat";
 
-interface ChatMessageProps {
-  message: string;
+export interface ChatMessageProps {
+  message: any;
   isUser: boolean;
-  children?: React.ReactNode;
+  children?: ReactNode;
+  onBlockClick?: (type: BlockType) => void;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) => {
-  const messageRef = useRef<HTMLDivElement>(null);
+// Function to clean up message text for rendering
+const cleanMessageText = (text: string): string => {
+  if (!text || typeof text !== 'string') {
+    console.error("[ChatMessage] Invalid text received:", text);
+    return "Message text unavailable";
+  }
   
-  // Function to clean text content by removing asterisks
-  const cleanMessageText = (text: string) => {
-    // Remove all asterisks from text
-    return text.replace(/\*\*/g, "");
-  };
+  return text
+    .replace(/```[a-z]*\n([\s\S]*?)```/g, '') // Remove code blocks
+    .trim();
+};
+
+const ChatMessage: React.FC<ChatMessageProps> = ({ 
+  message, 
+  isUser, 
+  children, 
+  onBlockClick 
+}) => {
+  console.log("[ChatMessage] Rendering message:", message);
   
-  // Clean the message text
-  const cleanedMessage = cleanMessageText(message);
-
-  // Function to trigger micro-confetti
-  const triggerMicroConfetti = () => {
-    if (messageRef.current && !isUser) {
-      const rect = messageRef.current.getBoundingClientRect();
-      confetti({
-        particleCount: 25,
-        spread: 50,
-        origin: { 
-          x: (rect.left + 30) / window.innerWidth, 
-          y: (rect.top + 30) / window.innerHeight 
-        },
-        gravity: 0.5,
-        colors: ['#7c3aed', '#9d74f8', '#F59E0B', '#14B8A6'],
-        scalar: 0.6,
-        disableForReducedMotion: true
-      });
-    }
-  };
+  // Safety check for message
+  if (!message) {
+    console.error("[ChatMessage] No message provided");
+    return null;
+  }
   
-  useEffect(() => {
-    if (messageRef.current) {
-      // Create a staggered animation for text appearing
-      const textElement = messageRef.current.querySelector("p");
-      if (textElement) {
-        animate(
-          messageRef.current,
-          { opacity: [0, 1], y: [20, 0] },
-          { duration: 0.5, easing: [0.25, 1, 0.5, 1] }
-        );
-      }
-      
-      // Add ripple effect to user messages
-      if (isUser && messageRef.current) {
-        const ripple = document.createElement("div");
-        ripple.className = "absolute inset-0 rounded-2xl bg-wonder-purple/20 z-[-1]";
-        messageRef.current.style.position = "relative";
-        messageRef.current.appendChild(ripple);
-        
-        animate(
-          ripple,
-          { opacity: [0.6, 0], scale: [0.85, 1.05] },
-          { duration: 1, easing: "ease-out" }
-        );
-        
-        // Remove ripple after animation
-        setTimeout(() => {
-          ripple.remove();
-        }, 1000);
-      }
-    }
-  }, [isUser]);
-
-  // Random helper icon selection for AI messages
-  const getRandomIconForAI = () => {
-    const icons = [<Sparkles key="sparkles" />, <Lightbulb key="lightbulb" />, <Star key="star" />];
-    return icons[Math.floor(Math.random() * icons.length)];
-  };
-
+  // Check message.text
+  if (message.text !== undefined && message.text !== null) {
+    console.log("[ChatMessage] Message text type:", typeof message.text);
+  } else {
+    console.error("[ChatMessage] Message is missing text property");
+    message.text = "No message content available";
+  }
+  
+  const messageText = typeof message.text === 'string' ? cleanMessageText(message.text) : "Message text unavailable";
+  
   return (
-    <div 
-      ref={messageRef}
-      className={`mb-6 ${isUser ? 'ml-auto max-w-[85%]' : 'mr-auto max-w-[85%]'}`}
-      style={{ opacity: 0 }} // Start with opacity 0 before animation
-      onClick={() => !isUser && triggerMicroConfetti()}
-    >
-      <div 
-        className={isUser 
-          ? 'chat-bubble-user transform transition-transform active:scale-98 relative hover:shadow-magical-hover' 
-          : 'chat-bubble-ai transform transition-transform hover:scale-102 relative hover:shadow-wonder-lg'
-        }
-      >
-        {/* Add subtle sparkle effect to AI responses */}
+    <div className={`w-full max-w-3xl rounded-lg p-4 ${isUser ? 'bg-indigo-100 text-indigo-900' : 'bg-white shadow-sm border border-gray-100'}`}>
+      {/* Message content */}
+      <div className="prose-sm">
+        {messageText.split('\n').map((paragraph, idx) => (
+          <p key={idx} className={`mb-2 ${idx === 0 ? 'font-medium' : ''}`}>
+            {paragraph}
+          </p>
+        ))}
+        
+        {/* Code blocks */}
+        {message.code && (
+          <CodeBlock code={message.code} language={message.codeLanguage || 'javascript'} />
+        )}
+        
+        {/* Additional UI elements for AI messages */}
         {!isUser && (
-          <span className="absolute -top-1 -left-1 h-4 w-4 text-wonder-yellow/70 animate-sparkle">
-            {getRandomIconForAI()}
-          </span>
-        )}
-        
-        {/* Add heart to user messages */}
-        {isUser && (
-          <Heart 
-            className="absolute -top-1 -right-1 h-4 w-4 text-white/70 animate-pulse-soft" 
-            fill="currentColor"
-          />
-        )}
-        
-        <p className="whitespace-pre-line leading-relaxed text-base font-rounded">
-          {cleanedMessage}
-        </p>
-        {children}
-        
-        {/* Add tooltip for user to know they can tap on non-user messages for more info */}
-        {!isUser && !message.includes("I'd love to teach you about") && (
-          <div className="mt-2 text-xs text-wonder-purple/70 flex items-center opacity-70">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="flex items-center cursor-help">
-                    <Star className="h-3 w-3 mr-1" /> Tap to interact
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Tap on elements to learn more!</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <div className="mt-4">
+            {/* Learning blocks if applicable */}
+            {message.blocks && message.showBlocks && onBlockClick && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {message.blocks.map((block: BlockType) => (
+                  <LearningBlock 
+                    key={block} 
+                    type={block} 
+                    onClick={() => onBlockClick(block)} 
+                  />
+                ))}
+              </div>
+            )}
+            
+            {/* Render children (like TableOfContents) */}
+            {children && <div className="mt-4">{children}</div>}
           </div>
         )}
       </div>
