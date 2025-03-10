@@ -9,8 +9,7 @@ export const useRelatedTopics = (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>
 ) => {
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Modified to take language as a string, matching useTopicManagement's expectations
+  
   const generateRelatedTopics = useCallback(
     async (topic: string, ageRange: string, language: string): Promise<string[]> => {
       // Create a cache key based on topic, age and language
@@ -22,7 +21,7 @@ export const useRelatedTopics = (
         return topicsCache.get(cacheKey) || [];
       }
       
-      console.log(`[RelatedTopics] Generating related topics for: ${topic}`);
+      console.log(`[RelatedTopics] Generating related topics for: ${topic} with language: ${language}`);
       setIsGenerating(true);
       
       try {

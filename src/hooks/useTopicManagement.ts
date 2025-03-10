@@ -98,7 +98,7 @@ export const useTopicManagement = (
         
         setMessages(prev => [...prev, sectionMessage]);
         
-        // Mark the section as completed - Fixed with direct array instead of functional update
+        // Mark the section as completed - Fixed to use direct array instead of functional update
         if (!completedSections.includes(section)) {
           console.log(`[TopicManagement] Marking section as completed: ${section}`);
           const newCompletedSections = [...completedSections, section];
@@ -155,33 +155,33 @@ export const useTopicManagement = (
     ]
   );
   
-  // Modify the generateTopicRelations function to use the cache
+  // Modify the generateTopicRelations function to use the cache and ensure language is passed correctly
   const generateTopicRelations = useCallback(async () => {
     if (!selectedTopic) return;
     
-    console.log("Checking if TOC already generated for:", selectedTopic);
+    console.log(`[TopicManagement] Checking if TOC already generated for: ${selectedTopic} with language: ${language}`);
     
     // Skip regeneration if we've already done it for this topic
     const cacheKey = `${selectedTopic}-${ageRange}-${language}`;
     if (tocGeneratedRef.current.has(cacheKey)) {
-      console.log("TOC already generated for this topic, skipping");
+      console.log("[TopicManagement] TOC already generated for this topic, skipping");
       return;
     }
     
-    console.log("Generating TOC and related topics for:", selectedTopic);
+    console.log(`[TopicManagement] Generating TOC and related topics for: ${selectedTopic}`);
     setIsProcessing(true);
     setShowTypingIndicator(true);
     
     try {
       // Generate the table of contents
       if (!topicSectionsGenerated) {
-        console.log("Topic sections not yet generated, creating TOC");
+        console.log("[TopicManagement] Topic sections not yet generated, creating TOC");
         const tocPrompt = `Generate a concise table of contents with exactly 5 short, focused sections for learning about: ${selectedTopic}. Format as a simple numbered list. No welcome or introduction sections, focus only on educational content.`;
         const tocResponse = await generateResponse(tocPrompt, ageRange, language);
         
         // Parse TOC sections - improved with clearer section extraction
         const sections = parseTOCSections(tocResponse);
-        console.log("Generated TOC sections:", sections);
+        console.log("[TopicManagement] Generated TOC sections:", sections);
         
         // Add TOC message
         const tocMessage: Message = {
@@ -200,7 +200,7 @@ export const useTopicManagement = (
           );
           
           if (hasTOC) {
-            console.log("TOC message already exists, not adding duplicate");
+            console.log("[TopicManagement] TOC message already exists, not adding duplicate");
             return prev;
           }
           
@@ -213,17 +213,17 @@ export const useTopicManagement = (
       
       // Generate related topics only if needed
       if (relatedTopics.length === 0) {
-        console.log("Generating related topics for:", selectedTopic);
+        console.log(`[TopicManagement] Generating related topics for: ${selectedTopic} with language: ${language}`);
         const newRelatedTopics = await generateRelatedTopics(selectedTopic, ageRange, language);
         setRelatedTopics(newRelatedTopics);
       } else {
-        console.log("Related topics already exist:", relatedTopics);
+        console.log("[TopicManagement] Related topics already exist:", relatedTopics);
       }
       
       // Set learning progress for this section
       setLearningProgress(10); // 10% progress for seeing TOC
     } catch (error) {
-      console.error("Error generating topic relations:", error);
+      console.error("[TopicManagement] Error generating topic relations:", error);
       toast.error("Oops! Something went wrong while creating your learning path. Let's try again!");
     } finally {
       setIsProcessing(false);
