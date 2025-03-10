@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,7 +11,7 @@ import { useChatState } from "@/hooks/useChatState";
 import { useChatInitialization } from "@/hooks/useChatInitialization";
 import { useRelatedTopics } from "@/hooks/useRelatedTopics";
 import { useMessageHandling } from "@/hooks/useMessageHandling";
-import { useTopicManagement } from "@/hooks/useTopicManagement";
+import useTopicManagement from "@/hooks/useTopicManagement";
 import { useSectionHandling } from "@/hooks/useSectionHandling";
 import { handleBlockClick as handleLearningBlockClick } from "@/services/learningBlockService";
 import { supabase } from "@/integrations/supabase/client";

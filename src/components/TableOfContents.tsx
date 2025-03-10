@@ -1,3 +1,4 @@
+
 import React from "react";
 
 interface TableOfContentsProps {
@@ -33,13 +34,20 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       <h2 className="text-lg font-bold">Table of Contents</h2>
       <ul className="list-disc pl-5">
         {sections.map((section, index) => (
-          <li key={index} className={`cursor-pointer ${completedSections.includes(section) ? 'line-through' : ''}`} onClick={() => onSectionClick(section)}>
+          <li 
+            key={index} 
+            className={`cursor-pointer ${completedSections.includes(section) ? 'line-through' : ''} ${currentSection === section ? 'font-bold text-wonder-purple' : ''}`} 
+            onClick={() => onSectionClick(section)}
+          >
             {section}
           </li>
         ))}
       </ul>
-      <div className="progress-bar">
-        <div className="progress" style={{ width: `${progress}%` }} />
+      <div className="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-wonder-purple rounded-full transition-all duration-500 ease-out" 
+          style={{ width: `${progress}%` }} 
+        />
       </div>
     </div>
   );

@@ -1,12 +1,59 @@
-import { useCallback } from "react";
-import { useChatState } from "@/hooks/useChatState";
 
-const useTopicManagement = (
+import { useCallback } from "react";
+
+// Define generateTopicRelations function
+const generateTopicRelations = async (
+  topic: string,
+  generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
+  ageRange: string,
+  language: string,
+  setRelatedTopics: (topics: string[]) => void
+) => {
+  try {
+    console.log("[TopicManagement] Generating related topics for:", topic);
+    
+    const prompt = `Generate 5 related educational topics that a child interested in "${topic}" might also want to learn about. 
+    Return just a simple numbered list with no additional text or description. Each topic should be 3-6 words long.
+    Example:
+    1. Ocean Ecosystems
+    2. Marine Mammals
+    3. Coral Reef Conservation
+    4. Deep Sea Exploration
+    5. Ocean Pollution Solutions`;
+    
+    const response = await generateResponse(prompt, ageRange, language);
+    console.log("[TopicManagement] Related topics response:", response);
+    
+    // Extract the topics
+    const topicsList: string[] = [];
+    const lines = response.split('\n');
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // Match lines that start with a number and dot/parenthesis
+      const match = trimmed.match(/^\d+[\.\)]?\s+(.*)/);
+      if (match && match[1]) {
+        topicsList.push(match[1].trim());
+      }
+    }
+    
+    console.log("[TopicManagement] Extracted related topics:", topicsList);
+    
+    // Only update if we have topics
+    if (topicsList.length > 0) {
+      setRelatedTopics(topicsList);
+    }
+  } catch (error) {
+    console.error("[TopicManagement] Error generating related topics:", error);
+  }
+};
+
+export const useTopicManagement = (
   selectedTopic: string | null,
   topicSectionsGenerated: boolean,
   messages: any[],
-  completedSections: any[],
-  relatedTopics: any[],
+  completedSections: string[],
+  relatedTopics: string[],
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>,
   ageRange: string,
   language: string,
@@ -15,16 +62,16 @@ const useTopicManagement = (
   generateRelatedTopics: (topic: string) => void,
   inputValue: string,
   isProcessing: boolean,
-  setMessages: (messages: any[]) => void,
+  setMessages: (messagesSetter: (prev: any[]) => any[]) => void,
   setInputValue: (value: string) => void,
   setIsProcessing: (isProcessing: boolean) => void,
   setShowTypingIndicator: (show: boolean) => void,
   setSelectedTopic: (topic: string | null) => void,
   setTopicSectionsGenerated: (generated: boolean) => void,
-  setCompletedSections: (sections: any[]) => void,
-  setCurrentSection: (section: any) => void,
-  setPreviousTopics: (topics: any[]) => void,
-  setPoints: (points: number) => void,
+  setCompletedSections: (sectionsSetter: (prev: string[]) => string[]) => void,
+  setCurrentSection: (section: string | null) => void,
+  setPreviousTopics: (topicsSetter: (prev: string[]) => string[]) => void,
+  setPoints: (pointsSetter: (prev: number) => number) => void,
   setLearningProgress: (progress: number) => void
 ) => {
   // Add improved logging for topic detection and TOC generation
@@ -144,7 +191,13 @@ const useTopicManagement = (
       }
       
       // Generate related topics in the background
-      generateTopicRelations(userTopic);
+      generateTopicRelations(
+        userTopic, 
+        generateResponse, 
+        ageRange, 
+        language, 
+        setRelatedTopics
+      );
     } catch (error) {
       console.error("[TopicManagement] Error in handleNewTopicRequest:", error);
       // Create error message
@@ -174,7 +227,7 @@ const useTopicManagement = (
     setShowTypingIndicator, 
     setTopicSectionsGenerated, 
     setLearningProgress,
-    generateTopicRelations
+    setRelatedTopics
   ]);
 
   // Improved function to extract TOC sections
