@@ -24,6 +24,8 @@ const buttonVariants = cva(
         chupa: "bg-gradient-to-br from-chupa-pink to-chupa-orange text-white shadow-[0_8px_20px_rgba(255,97,210,0.2)] hover:shadow-[0_10px_25px_rgba(255,97,210,0.3)] hover:-translate-y-0.5 active:translate-y-0",
         // New Apple-inspired style
         apple: "bg-white border border-gray-200 text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.05)] hover:shadow-[0_5px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 active:translate-y-0",
+        // New Kid-friendly style with fun colors
+        kidFriendly: "bg-gradient-to-br from-wonder-yellow/80 to-wonder-yellow text-gray-800 shadow-[0_8px_15px_rgba(250,204,21,0.2)] hover:shadow-[0_10px_20px_rgba(250,204,21,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bubbly",
       },
       size: {
         default: "h-10 px-4 py-2 rounded-xl",

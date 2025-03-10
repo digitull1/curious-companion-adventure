@@ -209,7 +209,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return { prev, next };
   };
 
-  // Topic pill instead of a sticky header
+  // Render topic pill (improved version that doesn't overlap)
   const renderTopicPill = () => {
     if (!currentSection) return null;
     
@@ -223,7 +223,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             <div className="w-6 h-6 flex-shrink-0 rounded-full bg-wonder-purple/20 flex items-center justify-center">
               <BookOpen className="h-3 w-3 text-wonder-purple" />
             </div>
-            <span className="text-xs text-wonder-purple/70">Learning about:</span>
+            <span className="text-xs text-wonder-purple/70">Learning:</span>
             <span className="text-sm font-medium text-wonder-purple truncate max-w-[150px] sm:max-w-[300px]">
               {cleanedSection}
             </span>
@@ -231,7 +231,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           <div className="flex items-center gap-2">
             <div className="w-20 h-1.5 bg-white/70 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-wonder-purple/50 rounded-full"
+                className="h-full bg-gradient-to-r from-pixar-blue to-pixar-sky rounded-full"
                 style={{ width: `${learningProgress}%` }}
               ></div>
             </div>
@@ -312,9 +312,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       className="flex-1 overflow-y-auto py-6 scrollbar-thin relative" 
       ref={chatHistoryRef}
     >
-      {currentSection && renderTopicPill()}
+      {/* Position topic pill at the top with proper spacing */}
+      <div className="sticky top-0 z-10 mb-4 bg-gradient-to-b from-wonder-background via-wonder-background to-transparent pb-2">
+        {currentSection && renderTopicPill()}
+      </div>
       
-      {/* Main chat content */}
+      {/* Main chat content - removed the overlapping journey section */}
       <div className="relative">
         <div className="space-y-6">
           {/* Display welcome message first */}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { animate } from "@motionone/dom";
 import { ChevronLeft, ChevronRight, Book, Star, Sparkles, Lightbulb, AtomIcon, MessageSquareText, Video, HelpCircle, Loader2 } from "lucide-react";
@@ -61,11 +62,29 @@ const ContentBox: React.FC<ContentBoxProps> = ({
   
   const titleEmoji = extractEmoji(cleanedTitle);
   
-  // Format content with proper paragraph breaks
+  // Format content with proper paragraph breaks and add child-friendly styling
   const formatContent = (content: string) => {
-    return content
-      .replace(/\n\n+/g, '</p><p class="mb-3">') // Replace double line breaks with paragraphs
-      .replace(/\n/g, '<br />'); // Replace single line breaks with <br>
+    // Break content into paragraphs
+    const paragraphs = content.split(/\n\n+/);
+    
+    // Process each paragraph
+    return paragraphs.map((paragraph, index) => {
+      // Check if paragraph starts with a number followed by a period (like "1.")
+      const isNumberedItem = /^\d+\./.test(paragraph);
+      
+      // Check if paragraph contains activity titles
+      const isActivityTitle = /Activity \d+:|Experiment \d+:/.test(paragraph);
+      
+      // Format for different types of paragraphs
+      if (isActivityTitle) {
+        return `<div class="activity-title my-4 py-2 px-4 bg-wonder-yellow/10 rounded-lg border border-wonder-yellow/30 font-bubbly text-lg text-wonder-purple">${paragraph}</div>`;
+      } else if (isNumberedItem) {
+        return `<div class="numbered-item my-3 pl-2 border-l-4 border-wonder-purple/20 py-1">${paragraph}</div>`;
+      } else {
+        // Regular paragraphs with line breaks
+        return `<p class="mb-4 leading-relaxed">${paragraph.replace(/\n/g, '<br />')}</p>`;
+      }
+    }).join('');
   };
   
   // Simulate content loading when navigating between sections
@@ -204,9 +223,9 @@ const ContentBox: React.FC<ContentBoxProps> = ({
       aria-labelledby="content-title"
     >
       {/* Content header with emoji */}
-      <div className="bg-gradient-to-r from-wonder-purple/10 to-wonder-blue/5 p-4 border-b border-wonder-purple/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-10 w-10 flex items-center justify-center rounded-full bg-gradient-to-br from-wonder-purple/20 to-wonder-purple/30 text-xl">
+      <div className="bg-gradient-to-r from-wonder-purple/20 to-wonder-blue/10 p-4 border-b border-wonder-purple/10 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 flex items-center justify-center rounded-full bg-gradient-to-br from-disney-purple/30 to-disney-purple/50 text-xl shadow-sm">
             {titleEmoji}
           </div>
           <h2 
@@ -242,9 +261,9 @@ const ContentBox: React.FC<ContentBoxProps> = ({
               <div className="prose prose-sm sm:prose max-w-none">
                 <div 
                   ref={contentRef}
-                  className="whitespace-pre-line leading-relaxed text-base font-rounded"
+                  className="whitespace-pre-line leading-relaxed text-base font-rounded child-friendly-content"
                   dangerouslySetInnerHTML={{ 
-                    __html: `<p class="mb-3">${formatContent(cleanedContent)}</p>`
+                    __html: formatContent(cleanedContent)
                       .replace(/\b(important|fascinating|amazing|incredible|exciting|surprising)\b/gi, '<strong>$1</strong>')
                   }} 
                 />
@@ -252,7 +271,7 @@ const ContentBox: React.FC<ContentBoxProps> = ({
               
               {/* Display image if there's an image prompt and active block is see-it */}
               {imagePrompt && activeBlock === 'see-it' && (
-                <div className="mt-6 mb-6 animate-fade-in" key={`image-${imagePrompt.substring(0, 20)}`}>
+                <div className="mt-6 mb-6 animate-fade-in rounded-xl overflow-hidden border-2 border-wonder-green/20" key={`image-${imagePrompt.substring(0, 20)}`}>
                   <ImageBlock prompt={imagePrompt} />
                 </div>
               )}

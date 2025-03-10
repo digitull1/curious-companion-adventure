@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&family=Varela+Round&display=swap');
 
 @tailwind base;
@@ -152,6 +153,27 @@
   
   .scroll-button {
     @apply flex items-center justify-center bg-white/90 backdrop-blur-sm border border-wonder-purple/10 rounded-full shadow-sm hover:shadow-wonder transition-all duration-300 h-6 w-6;
+  }
+  
+  /* Enhanced child-friendly content formatting */
+  .child-friendly-content {
+    @apply text-base leading-relaxed font-rounded;
+  }
+  
+  .child-friendly-content p {
+    @apply mb-4;
+  }
+  
+  .child-friendly-content .activity-title {
+    @apply text-lg font-bubbly font-bold text-wonder-purple mt-6 mb-4 py-2;
+  }
+  
+  .child-friendly-content .numbered-item {
+    @apply ml-4 mb-3 pl-4 border-l-4 border-wonder-yellow/30 py-2;
+  }
+  
+  .child-friendly-content strong {
+    @apply text-wonder-purple font-bold;
   }
   
   /* Button styles with Apple and Disney inspiration */
@@ -563,5 +585,17 @@
   }
   50% {
     transform: scale(1.1);
+  }
+}
+
+/* Add pop-in animation for chat bubbles */
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
