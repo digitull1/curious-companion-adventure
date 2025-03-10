@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { ArrowUpCircle } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -102,14 +103,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white overflow-hidden">
-      {/* Pass all required props to Header component */}
-      <Header 
-        avatar={avatar} 
-        streakCount={streak}
-        points={points}
-        learningProgress={learningProgress}
-        topicSectionsGenerated={topicSectionsGenerated}
-      />
       <main className="flex-1 overflow-hidden relative">
         <ChatArea 
           messages={messages}
@@ -139,6 +132,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           onSuggestedPromptClick={onSuggestedPromptClick}
           setShowSuggestedPrompts={setShowSuggestedPrompts}
         />
+        <div ref={messagesEndRef} />
       </main>
     </div>
   );

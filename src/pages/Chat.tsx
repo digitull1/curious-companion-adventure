@@ -8,7 +8,7 @@ import { useChatInitialization } from "@/hooks/useChatInitialization";
 import { useMessageHandling } from "@/hooks/useMessageHandling";
 import useTopicManagement, { generateTopicRelations } from "@/hooks/useTopicManagement";
 import { useSectionHandling } from "@/hooks/useSectionHandling";
-import { useRelatedTopics } from "@/hooks/useRelatedTopics";
+import useRelatedTopics from "@/hooks/useRelatedTopics";
 import { useInputHandling } from "@/hooks/useInputHandling";
 import { BlockType } from "@/types/chat";
 
@@ -56,33 +56,6 @@ const Chat = () => {
     generateResponse, generateImage, generateQuiz
   } = chatState;
   
-  // Create a wrapper function for generateTopicRelations
-  const handleGenerateTopicRelations = (topic) => {
-    generateTopicRelations(
-      topic,
-      generateResponse,
-      ageRange,
-      language,
-      setRelatedTopics
-    );
-  };
-  
-  // Initialize chat and load suggested topics
-  useChatInitialization(
-    ageRange,
-    avatar,
-    userName,
-    language,
-    generateResponse,
-    setShowTypingIndicator,
-    setSuggestedTopics,
-    setMessages,
-    setShowSuggestedPrompts,
-    setStreakCount,
-    setPoints,
-    defaultSuggestedPrompts
-  );
-  
   // Message processing handler
   const { processMessage } = useMessageHandling(
     generateResponse,
@@ -107,7 +80,13 @@ const Chat = () => {
     language,
     setLearningComplete,
     setRelatedTopics,
-    handleGenerateTopicRelations,
+    (topic) => generateTopicRelations(
+      topic,
+      generateResponse,
+      ageRange,
+      language,
+      setRelatedTopics
+    ),
     inputValue,
     isProcessing,
     setMessages,
@@ -132,7 +111,8 @@ const Chat = () => {
     setCurrentSection,
     setCompletedSections,
     setLearningProgress,
-    setLearningComplete
+    setLearningComplete,
+    messages
   );
   
   // Related topic handling
@@ -145,7 +125,13 @@ const Chat = () => {
   );
   
   // Input handling
-  const { handleInputChange, handleSubmit, handleVoiceInput, handleBlockClick, handleSuggestedTopicClick } = useInputHandling(
+  const { 
+    handleInputChange, 
+    handleSubmit, 
+    handleVoiceInput, 
+    handleBlockClick, 
+    handleSuggestedPromptClick 
+  } = useInputHandling(
     inputValue,
     setInputValue,
     isProcessing,
@@ -162,6 +148,22 @@ const Chat = () => {
     setMessages
   );
   
+  // Initialize chat and load suggested topics
+  useChatInitialization(
+    ageRange,
+    avatar,
+    userName,
+    language,
+    generateResponse,
+    setShowTypingIndicator,
+    setSuggestedTopics,
+    setMessages,
+    setShowSuggestedPrompts,
+    setStreakCount,
+    setPoints,
+    defaultSuggestedPrompts
+  );
+  
   console.log("[Chat] Rendering chat interface with state:", { 
     messagesCount: messages.length,
     showTypingIndicator,
@@ -174,10 +176,12 @@ const Chat = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Header 
-        userName={userName}
         avatar={avatar}
         streakCount={streakCount}
         points={points}
+        learningProgress={learningProgress}
+        topicSectionsGenerated={topicSectionsGenerated}
+        language={language}
       />
       <main className="flex-1 overflow-hidden flex flex-col pb-safe">
         <ChatInterface 
@@ -186,20 +190,28 @@ const Chat = () => {
           isProcessing={isProcessing}
           isListening={isListening}
           showTypingIndicator={showTypingIndicator}
+          selectedTopic={selectedTopic}
+          topicSectionsGenerated={topicSectionsGenerated}
           completedSections={completedSections}
           currentSection={currentSection}
           relatedTopics={relatedTopics}
           learningComplete={learningComplete}
-          suggestedTopics={suggestedTopics}
-          showSuggestedPrompts={showSuggestedPrompts}
-          handleInputChange={handleInputChange}
-          handleSubmit={handleSubmit}
-          handleVoiceInput={handleVoiceInput}
-          handleBlockClick={handleBlockClick}
-          handleSuggestedTopicClick={handleSuggestedTopicClick}
-          handleTocSectionClick={handleSectionClick}
-          handleRelatedTopicClick={handleRelatedTopicClick}
+          avatar={avatar}
+          streak={streakCount}
+          points={points}
           learningProgress={learningProgress}
+          suggestedPrompts={suggestedTopics}
+          showSuggestedPrompts={showSuggestedPrompts}
+          onInputChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onSendMessage={handleSubmit}
+          onBlockClick={handleBlockClick}
+          onTocSectionClick={handleSectionClick}
+          onRelatedTopicClick={handleRelatedTopicClick}
+          onVoiceInput={handleVoiceInput}
+          toggleListening={() => setIsListening(!isListening)}
+          onSuggestedPromptClick={handleSuggestedPromptClick}
+          setShowSuggestedPrompts={setShowSuggestedPrompts}
         />
       </main>
     </div>

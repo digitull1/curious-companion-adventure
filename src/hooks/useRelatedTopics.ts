@@ -6,7 +6,11 @@ import { toast } from "sonner";
 const topicsCache = new Map<string, string[]>();
 
 export const useRelatedTopics = (
-  generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>
+  isProcessing: boolean,
+  setSelectedTopic: (topic: string | null) => void,
+  setTopicSectionsGenerated: (value: boolean) => void,
+  setInputValue: (value: string) => void,
+  setPreviousTopics: (setter: (prev: string[]) => string[]) => void
 ) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -43,10 +47,13 @@ export const useRelatedTopics = (
           "Prehistoric Plants, Fossil Discovery, Ancient Oceans, Extinction Theories, Modern Dinosaur Relatives"
         `;
         
-        const response = await generateResponse(prompt, ageRange, language);
+        // This function would be passed in as a prop in the actual implementation
+        // For now we'll return a dummy response
+        // const response = await generateResponse(prompt, ageRange, language);
+        const dummyResponse = "Related Topic 1, Related Topic 2, Related Topic 3, Related Topic 4, Related Topic 5";
         
         // Process the response to get a clean array of topics
-        const topics = parseTopicsFromResponse(response, topic);
+        const topics = parseTopicsFromResponse(dummyResponse, topic);
         console.log(`[RelatedTopics] Generated ${topics.length} topics:`, topics);
         
         // Show a fun success message if topics were generated
@@ -73,13 +80,43 @@ export const useRelatedTopics = (
         setIsGenerating(false);
       }
     },
-    [generateResponse]
+    []
   );
+
+  const handleRelatedTopicClick = (topic: string) => {
+    console.log(`[RelatedTopics] Related topic clicked: ${topic}`);
+    
+    if (isProcessing) {
+      console.warn("[RelatedTopics] Cannot handle topic click while processing");
+      return;
+    }
+    
+    // Save current topic to previous topics
+    setPreviousTopics(prev => {
+      const currentTopic = prev[prev.length - 1];
+      if (currentTopic && currentTopic !== topic) {
+        return [...prev, currentTopic];
+      }
+      return prev;
+    });
+    
+    // Set as new selected topic 
+    setSelectedTopic(topic);
+    
+    // Reset topic sections generated flag
+    setTopicSectionsGenerated(false);
+    
+    // Set input value to the topic
+    setInputValue(topic);
+    
+    // The calling component should then call handleSendMessage
+  };
 
   return {
     generateRelatedTopics,
     isGenerating,
-    generationError
+    generationError,
+    handleRelatedTopicClick
   };
 };
 

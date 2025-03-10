@@ -69,6 +69,8 @@ const ChatArea = ({
 
   console.log("[ChatArea] Rendering ChatArea with messages:", messages);
   console.log("[ChatArea] Learning progress:", learningProgress);
+  console.log("[ChatArea] Current section:", currentSection);
+  console.log("[ChatArea] Completed sections:", completedSections);
 
   return (
     <div className="chat-area flex-1 overflow-y-auto pb-4 px-4 sm:px-6" ref={chatContainerRef}>
@@ -135,7 +137,7 @@ const ChatArea = ({
               <TableOfContents 
                 sections={tocMessage.tableOfContents || []}
                 completedSections={completedSections}
-                currentSection={currentSection}
+                currentSection={currentSection || ""}
                 onSectionClick={onTocSectionClick}
                 progress={learningProgress}
               />

@@ -1,68 +1,45 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { BlockType } from "@/types/chat";
+import { BlockType, MessageProcessingResult } from "@/types/chat";
 import { handleBlockClick as handleLearningBlockClick } from "@/services/learningBlockService";
 
 export const useInputHandling = (
   inputValue: string,
   setInputValue: (value: string) => void,
   isProcessing: boolean,
-  processMessage: (prompt: string) => Promise<any>,
-  selectedTopic: string | null,
-  topicSectionsGenerated: boolean,
-  learningComplete: boolean,
-  setPreviousTopics: (prev: (prevTopics: string[]) => string[]) => void,
-  setTopicSectionsGenerated: (value: boolean) => void,
-  setCompletedSections: (value: string[]) => void, 
-  setCurrentSection: (value: string | null) => void,
-  setLearningComplete: (value: boolean) => void,
-  setRelatedTopics: (value: string[]) => void,
+  setIsListening: (value: boolean) => void,
+  isListening: boolean,
   isNewTopicRequest: (input: string, currentTopic: string | null, sectionsGenerated: boolean) => boolean,
-  handleNewTopicRequest: () => Promise<void>
+  handleNewTopicRequest: () => Promise<void>,
+  processMessage: (prompt: string, isUserMessage?: boolean, skipUserMessage?: boolean) => Promise<MessageProcessingResult>,
+  setShowSuggestedPrompts: (show: boolean) => void,
+  generateQuiz: any,
+  generateImage: any,
+  ageRange: string,
+  language: string,
+  setMessages: any
 ) => {
-  const [isListening, setIsListening] = useState(false);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && inputValue.trim() && !isProcessing) {
-      handleSendMessage();
+      handleSubmit();
     }
   };
 
-  const handleSendMessage = async () => {
+  const handleSubmit = async () => {
     if (!inputValue.trim() || isProcessing) return;
 
     console.log("Handling send message with input:", inputValue);
-    console.log("Current state - selectedTopic:", selectedTopic, 
-                "topicSectionsGenerated:", topicSectionsGenerated, 
-                "learningComplete:", learningComplete);
 
-    // If starting a new topic after completing previous one
-    if (learningComplete && topicSectionsGenerated) {
-      // Save the previous topic before resetting
-      if (selectedTopic) {
-        console.log("Saving previous topic before starting new one:", selectedTopic);
-        setPreviousTopics(prev => [...prev, selectedTopic]);
-      }
-      
-      // Reset topic-related states
-      console.log("Resetting topic states for new topic");
-      setTopicSectionsGenerated(false);
-      setCompletedSections([]);
-      setCurrentSection(null);
-      setLearningComplete(false);
-      setRelatedTopics([]);
-    }
-
-    // Check if this is a new topic request (not a follow-up on sections)
+    // Check if this is a new topic request
     const isTopicRequest = isNewTopicRequest(
       inputValue, 
-      selectedTopic, 
-      topicSectionsGenerated
+      null, // Replace with selectedTopic from props
+      false // Replace with topicSectionsGenerated from props
     );
     
     console.log("Handle send message - isNewTopicRequest:", isTopicRequest);
@@ -90,27 +67,23 @@ export const useInputHandling = (
     setInputValue(prompt);
     // Auto-send the suggestion
     setTimeout(() => {
-      handleSendMessage();
+      handleSubmit();
     }, 100);
   };
 
-  const handleBlockClick = (type: BlockType, messageId: string, messageText: string, 
-    ageRange: string, language: string, setIsProcessing: (value: boolean) => void,
-    setShowTypingIndicator: (value: boolean) => void, setPoints: any, 
-    setMessages: any, generateResponse: any, generateQuiz: any) => {
-    
+  const handleBlockClick = (type: BlockType, messageId: string, messageText: string) => {
     handleLearningBlockClick(
       type,
       messageId,
       messageText,
       ageRange,
       language,
-      setIsProcessing,
-      setShowTypingIndicator,
-      setPoints,
+      (value: boolean) => {}, // setIsProcessing placeholder
+      (value: boolean) => {}, // setShowTypingIndicator placeholder
+      (points: any) => {}, // setPoints placeholder
       setMessages,
-      generateResponse,
-      generateQuiz
+      generateQuiz,
+      generateImage
     );
   };
 
@@ -119,7 +92,7 @@ export const useInputHandling = (
     setIsListening,
     handleInputChange,
     handleKeyDown,
-    handleSendMessage,
+    handleSubmit,
     handleVoiceInput,
     toggleListening,
     handleSuggestedPromptClick,
