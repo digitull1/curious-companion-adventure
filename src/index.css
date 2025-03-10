@@ -37,7 +37,7 @@
   
   --radius: 0.5rem;
   
-  /* Wonder Whiz specific colors */
+  /* Wonder Whiz specific colors - Enhanced for Pixar/Disney feel */
   --wonder-purple: 139, 92, 246;
   --wonder-purple-dark: 109, 40, 217;
   --wonder-purple-light: 167, 139, 250;
@@ -60,12 +60,15 @@
   
   --wonder-background: 250, 248, 254;
   
-  /* New cosmic theme colors */
-  --cosmic-dark: 13, 10, 37;
-  --cosmic-blue: 59, 52, 134;
-  --cosmic-purple: 124, 58, 237;
-  --cosmic-pink: 248, 113, 158;
-  --cosmic-yellow: 250, 204, 21;
+  /* Enhanced theme colors inspired by Pixar/Disney/Apple */
+  --pixar-blue: 11, 99, 246;
+  --pixar-sky: 0, 198, 251;
+  --disney-purple: 200, 80, 192;
+  --disney-blue: 65, 88, 208;
+  --chupa-pink: 255, 97, 210;
+  --chupa-orange: 254, 144, 144;
+  --apple-light: 248, 249, 250;
+  --apple-gray: 233, 236, 239;
 }
 
 @layer base {
@@ -97,22 +100,24 @@
 }
 
 @layer components {
+  /* Enhanced shadow styles inspired by Pixar and Apple */
   .shadow-magical {
-    box-shadow: 0 4px 20px rgba(var(--wonder-purple), 0.15), 0 2px 8px rgba(var(--wonder-purple), 0.1);
+    box-shadow: 0 10px 25px rgba(var(--wonder-purple), 0.15), 0 4px 10px rgba(var(--wonder-purple), 0.1);
   }
   
   .shadow-magical-hover {
-    box-shadow: 0 8px 25px rgba(var(--wonder-purple), 0.2), 0 4px 10px rgba(var(--wonder-purple), 0.15);
+    box-shadow: 0 15px 30px rgba(var(--wonder-purple), 0.2), 0 8px 15px rgba(var(--wonder-purple), 0.15);
   }
   
   .shadow-wonder {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
   }
   
   .shadow-wonder-lg {
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 8px 15px rgba(0, 0, 0, 0.05);
   }
   
+  /* Chat bubbles with improved Disney-like styling */
   .chat-bubble-user {
     @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white p-4 rounded-xl rounded-tr-sm shadow-wonder max-w-fit ml-auto border border-wonder-purple/20;
     animation: pop-in 0.3s ease-out;
@@ -123,7 +128,7 @@
     animation: pop-in 0.3s ease-out;
   }
   
-  /* Enhanced bubble designs with 3D effect */
+  /* Enhanced bubble designs with 3D effect - Pixar inspired */
   .chat-bubble-user::before {
     content: '';
     @apply absolute -inset-[1px] bg-gradient-to-br from-white/20 to-transparent rounded-xl rounded-tr-sm z-[-1] opacity-80;
@@ -135,7 +140,8 @@
     @apply absolute -inset-[1px] bg-gradient-to-tr from-wonder-purple/10 to-transparent rounded-xl rounded-tl-sm z-[-1] opacity-50;
     filter: blur(1px);
   }
-  
+
+  /* Learning blocks with Pixar-inspired depth and dimensionality */
   .learning-blocks-container {
     @apply flex overflow-x-auto gap-3 py-1 px-2 snap-x snap-mandatory scrollbar-none;
   }
@@ -148,9 +154,9 @@
     @apply flex items-center justify-center bg-white/90 backdrop-blur-sm border border-wonder-purple/10 rounded-full shadow-sm hover:shadow-wonder transition-all duration-300 h-6 w-6;
   }
   
+  /* Button styles with Apple and Disney inspiration */
   .btn-primary {
     @apply bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white rounded-lg px-4 py-2 shadow-magical hover:shadow-magical-hover transition-all duration-300 font-medium;
-    animation: button-pulse 2s infinite ease-in-out;
   }
   
   .btn-secondary {
@@ -161,6 +167,7 @@
     @apply bg-transparent text-wonder-purple/80 hover:text-wonder-purple rounded-lg px-4 py-2 transition-all duration-300 font-medium;
   }
   
+  /* Enhanced text pulse effects - subtle, not distracting */
   .animate-pulse-soft {
     animation: pulse-soft 3s ease-in-out infinite;
   }
@@ -189,6 +196,7 @@
     animation: float-up 3s ease-out forwards;
   }
   
+  /* Child-friendly container with Pixar-inspired depth */
   .child-friendly-container {
     @apply rounded-xl border-2 border-wonder-purple/20 bg-gradient-to-br from-white/95 to-white/85 backdrop-blur-sm p-3 shadow-wonder;
   }
@@ -233,7 +241,7 @@
     max-height: 0;
   }
   
-  /* Enhanced cosmic-inspired UI classes */
+  /* Enhanced cosmic-inspired UI classes with Pixar/Disney magic */
   .cosmic-card {
     @apply bg-gradient-to-br from-white/95 to-white/85 backdrop-blur-md border border-wonder-purple/10 rounded-xl shadow-magical;
   }
@@ -254,7 +262,7 @@
     @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-lg px-3 py-1.5 text-xs shadow-magical;
   }
   
-  /* New interactive components */
+  /* New interactive components with Apple-inspired simplicity */
   .interactive-card {
     @apply bg-white rounded-xl border border-wonder-purple/10 shadow-sm transition-all duration-300;
     transform: perspective(800px) rotateY(0deg) rotateX(0deg);
@@ -281,6 +289,56 @@
   
   .scrollbar-friendly::-webkit-scrollbar-thumb:hover {
     @apply bg-gradient-to-b from-wonder-purple/70 to-wonder-purple-dark/70;
+  }
+
+  /* New Pixar-inspired glass cards */
+  .pixar-card {
+    @apply bg-white/90 backdrop-blur-md border border-white/30 rounded-xl shadow-[0_15px_35px_rgba(0,0,0,0.1)] overflow-hidden;
+    position: relative;
+  }
+  
+  .pixar-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(to right, #0b63f6, #00c6fb);
+  }
+  
+  /* Disney-inspired magical cards */
+  .disney-card {
+    @apply bg-gradient-to-br from-white/95 to-white/85 rounded-xl shadow-[0_15px_35px_rgba(200,80,192,0.15)] border border-wonder-purple/10 overflow-hidden;
+  }
+  
+  /* Chupa Chups inspired colorful components */
+  .chupa-card {
+    @apply bg-white rounded-xl border-2 border-wonder-coral/20 shadow-[0_10px_25px_rgba(255,97,210,0.15)];
+    position: relative;
+  }
+  
+  .chupa-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(to right, #ff61d2, #fe9090);
+  }
+  
+  /* Apple-inspired clean UI components */
+  .apple-card {
+    @apply bg-white rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.06)] border border-gray-100;
+  }
+  
+  .apple-input {
+    @apply bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-wonder-blue/30 shadow-sm;
+  }
+  
+  .apple-button {
+    @apply bg-wonder-blue text-white rounded-full px-4 py-2 font-medium shadow-sm hover:shadow-md transition-all duration-300;
   }
 }
 
@@ -337,6 +395,30 @@
   
   .link-highlight {
     @apply relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-wonder-purple after:transition-all after:duration-300 hover:after:w-full;
+  }
+  
+  /* Apple-inspired smooth transitions */
+  .apple-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  /* Disney-inspired text effects */
+  .disney-text {
+    @apply font-bubbly text-transparent bg-clip-text bg-gradient-to-r from-disney-purple to-disney-blue;
+  }
+  
+  /* Pixar-inspired depth effects */
+  .pixar-shadow {
+    box-shadow: 0 10px 25px rgba(11, 99, 246, 0.15), 0 5px 10px rgba(0, 198, 251, 0.1);
+  }
+  
+  /* Chupa Chups color utilities */
+  .chupa-gradient {
+    background: linear-gradient(135deg, rgba(255, 97, 210, 0.8), rgba(254, 144, 144, 0.8));
+  }
+  
+  .chupa-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-chupa-pink to-chupa-orange;
   }
 }
 

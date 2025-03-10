@@ -45,17 +45,43 @@ const WonderWhizLogo: React.FC<WonderWhizLogoProps> = ({
       ref={logoRef}
       className={`font-bold flex items-center ${sizeClasses[size]} ${className}`}
     >
-      <div className="relative">
-        <span className="bg-clip-text text-transparent bg-gradient-to-r from-wonder-purple to-wonder-purple-dark font-rounded">Wonder</span>
-        <Sparkles className="absolute -top-3 -right-2 h-3 w-3 text-wonder-yellow animate-sparkle" />
+      {/* Enhanced logo with Pixar/Disney style depth and dimensionality */}
+      <div className="relative overflow-visible">
+        {/* Shadow layer for depth */}
+        <span className="absolute -left-1 -bottom-1 opacity-10 blur-sm bg-clip-text text-black font-rounded">Wonder</span>
+        
+        {/* Main text with enhanced gradient */}
+        <span className="relative bg-clip-text text-transparent bg-gradient-to-br from-wonder-purple via-pixar-blue to-wonder-purple-dark font-rounded">Wonder</span>
+        
+        {/* Disney-inspired sparkle effect */}
+        <Sparkles className="absolute -top-3 -right-2 h-4 w-4 text-wonder-yellow animate-sparkle" />
+        <div className="absolute -top-1 -right-1 h-2 w-2 bg-wonder-yellow/30 rounded-full blur-sm"></div>
       </div>
-      <span className="bg-clip-text text-transparent bg-gradient-to-r from-wonder-teal to-wonder-teal-dark font-rounded">Whiz</span>
+      
+      {/* Second word with contrasting gradient */}
+      <span className="relative bg-clip-text text-transparent bg-gradient-to-br from-wonder-teal via-pixar-sky to-wonder-teal-dark font-rounded">Whiz</span>
+      
+      {/* Enhanced magical orb with Pixar-inspired lighting and dimension */}
       <div className="ml-2 relative orb-container">
-        <div className="w-7 h-7 rounded-full shadow-magical animate-pulse-glow relative overflow-visible bg-gradient-to-r from-wonder-purple via-wonder-purple-light to-wonder-purple z-10">
-          <div className="absolute top-1 left-1 w-2 h-2 bg-white/80 rounded-full"></div>
-          <div className="absolute top-2 left-3 w-1 h-1 bg-white/50 rounded-full"></div>
+        {/* Main orb with enhanced gradient and dimension */}
+        <div className="w-8 h-8 rounded-full relative overflow-visible z-10">
+          {/* Orb background with depth */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-wonder-purple via-pixar-blue to-wonder-purple-dark shadow-[0_5px_15px_rgba(139,92,246,0.4)]"></div>
+          
+          {/* Light reflections for 3D effect */}
+          <div className="absolute top-1 left-1 w-2.5 h-2.5 bg-white/80 rounded-full blur-[1px]"></div>
+          <div className="absolute top-2 left-3 w-1.5 h-1.5 bg-white/50 rounded-full"></div>
+          
+          {/* Additional Pixar-style highlight */}
+          <div className="absolute bottom-1.5 right-1.5 w-2 h-2 bg-white/20 rounded-full blur-[2px]"></div>
         </div>
-        <div className="absolute -inset-2 bg-gradient-radial from-wonder-purple/20 to-transparent rounded-full animate-pulse opacity-70"></div>
+        
+        {/* Glow effect */}
+        <div className="absolute -inset-3 bg-gradient-radial from-wonder-purple/30 to-transparent rounded-full animate-pulse opacity-70 blur-md"></div>
+        
+        {/* Additional sparkles */}
+        <div className="absolute -top-1 -right-1 w-2 h-2 bg-wonder-yellow/40 rounded-full blur-sm"></div>
+        <div className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-wonder-teal/40 rounded-full blur-sm"></div>
       </div>
     </div>
   );
