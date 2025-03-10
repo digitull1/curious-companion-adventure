@@ -35,6 +35,9 @@ export const useTopicManagement = (
   const isNewTopicRequest = (input: string, currentTopic: string | null, sectionsGenerated: boolean): boolean => {
     const trimmedInput = input.trim();
     
+    console.log(`[TopicManagement][Debug] Checking if '${trimmedInput}' is a new topic request`);
+    console.log(`[TopicManagement][Debug] Current topic: ${currentTopic}, Sections generated: ${sectionsGenerated}`);
+    
     // If there's no current topic, it's definitely a new topic
     if (!currentTopic) {
       console.log("[TopicManagement] No current topic, new topic request");
@@ -157,31 +160,42 @@ export const useTopicManagement = (
   
   // Modify the generateTopicRelations function to use the cache and ensure language is passed correctly
   const generateTopicRelations = useCallback(async () => {
-    if (!selectedTopic) return;
+    if (!selectedTopic) {
+      console.error("[TopicManagement][Error] Cannot generate topic relations: No selected topic");
+      return;
+    }
     
-    console.log(`[TopicManagement] Checking if TOC already generated for: ${selectedTopic} with language: ${language}`);
+    console.log(`[TopicManagement][Debug] Checking if TOC already generated for: ${selectedTopic} with language: ${language}`);
     
     // Skip regeneration if we've already done it for this topic
     const cacheKey = `${selectedTopic}-${ageRange}-${language}`;
     if (tocGeneratedRef.current.has(cacheKey)) {
-      console.log("[TopicManagement] TOC already generated for this topic, skipping");
+      console.log("[TopicManagement][Debug] TOC already generated for this topic, skipping");
       return;
     }
     
-    console.log(`[TopicManagement] Generating TOC and related topics for: ${selectedTopic}`);
+    console.log(`[TopicManagement][Debug] Generating TOC and related topics for: ${selectedTopic}`);
     setIsProcessing(true);
     setShowTypingIndicator(true);
     
     try {
       // Generate the table of contents
       if (!topicSectionsGenerated) {
-        console.log("[TopicManagement] Topic sections not yet generated, creating TOC");
+        console.log("[TopicManagement][Debug] Topic sections not yet generated, creating TOC");
         const tocPrompt = `Generate a concise table of contents with exactly 5 short, focused sections for learning about: ${selectedTopic}. Format as a simple numbered list. No welcome or introduction sections, focus only on educational content.`;
+        
+        console.log(`[TopicManagement][Debug] TOC Prompt: ${tocPrompt}`);
         const tocResponse = await generateResponse(tocPrompt, ageRange, language);
+        console.log(`[TopicManagement][Debug] Raw TOC Response: ${tocResponse.substring(0, 300)}...`);
         
         // Parse TOC sections - improved with clearer section extraction
         const sections = parseTOCSections(tocResponse);
-        console.log("[TopicManagement] Generated TOC sections:", sections);
+        console.log("[TopicManagement][Debug] Generated TOC sections:", sections);
+        
+        if (sections.length === 0) {
+          console.error("[TopicManagement][Error] Failed to parse any sections from the TOC response");
+          throw new Error("Failed to generate table of contents sections");
+        }
         
         // Add TOC message
         const tocMessage: Message = {
@@ -200,12 +214,24 @@ export const useTopicManagement = (
           );
           
           if (hasTOC) {
-            console.log("[TopicManagement] TOC message already exists, not adding duplicate");
+            console.log("[TopicManagement][Debug] TOC message already exists, not adding duplicate");
             return prev;
           }
           
+          console.log("[TopicManagement][Debug] Adding TOC message to messages");
           return [...prev, tocMessage];
         });
+        
+        // Explicitly log the current state after setting the TOC
+        setTimeout(() => {
+          console.log("[TopicManagement][Debug] After TOC generation - messages state:", 
+            messages.filter(m => m.tableOfContents).map(m => ({
+              id: m.id,
+              hasTOC: !!m.tableOfContents,
+              tocSections: m.tableOfContents
+            }))
+          );
+        }, 100);
         
         setTopicSectionsGenerated(true);
         tocGeneratedRef.current.add(cacheKey);
@@ -213,17 +239,17 @@ export const useTopicManagement = (
       
       // Generate related topics only if needed
       if (relatedTopics.length === 0) {
-        console.log(`[TopicManagement] Generating related topics for: ${selectedTopic} with language: ${language}`);
+        console.log(`[TopicManagement][Debug] Generating related topics for: ${selectedTopic} with language: ${language}`);
         const newRelatedTopics = await generateRelatedTopics(selectedTopic, ageRange, language);
         setRelatedTopics(newRelatedTopics);
       } else {
-        console.log("[TopicManagement] Related topics already exist:", relatedTopics);
+        console.log("[TopicManagement][Debug] Related topics already exist:", relatedTopics);
       }
       
       // Set learning progress for this section
       setLearningProgress(10); // 10% progress for seeing TOC
     } catch (error) {
-      console.error("[TopicManagement] Error generating topic relations:", error);
+      console.error("[TopicManagement][Error] Error generating topic relations:", error);
       toast.error("Oops! Something went wrong while creating your learning path. Let's try again!");
     } finally {
       setIsProcessing(false);
@@ -237,6 +263,7 @@ export const useTopicManagement = (
     relatedTopics.length,
     generateResponse, 
     generateRelatedTopics, 
+    messages,
     setMessages, 
     setTopicSectionsGenerated, 
     setIsProcessing, 
@@ -253,7 +280,7 @@ export const useTopicManagement = (
       setIsProcessing(true);
       setShowTypingIndicator(true);
       
-      console.log("Processing new topic:", inputValue);
+      console.log("[TopicManagement][Debug] Processing new topic:", inputValue);
       setSelectedTopic(inputValue);
       
       // Add user message
@@ -270,19 +297,66 @@ export const useTopicManagement = (
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // Now generate topic relations (TOC and related topics)
+      console.log("[TopicManagement][Debug] Calling generateTopicRelations");
       await generateTopicRelations();
       
       // Wait a bit more for proper rendering before fetching the first section
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Start with the first section if this is truly a new topic
-      const sections = messages.find(msg => msg.tableOfContents)?.tableOfContents || [];
+      // Debug log current messages to see if TOC was added
+      console.log("[TopicManagement][Debug] Messages after TOC generation:", 
+        messages.filter(m => m.tableOfContents).map(m => ({
+          id: m.id, 
+          hasTOC: !!m.tableOfContents,
+          sections: m.tableOfContents
+        }))
+      );
+      
+      // Fixed: Find TOC sections from messages directly after the state update
+      // This guarantees we have the latest state
+      const tocMessage = messages.find(msg => msg.tableOfContents);
+      const sections = tocMessage?.tableOfContents || [];
+      
+      console.log("[TopicManagement][Debug] Found TOC message:", !!tocMessage);
+      console.log("[TopicManagement][Debug] Available sections for selection:", sections);
+      
+      // Start with the first section if sections are available
       if (sections.length > 0) {
+        console.log(`[TopicManagement][Debug] Selecting first section: ${sections[0]}`);
         await handleSectionSelection(sections[0], 0);
+      } else {
+        console.error("[TopicManagement][Error] No sections available to select from TOC");
+        
+        // Fallback: manually create a TOC if none exists
+        if (!tocMessage) {
+          console.log("[TopicManagement][Debug] No TOC message found, creating fallback TOC");
+          const fallbackSections = [
+            "Introduction to the Topic",
+            "Key Concepts and Ideas",
+            "Interesting Examples",
+            "Real-world Applications",
+            "Fun Activities and Experiments"
+          ];
+          
+          const fallbackTocMessage: Message = {
+            id: `fallback-toc-${Date.now()}`,
+            text: `I'd love to teach you about ${inputValue}! Here's what we'll cover:`,
+            isUser: false,
+            tableOfContents: fallbackSections
+          };
+          
+          setMessages(prev => [...prev, fallbackTocMessage]);
+          setTopicSectionsGenerated(true);
+          
+          // Select the first fallback section
+          setTimeout(() => {
+            handleSectionSelection(fallbackSections[0], 0);
+          }, 300);
+        }
       }
       
     } catch (error) {
-      console.error("Error handling new topic:", error);
+      console.error("[TopicManagement][Error] Error handling new topic:", error);
       toast.error("I had trouble processing that topic. Let's try something else!");
     } finally {
       setIsProcessing(false);
@@ -306,17 +380,33 @@ export const useTopicManagement = (
 
 // Helper function to parse TOC sections
 const parseTOCSections = (tocResponse: string): string[] => {
+  console.log("[TopicManagement][Debug] Parsing TOC sections from:", tocResponse.substring(0, 100) + "...");
+  
   // Try numbered list pattern first (most common format)
-  const numberedRegex = /\d+\.\s+\*\*([^*]+)\*\*/g;
+  const numberedRegex = /\d+\.\s+\*?\*?([^*\n]+)\*?\*?/g;
   const numberedMatches = [...tocResponse.matchAll(numberedRegex)].map(match => match[1].trim());
+  
+  console.log("[TopicManagement][Debug] Numbered matches:", numberedMatches);
   
   if (numberedMatches.length >= 3) {
     return numberedMatches;
   }
   
+  // Try numbered list pattern without markdown formatting
+  const simpleNumberedRegex = /\d+\.\s+([^\n]+)/g;
+  const simpleNumberedMatches = [...tocResponse.matchAll(simpleNumberedRegex)].map(match => match[1].trim());
+  
+  console.log("[TopicManagement][Debug] Simple numbered matches:", simpleNumberedMatches);
+  
+  if (simpleNumberedMatches.length >= 3) {
+    return simpleNumberedMatches;
+  }
+  
   // Try bulleted list pattern
-  const bulletRegex = /[•*-]\s+\*\*([^*]+)\*\*/g;
+  const bulletRegex = /[•*-]\s+\*?\*?([^*\n]+)\*?\*?/g;
   const bulletMatches = [...tocResponse.matchAll(bulletRegex)].map(match => match[1].trim());
+  
+  console.log("[TopicManagement][Debug] Bullet matches:", bulletMatches);
   
   if (bulletMatches.length >= 3) {
     return bulletMatches;
@@ -325,6 +415,8 @@ const parseTOCSections = (tocResponse: string): string[] => {
   // Try section headers
   const headerRegex = /\*\*([^*]+)\*\*/g;
   const headerMatches = [...tocResponse.matchAll(headerRegex)].map(match => match[1].trim());
+  
+  console.log("[TopicManagement][Debug] Header matches:", headerMatches);
   
   if (headerMatches.length >= 3) {
     return headerMatches;
@@ -336,9 +428,25 @@ const parseTOCSections = (tocResponse: string): string[] => {
     .filter(line => line.length > 10 && line.length < 100)
     .slice(0, 5);
   
+  console.log("[TopicManagement][Debug] Line break matches:", lines);
+  
   if (lines.length >= 3) {
     return lines;
   }
+  
+  // If all else fails, try splitting by periods to find sentence-based sections
+  const sentences = tocResponse.split('.')
+    .map(sentence => sentence.trim())
+    .filter(sentence => sentence.length > 10 && sentence.length < 100)
+    .slice(0, 5);
+    
+  console.log("[TopicManagement][Debug] Sentence matches:", sentences);
+  
+  if (sentences.length >= 3) {
+    return sentences;
+  }
+  
+  console.log("[TopicManagement][Debug] All parsing methods failed, using generic fallback");
   
   // If all else fails, use a generic fallback
   return [

@@ -39,8 +39,11 @@ const getTopicEmoji = (section: string): string => {
 
 // Process and separate multilingual sections
 const processMultilingualSections = (sections: string[]): string[] => {
-  console.log("Processing multilingual sections:", sections);
-  if (sections.length === 0) return [];
+  console.log("[TableOfContents][Debug] Processing sections:", sections);
+  if (!sections || sections.length === 0) {
+    console.error("[TableOfContents][Error] No sections provided to process");
+    return [];
+  }
   
   // If we only have one section but it contains multiple lines or separators
   if (sections.length === 1) {
@@ -68,8 +71,10 @@ const processMultilingualSections = (sections: string[]): string[] => {
 
 // Filter out introduction/welcome messages and table of contents headers
 const filterIntroSections = (sections: string[]): string[] => {
-  console.log("Filtering intro sections from:", sections);
+  console.log("[TableOfContents][Debug] Filtering intro sections from:", sections);
   return sections.filter(section => {
+    if (!section) return false;
+    
     const lowerSection = section.toLowerCase();
     // Enhanced filtering to remove more introductory phrases
     return !(
@@ -105,14 +110,34 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   const celebrationRef = useRef<HTMLDivElement>(null);
   const [showAllSections, setShowAllSections] = React.useState(false);
   
+  // Debug log the sections passed to the component
+  console.log("[TableOfContents][Debug] Original sections:", sections);
+  
+  // Validate sections array to prevent rendering errors
+  if (!sections || !Array.isArray(sections)) {
+    console.error("[TableOfContents][Error] Invalid sections provided:", sections);
+    sections = ["Section 1", "Section 2", "Section 3", "Section 4", "Section 5"];
+  }
+  
   // Process sections to handle multilingual content properly
-  console.log("Original TOC sections:", sections);
   let processedSections = processMultilingualSections(sections);
-  console.log("After multilingual processing:", processedSections);
+  console.log("[TableOfContents][Debug] After multilingual processing:", processedSections);
   
   // Filter out introduction sections
   processedSections = filterIntroSections(processedSections);
-  console.log("After filtering intros:", processedSections);
+  console.log("[TableOfContents][Debug] After filtering intros:", processedSections);
+  
+  // Ensure we have at least some sections to display
+  if (processedSections.length === 0) {
+    console.warn("[TableOfContents][Warn] No valid sections after processing, using fallback");
+    processedSections = [
+      "Introduction to the Topic",
+      "Key Facts and Information",
+      "Interesting Details",
+      "Real-World Applications",
+      "Fun Activities to Try"
+    ];
+  }
   
   // Now limit to 5 sections initially
   const limitedSections = showAllSections ? processedSections : processedSections.slice(0, 5);
@@ -195,12 +220,24 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         className="bg-white/90 backdrop-blur-sm rounded-xl p-5 shadow-sm hover:shadow-magical transition-all duration-300 relative overflow-hidden"
         ref={tocRef}
       >
+        {/* Debug info - remove in production */}
+        <div className="border border-yellow-200 bg-yellow-50 p-2 rounded mb-3 text-xs text-yellow-800">
+          <p>Sections count: {sections.length}</p>
+          <p>Processed sections: {processedSections.length}</p>
+          <p>Completed sections: {completedSections.length}</p>
+        </div>
+        
         {/* Decorative background elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-wonder-purple/5 to-transparent pointer-events-none"></div>
         <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-gradient-radial from-wonder-purple/10 to-transparent rounded-full"></div>
         
         <div className="space-y-3 relative">
           {limitedSections.map((section, index) => {
+            if (!section) {
+              console.error("[TableOfContents][Error] Invalid section at index", index);
+              return null;
+            }
+            
             const isCompleted = completedSections.includes(section);
             const isCurrent = section === currentSection;
             const topicEmoji = getTopicEmoji(section);

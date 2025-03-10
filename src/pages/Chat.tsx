@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Header from "@/components/Header";
@@ -25,6 +25,15 @@ const Chat = () => {
   // Use our custom hooks to manage state and logic
   const chatState = useChatState(userName, ageRange, avatar, language);
   const { generateRelatedTopics } = useRelatedTopics(chatState.generateResponse);
+  
+  // For debugging the TOC issue
+  useEffect(() => {
+    console.log("[Chat][Debug] Current messages:", chatState.messages.length);
+    console.log("[Chat][Debug] Messages with TOC:", 
+      chatState.messages.filter(m => m.tableOfContents).length);
+    console.log("[Chat][Debug] Selected topic:", chatState.selectedTopic);
+    console.log("[Chat][Debug] Topic sections generated:", chatState.topicSectionsGenerated);
+  }, [chatState.messages, chatState.selectedTopic, chatState.topicSectionsGenerated]);
   
   // Initialize message handling hook
   const { processMessage } = useMessageHandling(
@@ -158,6 +167,27 @@ const Chat = () => {
     // If it's a new topic, generate table of contents
     if (isTopicRequest) {
       await handleNewTopicRequest();
+      
+      // Add debug logic: Check if TOC was generated
+      setTimeout(() => {
+        console.log("[Chat][Debug] After handleNewTopicRequest:");
+        console.log("[Chat][Debug] Messages with TOC:", 
+          chatState.messages.filter(m => m.tableOfContents).length);
+        console.log("[Chat][Debug] topicSectionsGenerated:", chatState.topicSectionsGenerated);
+        
+        const tocMessage = chatState.messages.find(m => m.tableOfContents);
+        if (!tocMessage) {
+          console.error("[Chat][Error] No TOC message was added to messages!");
+          
+          // Force generate TOC if it wasn't created
+          if (chatState.selectedTopic && !chatState.topicSectionsGenerated) {
+            console.log("[Chat][Debug] Forcing TOC generation for:", chatState.selectedTopic);
+            generateTopicRelations().catch(err => 
+              console.error("[Chat][Error] Force TOC generation failed:", err)
+            );
+          }
+        }
+      }, 500);
     } else {
       // Handle regular messages
       console.log("Handling regular message (not a new topic)");

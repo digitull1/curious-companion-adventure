@@ -6,7 +6,7 @@ import TypingIndicator from "@/components/TypingIndicator";
 import TableOfContents from "@/components/TableOfContents";
 import ContentBox from "@/components/ContentBox";
 import { animate } from "@motionone/dom";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -101,6 +101,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages, showTypingIndicator]);
+
+  // Debug log messages to track table of contents
+  useEffect(() => {
+    console.log("[ChatArea][Debug] Current messages count:", messages.length);
+    const tocMessages = messages.filter(m => m.tableOfContents);
+    console.log("[ChatArea][Debug] TOC messages:", tocMessages.map(m => ({
+      id: m.id,
+      text: m.text.substring(0, 50) + "...",
+      hasTOC: !!m.tableOfContents,
+      sections: m.tableOfContents
+    })));
+  }, [messages]);
 
   // When a new message with image or quiz is added, update the current block message
   useEffect(() => {
@@ -245,7 +257,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const welcomeMessage = messages.find(m => !m.isUser && m.isIntroduction && !m.tableOfContents);
   
   // Find the introduction message that contains the table of contents
-  const introMessage = messages.find(m => m.isIntroduction && m.tableOfContents);
+  const introMessage = messages.find(m => m.tableOfContents);
+  
+  console.log("[ChatArea][Debug] Welcome message:", welcomeMessage ? `ID: ${welcomeMessage.id}` : "None");
+  console.log("[ChatArea][Debug] Intro message with TOC:", introMessage ? 
+    `ID: ${introMessage.id}, TOC sections: ${introMessage.tableOfContents?.length || 0}` : 
+    "None");
   
   // Check if we have related topics to display and if learning is complete
   const shouldShowRelatedTopics = processedRelatedTopics.length > 0 && learningComplete;
@@ -296,6 +313,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     >
       {currentSection && renderTopicPill()}
       
+      {/* Debug panel for development (remove in production) */}
+      <div className="p-2 bg-yellow-100 border border-yellow-300 text-xs text-yellow-800 mx-4 mb-4 rounded-lg">
+        <p>Debug Info:</p>
+        <p>Total Messages: {messages.length}</p>
+        <p>TOC Messages: {messages.filter(m => m.tableOfContents).length}</p>
+        <p>TOC Sections: {introMessage?.tableOfContents?.length || 0}</p>
+        <p>Current Section: {currentSection || "None"}</p>
+      </div>
+      
       {/* Main chat content */}
       <div className="relative">
         <div className="space-y-6">
@@ -328,42 +354,47 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           )}
           
           {/* Display user and AI message pairs in sequence */}
-          {userMessages.map((message, index) => (
-            <React.Fragment key={message.id}>
-              <div className="fade-scale-in px-4">
-                <ChatMessage message={message.text} isUser={true} />
-              </div>
-              {aiMessages[index] && (
+          {userMessages.map((message, index) => {
+            const aiMessage = aiMessages[index];
+            
+            return (
+              <div key={message.id} className="mb-6">
                 <div className="fade-scale-in px-4">
-                  <div className="relative">
-                    <ChatMessage 
-                      message={expandedMessages.has(aiMessages[index].id) ? 
-                        aiMessages[index].text : 
-                        shouldTruncate(aiMessages[index].text) ? 
-                          truncateText(aiMessages[index].text) : 
-                          aiMessages[index].text
-                      } 
-                      isUser={false} 
-                    />
-                    
-                    {/* Show expand/collapse button for long messages */}
-                    {shouldTruncate(aiMessages[index].text) && (
-                      <button 
-                        onClick={() => toggleMessageExpansion(aiMessages[index].id)}
-                        className="mt-2 flex items-center text-xs text-wonder-purple/70 hover:text-wonder-purple transition-colors"
-                      >
-                        {expandedMessages.has(aiMessages[index].id) ? (
-                          <>Show less <ChevronDown className="h-3 w-3 ml-1 transform rotate-180" /></>
-                        ) : (
-                          <>Read more <ChevronDown className="h-3 w-3 ml-1" /></>
-                        )}
-                      </button>
-                    )}
-                  </div>
+                  <ChatMessage message={message.text} isUser={true} />
                 </div>
-              )}
-            </React.Fragment>
-          ))}
+                
+                {aiMessage && (
+                  <div className="fade-scale-in px-4 mt-3">
+                    <div className="relative">
+                      <ChatMessage 
+                        message={expandedMessages.has(aiMessage.id) ? 
+                          aiMessage.text : 
+                          shouldTruncate(aiMessage.text) ? 
+                            truncateText(aiMessage.text) : 
+                            aiMessage.text
+                        } 
+                        isUser={false} 
+                      />
+                      
+                      {/* Show expand/collapse button for long messages */}
+                      {shouldTruncate(aiMessage.text) && (
+                        <button 
+                          onClick={() => toggleMessageExpansion(aiMessage.id)}
+                          className="mt-2 flex items-center text-xs text-wonder-purple/70 hover:text-wonder-purple transition-colors"
+                        >
+                          {expandedMessages.has(aiMessage.id) ? (
+                            <>Show less <ChevronDown className="h-3 w-3 ml-1 transform rotate-180" /></>
+                          ) : (
+                            <>Read more <ChevronDown className="h-3 w-3 ml-1" /></>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
           
           {/* Display content box for current section if selected */}
           {currentSection && currentSectionMessage && (
