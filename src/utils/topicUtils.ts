@@ -1,15 +1,31 @@
-
 /**
  * Processes a response string containing topics/sections and returns an array of topics
  */
 export const processTopicsFromResponse = (response: string): string[] => {
   console.log("Processing topics from response:", response);
   
+  // First, check if we have a line with "fascinating educational topics for X year olds" format
+  // and remove it from processing
+  let cleanedResponse = response;
+  const introLines = [
+    /here are \d+ fascinating educational topics for.*/i,
+    /fascinating educational topics for.*/i,
+    /educational topics for.*/i,
+    /topics for \d+-\d+ year olds.*/i
+  ];
+  
+  for (const pattern of introLines) {
+    if (pattern.test(cleanedResponse)) {
+      cleanedResponse = cleanedResponse.replace(pattern, '');
+      break;
+    }
+  }
+  
   // Check if it's a numbered list (most common format)
   // e.g., "1. First topic\n2. Second topic\n3. ..."
-  if (/\d+\./.test(response)) {
+  if (/\d+\./.test(cleanedResponse)) {
     // Split by line breaks and extract topics
-    const lines = response.split('\n').filter(line => line.trim());
+    const lines = cleanedResponse.split('\n').filter(line => line.trim());
     
     // Extract topics and remove any "table of contents" or intro headers
     const topics = lines
@@ -34,8 +50,8 @@ export const processTopicsFromResponse = (response: string): string[] => {
 
   // Check if it's a bullet list
   // e.g., "• First topic\n• Second topic\n• ..."
-  if (/[•*-]/.test(response)) {
-    const lines = response.split('\n').filter(line => line.trim());
+  if (/[•*-]/.test(cleanedResponse)) {
+    const lines = cleanedResponse.split('\n').filter(line => line.trim());
     
     // Extract topics
     const topics = lines
@@ -56,8 +72,8 @@ export const processTopicsFromResponse = (response: string): string[] => {
 
   // Check if it's a comma-separated list
   // e.g., "First topic, Second topic, Third topic"
-  if (response.includes(',')) {
-    const topics = response
+  if (cleanedResponse.includes(',')) {
+    const topics = cleanedResponse
       .split(',')
       .map(t => t.trim())
       .filter(t => t.length > 0)
@@ -76,8 +92,8 @@ export const processTopicsFromResponse = (response: string): string[] => {
 
   // Check if it's a semicolon-separated list
   // e.g., "First topic; Second topic; Third topic"
-  if (response.includes(';')) {
-    const topics = response
+  if (cleanedResponse.includes(';')) {
+    const topics = cleanedResponse
       .split(';')
       .map(t => t.trim())
       .filter(t => t.length > 0)
@@ -95,7 +111,7 @@ export const processTopicsFromResponse = (response: string): string[] => {
   }
 
   // If none of the above formats match, split by lines and filter out empty lines
-  const lines = response
+  const lines = cleanedResponse
     .split('\n')
     .map(line => line.trim())
     .filter(line => line.length > 0)
@@ -106,12 +122,14 @@ export const processTopicsFromResponse = (response: string): string[] => {
         lowerLine.includes("welcome") ||
         lowerLine.includes("introduction") ||
         lowerLine.includes("here's what") ||
-        lowerLine.includes("let's explore")
+        lowerLine.includes("let's explore") ||
+        lowerLine.includes("here are") ||
+        lowerLine.match(/^\d+-\d+ year/)
       );
     });
     
   console.log("Processed as line breaks:", lines);
-  return lines.length > 0 ? lines : [response];
+  return lines.length > 0 ? lines : [cleanedResponse];
 };
 
 /**
