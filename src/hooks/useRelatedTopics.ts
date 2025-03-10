@@ -1,60 +1,86 @@
-import { useState, useCallback, useRef } from "react";
-import { processTopicsFromResponse } from "@/utils/topicUtils";
+
+import { useState, useCallback } from "react";
+import { toast } from "sonner";
+
+// Cache for storing generated topics to prevent redundant API calls
+const topicsCache = new Map<string, string[]>();
 
 export const useRelatedTopics = (
   generateResponse: (prompt: string, ageRange: string, language: string) => Promise<string>
 ) => {
-  // Keep track of topics we've already generated
-  const generatedTopicsCache = useRef<Map<string, string[]>>(new Map());
   const [isGenerating, setIsGenerating] = useState(false);
-  
-  const generateRelatedTopics = useCallback(async (topic: string, ageRange: string, language: string) => {
-    try {
-      // First check if we already have this topic in cache
-      const cacheKey = `${topic}-${ageRange}-${language}`;
-      if (generatedTopicsCache.current.has(cacheKey)) {
-        console.log("Using cached related topics for:", topic);
-        return generatedTopicsCache.current.get(cacheKey)!;
-      }
-      
-      // Prevent multiple concurrent requests for the same topic
-      if (isGenerating) {
-        console.log("Already generating related topics, skipping duplicate request");
-        return [];
-      }
-      
-      setIsGenerating(true);
-      console.log("Generating related topics for:", topic);
-      const relatedTopicsPrompt = `Generate 5 related topics to "${topic}" that might interest a learner aged ${ageRange}. Format as a short comma-separated list.`;
-      const relatedTopicsResponse = await generateResponse(relatedTopicsPrompt, ageRange, language);
-      console.log("Raw related topics response:", relatedTopicsResponse);
-      
-      // Process the response to extract topics
-      const newRelatedTopics = processTopicsFromResponse(relatedTopicsResponse);
-      console.log("Processed related topics:", newRelatedTopics);
-      
-      // Make sure we have up to 5 topics
-      const finalRelatedTopics = newRelatedTopics.slice(0, 5);
-      console.log("Final related topics list:", finalRelatedTopics);
-      
-      // Save to cache
-      generatedTopicsCache.current.set(cacheKey, finalRelatedTopics);
-      
-      return finalRelatedTopics;
-    } catch (error) {
-      console.error("Error generating related topics:", error);
-      // Fallback related topics
-      return [
-        "Space exploration", 
-        "Astronomy facts", 
-        "Planets and moons", 
-        "Solar system formation", 
-        "Black holes"
-      ];
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [generateResponse, isGenerating]);
 
-  return { generateRelatedTopics };
+  // Modified to take language as a string, matching useTopicManagement's expectations
+  const generateRelatedTopics = useCallback(
+    async (topic: string, ageRange: string, language: string): Promise<string[]> => {
+      // Create a cache key based on topic, age and language
+      const cacheKey = `${topic}-${ageRange}-${language}`;
+      
+      // Check if we already have these topics cached
+      if (topicsCache.has(cacheKey)) {
+        console.log(`[RelatedTopics] Using cached topics for: ${cacheKey}`);
+        return topicsCache.get(cacheKey) || [];
+      }
+      
+      console.log(`[RelatedTopics] Generating related topics for: ${topic}`);
+      setIsGenerating(true);
+      
+      try {
+        const prompt = `Generate 5 related topics that would interest someone learning about "${topic}". Return these as a simple comma-separated list with no numbering, introduction or explanation. Make each suggestion brief (2-5 words).`;
+        
+        const response = await generateResponse(prompt, ageRange, language);
+        
+        // Process the response to get a clean array of topics
+        const topics = parseTopicsFromResponse(response);
+        console.log(`[RelatedTopics] Generated ${topics.length} topics:`, topics);
+        
+        // Cache the results
+        topicsCache.set(cacheKey, topics);
+        
+        return topics;
+      } catch (error) {
+        console.error("[RelatedTopics] Error generating related topics:", error);
+        toast.error("Couldn't generate related topics right now.");
+        return [];
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [generateResponse]
+  );
+
+  return {
+    generateRelatedTopics,
+    isGenerating
+  };
 };
+
+// Helper function to parse topics from the API response
+const parseTopicsFromResponse = (response: string): string[] => {
+  // Try different parsing strategies
+  
+  // First, try to parse as comma-separated list (most likely format)
+  const commaList = response
+    .split(',')
+    .map(item => item.trim())
+    .filter(item => item.length > 0 && item.length < 50);
+  
+  if (commaList.length >= 3) {
+    return commaList.slice(0, 5);
+  }
+  
+  // Try to parse as line-separated list
+  const lineList = response
+    .split('\n')
+    .map(item => item.replace(/^\d+\.\s*/, '').trim()) // Remove any numbering
+    .filter(item => item.length > 0 && item.length < 50);
+  
+  if (lineList.length >= 3) {
+    return lineList.slice(0, 5);
+  }
+  
+  // If all else fails, just return a partial list or empty list
+  return commaList.length > 0 ? commaList.slice(0, 5) : ['More about ' + response.slice(0, 20)];
+};
+
+export default useRelatedTopics;

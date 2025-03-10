@@ -98,7 +98,7 @@ export const useTopicManagement = (
         
         setMessages(prev => [...prev, sectionMessage]);
         
-        // Mark the section as completed - FIX: Not using functional update pattern
+        // Mark the section as completed - Fixed with direct array instead of functional update
         if (!completedSections.includes(section)) {
           console.log(`[TopicManagement] Marking section as completed: ${section}`);
           const newCompletedSections = [...completedSections, section];
