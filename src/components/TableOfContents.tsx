@@ -1,37 +1,38 @@
-
 import React, { useEffect, useRef } from "react";
-import { ChevronRight, CheckCircle2, BookOpen } from "lucide-react";
+import { ChevronRight, CheckCircle2, BookOpen, ArrowRight } from "lucide-react";
 import { animate, spring } from "@motionone/dom";
+import { Button } from "@/components/ui/button";
 
 interface TableOfContentsProps {
   sections: string[];
   completedSections: string[];
   currentSection: string | null;
   onSectionClick: (section: string) => void;
+  isInitialView?: boolean;
+  onStartLearning?: () => void;
 }
 
 const TableOfContents = ({ 
   sections, 
   completedSections, 
   currentSection, 
-  onSectionClick 
+  onSectionClick,
+  isInitialView = false,
+  onStartLearning
 }: TableOfContentsProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   
-  // Initialize the array with proper length
   useEffect(() => {
     sectionRefs.current = Array(sections.length).fill(null);
   }, [sections.length]);
   
-  // Debug logs for TOC
   useEffect(() => {
     console.log("[TableOfContents][Debug] Original sections:", sections);
     
     const processedSections = sections.map(section => {
-      // Clean section names for display (remove excess punctuation, etc.)
       return section
-        .replace(/\*\*/g, "") // Remove markdown
+        .replace(/\*\*/g, "")
         .trim();
     });
     
@@ -46,7 +47,47 @@ const TableOfContents = ({
   }, [sections]);
   
   useEffect(() => {
-    // Animate sections in staggered appearance
+    if (containerRef.current && isInitialView) {
+      animate(
+        containerRef.current,
+        { opacity: [0, 1], y: [20, 0] },
+        { duration: 0.8, easing: "ease-out" }
+      );
+    }
+  }, [isInitialView]);
+  
+  if (isInitialView) {
+    return (
+      <div 
+        className="mt-4 rounded-xl border border-wonder-purple/15 bg-white/70 backdrop-blur-sm overflow-hidden shadow-sm"
+        ref={containerRef}
+      >
+        <div className="bg-gradient-to-r from-wonder-purple/10 to-transparent p-3 border-b border-wonder-purple/10">
+          <h3 className="text-wonder-purple font-bubbly flex items-center text-lg">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Your Learning Journey
+          </h3>
+        </div>
+        
+        <div className="p-6 text-center">
+          <h4 className="text-lg font-medium text-wonder-purple mb-3">
+            Ready to explore these topics?
+          </h4>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Take a moment to review the sections above. When you're ready, click the button below to start your learning adventure!
+          </p>
+          <Button
+            onClick={onStartLearning}
+            className="bg-wonder-purple hover:bg-wonder-purple/90 text-white flex items-center gap-2 mx-auto"
+          >
+            Begin Learning <ArrowRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  useEffect(() => {
     if (containerRef.current) {
       animate(
         containerRef.current,
@@ -70,12 +111,10 @@ const TableOfContents = ({
     }
   }, []);
   
-  // Function to apply spring animation to a section when clicked
   const handleSectionClick = (section: string, index: number) => {
     const sectionRef = sectionRefs.current[index];
     
     if (sectionRef) {
-      // Apply a spring-based "click" animation
       animate(
         sectionRef,
         { 
@@ -94,26 +133,22 @@ const TableOfContents = ({
       );
     }
     
-    // Call the original onSectionClick
     onSectionClick(section);
   };
   
-  // Cleanup section names for display
   const cleanSectionName = (section: string) => {
     return section
-      .replace(/\*\*/g, "")  // Remove markdown bold
-      .replace(/^(\d+\.\s*)+/, "") // Remove leading numbers
+      .replace(/\*\*/g, "")
+      .replace(/^(\d+\.\s*)+/, "")
       .trim();
   };
   
-  // Check if section is the current section
   const isCurrentSection = (section: string) => {
     const normalizedCurrent = currentSection?.replace(/\*\*/g, "").trim() || "";
     const normalizedSection = section.replace(/\*\*/g, "").trim();
     return normalizedCurrent === normalizedSection;
   };
   
-  // Check if section has been completed
   const isCompletedSection = (section: string) => {
     return completedSections.some(completedSection => {
       const normalizedCompleted = completedSection.replace(/\*\*/g, "").trim();
@@ -181,7 +216,6 @@ const TableOfContents = ({
                   {cleanedSection}
                 </span>
                 
-                {/* Current section indicator */}
                 {isCurrent && (
                   <div className="absolute inset-0 rounded-lg border border-wonder-purple/30 pointer-events-none"></div>
                 )}

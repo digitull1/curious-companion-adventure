@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -24,14 +23,11 @@ const Chat = () => {
   const [userName, setUserName] = useState(localStorage.getItem("wonderwhiz_username") || "Explorer");
   const [language, setLanguage] = useState(localStorage.getItem("wonderwhiz_language") || "en");
   
-  // Get the generateQuiz function from useOpenAI
   const { generateQuiz } = useOpenAI();
   
-  // Use our custom hooks to manage state and logic
   const chatState = useChatState(userName, ageRange, avatar, language);
   const { generateRelatedTopics } = useRelatedTopics(chatState.generateResponse);
   
-  // Initialize message handling hook
   const { processMessage } = useMessageHandling(
     chatState.generateResponse,
     ageRange,
@@ -43,7 +39,6 @@ const Chat = () => {
     chatState.setPoints
   );
   
-  // Initialize topic management hook
   const { handleNewTopicRequest, isNewTopicRequest, generateTopicRelations } = useTopicManagement(
     chatState.selectedTopic,
     chatState.topicSectionsGenerated,
@@ -71,7 +66,6 @@ const Chat = () => {
     chatState.setLearningProgress
   );
   
-  // Initialize section handling hook
   const { handleTocSectionClick, handleRelatedTopicClick } = useSectionHandling(
     chatState.messages,
     chatState.selectedTopic,
@@ -83,7 +77,6 @@ const Chat = () => {
     chatState.setLearningProgress
   );
   
-  // Initialize input handling hook with proper parameters
   const {
     isListening,
     setIsListening,
@@ -112,7 +105,9 @@ const Chat = () => {
     handleNewTopicRequest
   );
   
-  // Initialize chat - optimized to reduce rerenders
+  const [isInitialView, setIsInitialView] = useState(true);
+  const [hasUserStarted, setHasUserStarted] = useState(false);
+
   useChatInitialization(
     ageRange,
     avatar,
@@ -125,7 +120,8 @@ const Chat = () => {
     chatState.setShowSuggestedPrompts,
     chatState.setStreakCount,
     chatState.setPoints,
-    chatState.defaultSuggestedPrompts
+    chatState.defaultSuggestedPrompts,
+    hasUserStarted
   );
 
   const handleAgeRangeChange = useCallback((newRange: string) => {
@@ -140,7 +136,6 @@ const Chat = () => {
     localStorage.setItem("wonderwhiz_language", newLanguage);
     toast.success(`Language changed to ${newLanguage}!`);
     
-    // Clear chat and generate new welcome message in selected language
     clearChat();
   }, []);
 
@@ -177,7 +172,6 @@ const Chat = () => {
     chatState.setPreviousTopics
   ]);
 
-  // Create a wrapper for handleBlockClick that provides the necessary parameters
   const handleBlockClickWrapper = (type: BlockType, messageId: string, messageText: string) => {
     handleLearningBlockClick(
       type,
@@ -194,9 +188,15 @@ const Chat = () => {
     );
   };
 
+  const handleStartLearning = useCallback(() => {
+    setIsInitialView(false);
+    setHasUserStarted(true);
+    
+    toast.success("Great! Choose a section to begin your learning journey!");
+  }, []);
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white overflow-hidden relative">
-      {/* Background pattern */}
       <div className="absolute inset-0 pointer-events-none opacity-5 z-0">
         <img 
           src="/lovable-uploads/22fa1957-ce26-4f1a-ae37-bf442630d36d.png" 
@@ -205,7 +205,6 @@ const Chat = () => {
         />
       </div>
       
-      {/* Header with Stats integrated */}
       <Header 
         avatar={avatar} 
         streakCount={chatState.streakCount}
@@ -218,7 +217,6 @@ const Chat = () => {
       
       <main className="flex-1 overflow-hidden backdrop-blur-sm relative z-10">
         <div className="w-full h-full mx-auto flex flex-col">
-          {/* Update ChatArea to use the wrapper function */}
           <ChatArea 
             messages={chatState.messages}
             showTypingIndicator={chatState.showTypingIndicator}
@@ -230,9 +228,10 @@ const Chat = () => {
             onTocSectionClick={handleTocSectionClick}
             onRelatedTopicClick={handleRelatedTopicClick}
             learningProgress={chatState.learningProgress}
+            isInitialView={isInitialView}
+            onStartLearning={handleStartLearning}
           />
           
-          {/* Chat Input */}
           <ChatInput 
             inputValue={chatState.inputValue}
             isProcessing={chatState.isProcessing}
@@ -247,11 +246,11 @@ const Chat = () => {
             toggleListening={toggleListening}
             onSuggestedPromptClick={handleSuggestedPromptClick}
             setShowSuggestedPrompts={chatState.setShowSuggestedPrompts}
+            disabled={isInitialView}
           />
         </div>
       </main>
       
-      {/* Age Selector Modal */}
       {chatState.showAgeSelector && (
         <AgeRangeSelector 
           currentRange={ageRange} 

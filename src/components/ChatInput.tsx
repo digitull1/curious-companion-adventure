@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from "react";
 import { MessageCircle, Send, Sparkles, Lightbulb, Search, Mic, MicOff } from "lucide-react";
 import VoiceInput from "@/components/VoiceInput";
@@ -19,6 +18,7 @@ interface ChatInputProps {
   toggleListening: () => void;
   onSuggestedPromptClick: (prompt: string) => void;
   setShowSuggestedPrompts: (show: boolean) => void;
+  disabled?: boolean;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -34,7 +34,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onVoiceInput,
   toggleListening,
   onSuggestedPromptClick,
-  setShowSuggestedPrompts
+  setShowSuggestedPrompts,
+  disabled = false
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
@@ -53,7 +54,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
     "What's on your mind today?",
   ];
   
-  // Rotate placeholders every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isFocused && !inputValue) {
@@ -64,13 +64,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
     return () => clearInterval(interval);
   }, [isFocused, inputValue, placeholders.length]);
 
-  // Focus input on component mount
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
     
-    // Animate the input container on mount
     if (inputContainerRef.current) {
       animate(
         inputContainerRef.current,
@@ -80,7 +78,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, []);
 
-  // Handle focus animations
   useEffect(() => {
     if (inputContainerRef.current) {
       if (isFocused) {
@@ -99,7 +96,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [isFocused]);
 
-  // Handle send button ripple effect
   const triggerRipple = () => {
     if (!isRippling && inputValue.trim() && !isProcessing) {
       setIsRippling(true);
@@ -116,7 +112,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleSendClick = () => {
     if (inputValue.trim() && !isProcessing) {
-      // Create ripple effect on send
       if (inputContainerRef.current) {
         const sendButton = inputContainerRef.current.querySelector('button:last-child');
         if (sendButton) {
@@ -134,11 +129,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="sticky bottom-0 left-0 right-0 py-6 px-4 md:px-6 z-20">
-      {/* Enhanced gradient background */}
+    <div className={`sticky bottom-0 left-0 right-0 py-6 px-4 md:px-6 z-20 transition-opacity duration-300 ${
+      disabled ? 'opacity-50 pointer-events-none' : 'opacity-100'
+    }`}>
       <div className="absolute inset-0 bg-gradient-to-t from-white via-wonder-background/95 to-transparent backdrop-blur-xl"></div>
       
-      {/* Suggested topics overlay */}
       {showSuggestedPrompts && (
         <SuggestedTopics
           topics={suggestedPrompts}
@@ -147,7 +142,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
         />
       )}
       
-      {/* Main input container */}
       <div className="relative max-w-4xl mx-auto z-10" ref={inputContainerRef}>
         <div 
           className={`relative transition-all duration-300 bg-white/95 backdrop-blur-lg rounded-2xl shadow-magical ${
@@ -156,12 +150,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
               : 'border border-wonder-purple/20'
           }`}
         >
-          {/* Animated glow effect when focused */}
           {isFocused && (
             <div className="absolute -inset-0.5 bg-gradient-to-r from-wonder-purple/30 to-wonder-yellow/30 rounded-[22px] blur-sm animate-pulse-slow z-[-1]"></div>
           )}
           
-          {/* Input wrapper */}
           <div className="relative flex items-center gap-3 px-5 py-4">
             <div className={`transition-all duration-300 ${isFocused ? 'text-wonder-purple scale-110' : 'text-wonder-purple/70'}`}>
               {inputValue ? <Search className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
@@ -181,7 +173,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 font-comic text-lg focus:ring-0 disabled:opacity-70"
             />
 
-            {/* Action buttons */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowSuggestedPrompts(true)}
