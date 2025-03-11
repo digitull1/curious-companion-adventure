@@ -13,6 +13,7 @@ import { useRelatedTopics } from "@/hooks/useRelatedTopics";
 import { useMessageHandling } from "@/hooks/useMessageHandling";
 import { useTopicManagement } from "@/hooks/useTopicManagement";
 import { useSectionHandling } from "@/hooks/useSectionHandling";
+import { useInputHandling } from "@/hooks/useInputHandling";
 import { handleBlockClick as handleLearningBlockClick } from "@/services/learningBlockService";
 
 const Chat = () => {
