@@ -1,601 +1,156 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&family=Varela+Round&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --foreground-hex: 20, 20, 20;
-  --background-hex: 250, 248, 254;
-  
-  --primary-hex: 139, 92, 246;
-  --primary-foreground-hex: 255, 255, 255;
-  
-  --secondary-hex: 248, 113, 158;
-  --secondary-foreground-hex: 255, 255, 255;
-  
-  --accent-hex: 106, 192, 253;
-  --accent-foreground-hex: 255, 255, 255;
-  
-  --card-hex: 255, 255, 255;
-  --card-foreground-hex: 20, 20, 20;
-  
-  --popover-hex: 255, 255, 255;
-  --popover-foreground-hex: 20, 20, 20;
-  
-  --muted-hex: 240, 240, 245;
-  --muted-foreground-hex: 112, 112, 112;
-  
-  --destructive-hex: 234, 56, 76;
-  --destructive-foreground-hex: 255, 255, 255;
-  
-  --border-hex: 230, 230, 230;
-  
-  --input-hex: 255, 255, 255;
-  
-  --ring-hex: 139, 92, 246;
-  
-  --radius: 0.5rem;
-  
-  /* Wonder Whiz specific colors - Enhanced for Pixar/Disney feel */
-  --wonder-purple: 139, 92, 246;
-  --wonder-purple-dark: 109, 40, 217;
-  --wonder-purple-light: 167, 139, 250;
-  
-  --wonder-coral: 248, 113, 158;
-  --wonder-coral-dark: 230, 73, 128;
-  --wonder-coral-light: 251, 182, 206;
-  
-  --wonder-yellow: 250, 204, 21;
-  --wonder-yellow-dark: 235, 171, 15;
-  --wonder-yellow-light: 251, 229, 142;
-  
-  --wonder-blue: 14, 165, 233;
-  --wonder-blue-dark: 3, 105, 161;
-  --wonder-blue-light: 186, 230, 253;
-  
-  --wonder-green: 16, 185, 129;
-  --wonder-green-dark: 4, 120, 87;
-  --wonder-green-light: 167, 243, 208;
-  
-  --wonder-background: 250, 248, 254;
-  
-  /* Enhanced theme colors inspired by Pixar/Disney/Apple */
-  --pixar-blue: 11, 99, 246;
-  --pixar-sky: 0, 198, 251;
-  --disney-purple: 200, 80, 192;
-  --disney-blue: 65, 88, 208;
-  --chupa-pink: 255, 97, 210;
-  --chupa-orange: 254, 144, 144;
-  --apple-light: 248, 249, 250;
-  --apple-gray: 233, 236, 239;
+/* Add these animations to make content transitions smoother */
+.fade-scale-in {
+  animation: fadeScaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: center bottom;
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Quicksand', system-ui, sans-serif;
-  }
-  
-  html {
-    scroll-behavior: smooth;
-  }
-  
-  .font-bubbly {
-    font-family: 'Quicksand', system-ui, sans-serif;
-    font-weight: 700;
-  }
-  
-  .font-rounded {
-    font-family: 'Varela Round', 'Quicksand', system-ui, sans-serif;
-  }
-  
-  .font-comic {
-    font-family: 'Quicksand', system-ui, sans-serif;
-  }
-}
-
-@layer components {
-  /* Enhanced shadow styles inspired by Pixar and Apple */
-  .shadow-magical {
-    box-shadow: 0 10px 25px rgba(var(--wonder-purple), 0.15), 0 4px 10px rgba(var(--wonder-purple), 0.1);
-  }
-  
-  .shadow-magical-hover {
-    box-shadow: 0 15px 30px rgba(var(--wonder-purple), 0.2), 0 8px 15px rgba(var(--wonder-purple), 0.15);
-  }
-  
-  .shadow-wonder {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
-  }
-  
-  .shadow-wonder-lg {
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 8px 15px rgba(0, 0, 0, 0.05);
-  }
-  
-  /* Chat bubbles with improved Disney-like styling */
-  .chat-bubble-user {
-    @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white p-4 rounded-xl rounded-tr-sm shadow-wonder max-w-fit ml-auto border border-wonder-purple/20;
-    animation: pop-in 0.3s ease-out;
-  }
-  
-  .chat-bubble-ai {
-    @apply bg-white p-4 rounded-xl rounded-tl-sm shadow-wonder max-w-fit border border-gray-100;
-    animation: pop-in 0.3s ease-out;
-  }
-  
-  /* Enhanced bubble designs with 3D effect - Pixar inspired */
-  .chat-bubble-user::before {
-    content: '';
-    @apply absolute -inset-[1px] bg-gradient-to-br from-white/20 to-transparent rounded-xl rounded-tr-sm z-[-1] opacity-80;
-    filter: blur(1px);
-  }
-  
-  .chat-bubble-ai::before {
-    content: '';
-    @apply absolute -inset-[1px] bg-gradient-to-tr from-wonder-purple/10 to-transparent rounded-xl rounded-tl-sm z-[-1] opacity-50;
-    filter: blur(1px);
-  }
-
-  /* Learning blocks with Pixar-inspired depth and dimensionality */
-  .learning-blocks-container {
-    @apply flex overflow-x-auto gap-3 py-1 px-2 snap-x snap-mandatory scrollbar-none;
-  }
-  
-  .learning-block {
-    @apply min-w-[180px] sm:min-w-[220px] p-3 rounded-xl bg-gradient-to-br from-white/95 to-white/85 border border-wonder-purple/10 shadow-sm relative overflow-hidden flex-shrink-0 snap-center transition-all duration-300 hover:shadow-magical;
-  }
-  
-  .scroll-button {
-    @apply flex items-center justify-center bg-white/90 backdrop-blur-sm border border-wonder-purple/10 rounded-full shadow-sm hover:shadow-wonder transition-all duration-300 h-6 w-6;
-  }
-  
-  /* Enhanced child-friendly content formatting */
-  .child-friendly-content {
-    @apply text-base leading-relaxed font-rounded;
-  }
-  
-  .child-friendly-content p {
-    @apply mb-4;
-  }
-  
-  .child-friendly-content .activity-title {
-    @apply text-lg font-bubbly font-bold text-wonder-purple mt-6 mb-4 py-2;
-  }
-  
-  .child-friendly-content .numbered-item {
-    @apply ml-4 mb-3 pl-4 border-l-4 border-wonder-yellow/30 py-2;
-  }
-  
-  .child-friendly-content strong {
-    @apply text-wonder-purple font-bold;
-  }
-  
-  /* Button styles with Apple and Disney inspiration */
-  .btn-primary {
-    @apply bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white rounded-lg px-4 py-2 shadow-magical hover:shadow-magical-hover transition-all duration-300 font-medium;
-  }
-  
-  .btn-secondary {
-    @apply bg-white text-wonder-purple border border-wonder-purple/20 rounded-lg px-4 py-2 shadow-sm hover:shadow-magical transition-all duration-300 font-medium;
-  }
-  
-  .btn-tertiary {
-    @apply bg-transparent text-wonder-purple/80 hover:text-wonder-purple rounded-lg px-4 py-2 transition-all duration-300 font-medium;
-  }
-  
-  /* Enhanced text pulse effects - subtle, not distracting */
-  .animate-pulse-soft {
-    animation: pulse-soft 3s ease-in-out infinite;
-  }
-  
-  .animate-pulse-glow {
-    animation: pulse-glow 3s ease-in-out infinite;
-  }
-  
-  .animate-sparkle {
-    animation: sparkle 2s ease-in-out infinite;
-  }
-  
-  .animate-shine {
-    animation: shine 2s linear infinite;
-  }
-  
-  .animate-fade-in {
-    animation: fade-scale-in 0.5s ease-out;
-  }
-  
-  .fade-scale-in {
-    animation: fade-scale-in 0.5s ease-out;
-  }
-  
-  .animate-float-up {
-    animation: float-up 3s ease-out forwards;
-  }
-  
-  /* Child-friendly container with Pixar-inspired depth */
-  .child-friendly-container {
-    @apply rounded-xl border-2 border-wonder-purple/20 bg-gradient-to-br from-white/95 to-white/85 backdrop-blur-sm p-3 shadow-wonder;
-  }
-  
-  .kid-friendly-text {
-    @apply text-base leading-relaxed font-rounded;
-  }
-  
-  .kid-friendly-heading {
-    @apply text-xl font-bold font-bubbly text-wonder-purple;
-  }
-  
-  /* Progress bar animation */
-  .progress-animate {
-    @apply relative overflow-hidden;
-  }
-  
-  .progress-animate::after {
-    content: "";
-    @apply absolute top-0 right-0 bottom-0 left-0 bg-gradient-to-r from-transparent via-white/30 to-transparent;
-    animation: progress-shine 2s ease-in-out infinite;
-  }
-  
-  /* Collapsible block animation */
-  .collapse-enter {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-in-out;
-  }
-  
-  .collapse-enter-active {
-    max-height: 1000px;
-  }
-  
-  .collapse-exit {
-    max-height: 1000px;
-    overflow: hidden;
-    transition: max-height 0.3s ease-in-out;
-  }
-  
-  .collapse-exit-active {
-    max-height: 0;
-  }
-  
-  /* Enhanced cosmic-inspired UI classes with Pixar/Disney magic */
-  .cosmic-card {
-    @apply bg-gradient-to-br from-white/95 to-white/85 backdrop-blur-md border border-wonder-purple/10 rounded-xl shadow-magical;
-  }
-  
-  .cosmic-input {
-    @apply bg-white/80 backdrop-blur-sm border border-wonder-purple/20 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-wonder-purple/30 shadow-sm hover:shadow-wonder transition-all duration-300;
-  }
-  
-  .cosmic-button {
-    @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-lg px-4 py-2 shadow-magical hover:shadow-magical-hover transition-all duration-300 font-medium hover:-translate-y-0.5 active:translate-y-0;
-  }
-  
-  .cosmic-badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-wonder-purple/10 text-wonder-purple;
-  }
-  
-  .cosmic-tooltip {
-    @apply bg-gradient-to-br from-wonder-purple to-wonder-purple-dark text-white rounded-lg px-3 py-1.5 text-xs shadow-magical;
-  }
-  
-  /* New interactive components with Apple-inspired simplicity */
-  .interactive-card {
-    @apply bg-white rounded-xl border border-wonder-purple/10 shadow-sm transition-all duration-300;
-    transform: perspective(800px) rotateY(0deg) rotateX(0deg);
-  }
-  
-  .interactive-card:hover {
-    @apply shadow-magical border-wonder-purple/30;
-    transform: perspective(800px) rotateY(2deg) rotateX(2deg);
-  }
-  
-  /* Accessible, kid-friendly custom scrollbar */
-  .scrollbar-friendly::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  
-  .scrollbar-friendly::-webkit-scrollbar-track {
-    @apply bg-wonder-purple/5 rounded-full;
-  }
-  
-  .scrollbar-friendly::-webkit-scrollbar-thumb {
-    @apply bg-gradient-to-b from-wonder-purple/50 to-wonder-purple-dark/50 rounded-full border-2 border-transparent border-solid bg-clip-padding;
-  }
-  
-  .scrollbar-friendly::-webkit-scrollbar-thumb:hover {
-    @apply bg-gradient-to-b from-wonder-purple/70 to-wonder-purple-dark/70;
-  }
-
-  /* New Pixar-inspired glass cards */
-  .pixar-card {
-    @apply bg-white/90 backdrop-blur-md border border-white/30 rounded-xl shadow-[0_15px_35px_rgba(0,0,0,0.1)] overflow-hidden;
-    position: relative;
-  }
-  
-  .pixar-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(to right, #0b63f6, #00c6fb);
-  }
-  
-  /* Disney-inspired magical cards */
-  .disney-card {
-    @apply bg-gradient-to-br from-white/95 to-white/85 rounded-xl shadow-[0_15px_35px_rgba(200,80,192,0.15)] border border-wonder-purple/10 overflow-hidden;
-  }
-  
-  /* Chupa Chups inspired colorful components */
-  .chupa-card {
-    @apply bg-white rounded-xl border-2 border-wonder-coral/20 shadow-[0_10px_25px_rgba(255,97,210,0.15)];
-    position: relative;
-  }
-  
-  .chupa-card::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(to right, #ff61d2, #fe9090);
-  }
-  
-  /* Apple-inspired clean UI components */
-  .apple-card {
-    @apply bg-white rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.06)] border border-gray-100;
-  }
-  
-  .apple-input {
-    @apply bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-wonder-blue/30 shadow-sm;
-  }
-  
-  .apple-button {
-    @apply bg-wonder-blue text-white rounded-full px-4 py-2 font-medium shadow-sm hover:shadow-md transition-all duration-300;
-  }
-}
-
-@layer utilities {
-  .safe-area-top {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
-  
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  
-  .transform {
-    transform: translateZ(0);
-  }
-  
-  .hover\:scale-102:hover {
-    transform: scale(1.02);
-  }
-  
-  .active\:scale-98:active {
-    transform: scale(0.98);
-  }
-  
-  .scrollbar-thin {
-    scrollbar-width: thin;
-  }
-  
-  .scrollbar-none {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .bg-cosmic-gradient {
-    background: linear-gradient(135deg, rgba(var(--wonder-purple), 0.1), rgba(var(--wonder-blue), 0.05));
-  }
-  
-  .text-glow {
-    text-shadow: 0 0 10px rgba(var(--wonder-purple), 0.5);
-  }
-  
-  .cosmic-blur {
-    backdrop-filter: blur(10px);
-  }
-  
-  /* Accessibility utilities */
-  .focus-visible-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wonder-purple focus-visible:ring-offset-2;
-  }
-  
-  .link-highlight {
-    @apply relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-wonder-purple after:transition-all after:duration-300 hover:after:w-full;
-  }
-  
-  /* Apple-inspired smooth transitions */
-  .apple-transition {
-    @apply transition-all duration-300 ease-in-out;
-  }
-  
-  /* Disney-inspired text effects */
-  .disney-text {
-    @apply font-bubbly text-transparent bg-clip-text bg-gradient-to-r from-disney-purple to-disney-blue;
-  }
-  
-  /* Pixar-inspired depth effects */
-  .pixar-shadow {
-    box-shadow: 0 10px 25px rgba(11, 99, 246, 0.15), 0 5px 10px rgba(0, 198, 251, 0.1);
-  }
-  
-  /* Chupa Chups color utilities */
-  .chupa-gradient {
-    background: linear-gradient(135deg, rgba(255, 97, 210, 0.8), rgba(254, 144, 144, 0.8));
-  }
-  
-  .chupa-text {
-    @apply text-transparent bg-clip-text bg-gradient-to-r from-chupa-pink to-chupa-orange;
-  }
-}
-
-/* New space-themed animations */
-@keyframes twinkle {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0) translateX(0);
-  }
-  25% {
-    transform: translateY(-10px) translateX(10px);
-  }
-  50% {
-    transform: translateY(-20px) translateX(0);
-  }
-  75% {
-    transform: translateY(-10px) translateX(-10px);
-  }
-}
-
-/* New float-up animation */
-@keyframes float-up {
-  0% {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  30% {
-    opacity: 0.8;
-  }
-  100% {
-    transform: translateY(-100px);
-    opacity: 0;
-  }
-}
-
-/* Existing animations */
-@keyframes pulse-soft {
-  0%, 100% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.1;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 0.3;
-    transform: scale(1.1);
-  }
-}
-
-@keyframes sparkle {
-  0%, 100% {
-    opacity: 0.7;
-    transform: scale(0.9);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
-  }
-}
-
-@keyframes shine {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes fade-scale-in {
+@keyframes fadeScaleIn {
   0% {
     opacity: 0;
-    transform: scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes progress-shine {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes float-subtle {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}
-
-/* Add meteor animation */
-@keyframes meteor {
-  0% {
-    transform: translateX(0) translateY(0) rotate(45deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-500px) translateY(500px) rotate(45deg);
-    opacity: 0;
-  }
-}
-
-/* Add reveal-text animation */
-@keyframes reveal-text {
-  0% {
-    clip-path: inset(0 100% 0 0);
-  }
-  100% {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-/* Add scale-bounce animation */
-@keyframes scale-bounce {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-/* Add pop-in animation for chat bubbles */
-@keyframes pop-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
+    transform: scale(0.97) translateY(10px);
   }
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
   }
 }
+
+/* Chat bubbles enhanced styling */
+.chat-bubble-user {
+  position: relative;
+  padding: 12px 16px;
+  background: linear-gradient(145deg, var(--wonder-purple), var(--wonder-purple-dark));
+  border-radius: 18px 18px 4px 18px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.chat-bubble-user::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.chat-bubble-ai {
+  position: relative;
+  padding: 14px 18px;
+  background: linear-gradient(145deg, #ffffff, #f9f7ff);
+  border-radius: 18px 18px 18px 4px;
+  color: #333;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(124, 58, 237, 0.1);
+}
+
+/* Revealing content animation */
+.reveal-children > * {
+  animation: revealChild 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@keyframes revealChild {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Make child-friendly content more engaging */
+.child-friendly-content strong {
+  color: var(--wonder-purple);
+  font-weight: 600;
+  padding: 0 1px;
+  transition: color 0.3s ease;
+}
+
+.child-friendly-content .activity-title {
+  animation: floatIn 0.5s ease-out forwards;
+  transform-origin: left center;
+}
+
+@keyframes floatIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Improve quiz blocks with engaging animations */
+.quiz-option {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.quiz-option:hover {
+  transform: translateY(-2px) scale(1.01);
+}
+
+.quiz-option.correct {
+  animation: correctAnswer 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes correctAnswer {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Loading indicator animation for content */
+.content-loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.content-loading-indicator span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--wonder-purple);
+  animation: loadingBounce 1.4s infinite ease-in-out both;
+}
+
+.content-loading-indicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.content-loading-indicator span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes loadingBounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* Define custom CSS variables */
+:root {
+  --wonder-purple: #7c3aed;
+  --wonder-purple-light: #9d74f8;
+  --wonder-purple-dark: #6025c9;
+  --wonder-animation-timing: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

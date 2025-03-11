@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { MessageCircle, Send, Sparkles, Lightbulb, Search, Mic, MicOff } from "lucide-react";
 import VoiceInput from "@/components/VoiceInput";
 import SuggestedTopics from "@/components/SuggestedTopics";
+import { animate, spring } from "@motionone/dom";
 
 interface ChatInputProps {
   inputValue: string;
@@ -36,6 +37,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   setShowSuggestedPrompts
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isRippling, setIsRippling] = useState(false);
@@ -67,7 +69,35 @@ const ChatInput: React.FC<ChatInputProps> = ({
     if (inputRef.current) {
       inputRef.current.focus();
     }
+    
+    // Animate the input container on mount
+    if (inputContainerRef.current) {
+      animate(
+        inputContainerRef.current,
+        { y: [20, 0], opacity: [0, 1] },
+        { duration: 0.5, easing: [0.16, 1, 0.3, 1] }
+      );
+    }
   }, []);
+
+  // Handle focus animations
+  useEffect(() => {
+    if (inputContainerRef.current) {
+      if (isFocused) {
+        animate(
+          inputContainerRef.current,
+          { scale: [1, 1.01], y: [0, -2] },
+          { duration: 0.3, easing: "ease-out" }
+        );
+      } else {
+        animate(
+          inputContainerRef.current,
+          { scale: [1.01, 1], y: [-2, 0] },
+          { duration: 0.3, easing: "ease-out" }
+        );
+      }
+    }
+  }, [isFocused]);
 
   // Handle send button ripple effect
   const triggerRipple = () => {
@@ -82,6 +112,25 @@ const ChatInput: React.FC<ChatInputProps> = ({
       return `Ask me about ${selectedTopic} or explore a section...`;
     }
     return placeholders[placeholderIndex];
+  };
+
+  const handleSendClick = () => {
+    if (inputValue.trim() && !isProcessing) {
+      // Create ripple effect on send
+      if (inputContainerRef.current) {
+        const sendButton = inputContainerRef.current.querySelector('button:last-child');
+        if (sendButton) {
+          animate(
+            sendButton,
+            { scale: [1, 0.94, 1] },
+            { duration: 0.3, easing: spring({ stiffness: 500, damping: 15 }) }
+          );
+        }
+      }
+      
+      triggerRipple();
+      onSendMessage();
+    }
   };
 
   return (
@@ -99,12 +148,19 @@ const ChatInput: React.FC<ChatInputProps> = ({
       )}
       
       {/* Main input container */}
-      <div className="relative max-w-4xl mx-auto z-10">
-        <div className={`relative transition-all duration-300 bg-white/95 backdrop-blur-lg rounded-2xl shadow-magical ${
-          isFocused 
-            ? 'border-2 border-wonder-purple shadow-[0_8px_25px_rgba(139,92,246,0.25)]' 
-            : 'border border-wonder-purple/20'
-        }`}>
+      <div className="relative max-w-4xl mx-auto z-10" ref={inputContainerRef}>
+        <div 
+          className={`relative transition-all duration-300 bg-white/95 backdrop-blur-lg rounded-2xl shadow-magical ${
+            isFocused 
+              ? 'border-2 border-wonder-purple shadow-[0_8px_25px_rgba(139,92,246,0.25)]' 
+              : 'border border-wonder-purple/20'
+          }`}
+        >
+          {/* Animated glow effect when focused */}
+          {isFocused && (
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-wonder-purple/30 to-wonder-yellow/30 rounded-[22px] blur-sm animate-pulse-slow z-[-1]"></div>
+          )}
+          
           {/* Input wrapper */}
           <div className="relative flex items-center gap-3 px-5 py-4">
             <div className={`transition-all duration-300 ${isFocused ? 'text-wonder-purple scale-110' : 'text-wonder-purple/70'}`}>
@@ -156,12 +212,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               </button>
               
               <button
-                onClick={() => {
-                  if (inputValue.trim() && !isProcessing) {
-                    triggerRipple();
-                    onSendMessage();
-                  }
-                }}
+                onClick={handleSendClick}
                 disabled={!inputValue.trim() || isProcessing}
                 className={`px-4 h-10 flex items-center justify-center rounded-xl transition-all duration-300 
                   ${inputValue.trim() && !isProcessing

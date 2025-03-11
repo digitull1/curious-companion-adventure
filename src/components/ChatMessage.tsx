@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { animate } from "@motionone/dom";
 import { Sparkles, Star, Heart, Lightbulb } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,6 +13,8 @@ interface ChatMessageProps {
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) => {
   const messageRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(false);
   
   // Function to clean text content by removing asterisks
   const cleanMessageText = (text: string) => {
@@ -43,37 +45,56 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
   };
   
   useEffect(() => {
-    if (messageRef.current) {
-      // Create a staggered animation for text appearing
-      const textElement = messageRef.current.querySelector("p");
-      if (textElement) {
-        animate(
-          messageRef.current,
-          { opacity: [0, 1], y: [20, 0] },
-          { duration: 0.5, easing: [0.25, 1, 0.5, 1] }
-        );
-      }
-      
-      // Add ripple effect to user messages
-      if (isUser && messageRef.current) {
-        const ripple = document.createElement("div");
-        ripple.className = "absolute inset-0 rounded-2xl bg-wonder-purple/20 z-[-1]";
-        messageRef.current.style.position = "relative";
-        messageRef.current.appendChild(ripple);
+    setIsVisible(true);
+    
+    const timer = setTimeout(() => {
+      if (messageRef.current && !hasAnimated) {
+        if (isUser) {
+          // User message entrance animation
+          animate(
+            messageRef.current,
+            { 
+              opacity: [0, 1], 
+              x: [20, 0],
+              scale: [0.95, 1]
+            },
+            { 
+              duration: 0.4, 
+              easing: [0.22, 1, 0.36, 1] 
+            }
+          );
+        } else {
+          // AI message entrance animation with sequential text reveal
+          animate(
+            messageRef.current,
+            { 
+              opacity: [0, 1], 
+              y: [15, 0],
+              scale: [0.98, 1]
+            },
+            { 
+              duration: 0.45, 
+              easing: [0.22, 1, 0.36, 1] 
+            }
+          );
+          
+          // Add staggered animation for paragraphs
+          const paragraphs = messageRef.current.querySelectorAll('p');
+          paragraphs.forEach((paragraph, index) => {
+            animate(
+              paragraph,
+              { opacity: [0, 1], y: [8, 0] },
+              { duration: 0.3, delay: 0.1 + (index * 0.1), easing: "ease-out" }
+            );
+          });
+        }
         
-        animate(
-          ripple,
-          { opacity: [0.6, 0], scale: [0.85, 1.05] },
-          { duration: 1, easing: "ease-out" }
-        );
-        
-        // Remove ripple after animation
-        setTimeout(() => {
-          ripple.remove();
-        }, 1000);
+        setHasAnimated(true);
       }
-    }
-  }, [isUser]);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [isUser, hasAnimated]);
 
   // Random helper icon selection for AI messages
   const getRandomIconForAI = () => {
@@ -90,8 +111,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
     >
       <div 
         className={isUser 
-          ? 'chat-bubble-user transform transition-transform active:scale-98 relative hover:shadow-magical-hover' 
-          : 'chat-bubble-ai transform transition-transform hover:scale-102 relative hover:shadow-wonder-lg'
+          ? 'chat-bubble-user transform transition-all duration-300 active:scale-98 relative hover:shadow-magical-hover' 
+          : 'chat-bubble-ai transform transition-all duration-300 hover:scale-102 relative hover:shadow-wonder-lg'
         }
       >
         {/* Add subtle sparkle effect to AI responses */}
@@ -109,10 +130,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, children }) 
           />
         )}
         
-        <p className="whitespace-pre-line leading-relaxed text-base font-rounded">
-          {cleanedMessage}
-        </p>
-        {children}
+        <div className="relative overflow-hidden">
+          <p className="whitespace-pre-line leading-relaxed text-base font-rounded opacity-0 transform">
+            {cleanedMessage}
+          </p>
+          {children && <div className="mt-2 reveal-children">{children}</div>}
+        </div>
         
         {/* Add tooltip for user to know they can tap on non-user messages for more info */}
         {!isUser && !message.includes("I'd love to teach you about") && (
