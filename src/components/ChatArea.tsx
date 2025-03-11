@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from "react";
 import { ChevronRight, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
 import ChatMessage from "@/components/ChatMessage";
@@ -41,36 +40,32 @@ interface ChatAreaProps {
   onTocSectionClick: (section: string) => void;
   onRelatedTopicClick: (topic: string) => void;
   learningProgress: number;
+  isInitialView?: boolean;
+  onStartLearning?: () => void;
 }
 
-// Helper function to process related topics from a single string
 const processRelatedTopics = (topics: string[]): string[] => {
   console.log("Processing related topics:", topics);
   if (!topics || topics.length === 0) return [];
   
-  // If it's a single string containing multiple topics
   if (topics.length === 1 && typeof topics[0] === 'string') {
     const topicStr = topics[0];
     
-    // Check for numbered list format (e.g., "1. Topic\n2. Topic")
     if (topicStr.includes('\n')) {
       return topicStr.split('\n')
         .map(line => line.replace(/^\d+[\.\)]?\s*/, '').trim())
         .filter(line => line.length > 0);
     }
     
-    // Check for comma-separated list
     if (topicStr.includes(',')) {
       return topicStr.split(',').map(t => t.trim()).filter(t => t.length > 0);
     }
     
-    // Check for semicolon-separated list
     if (topicStr.includes(';')) {
       return topicStr.split(';').map(t => t.trim()).filter(t => t.length > 0);
     }
   }
   
-  // Already an array of topics
   return topics.filter(t => t && typeof t === 'string' && t.trim().length > 0);
 };
 
@@ -84,7 +79,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   onBlockClick,
   onTocSectionClick,
   onRelatedTopicClick,
-  learningProgress
+  learningProgress,
+  isInitialView = false,
+  onStartLearning
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
@@ -95,7 +92,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [processedCurrentSection, setProcessedCurrentSection] = useState<string | null>(null);
   
-  // Process related topics
   const processedRelatedTopics = processRelatedTopics(relatedTopics);
   console.log("Processed related topics:", processedRelatedTopics);
 
@@ -103,7 +99,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     scrollToBottom();
   }, [messages, showTypingIndicator]);
 
-  // Debug log messages to track table of contents
   useEffect(() => {
     console.log("[ChatArea][Debug] Current messages count:", messages.length);
     const tocMessages = messages.filter(m => m.tableOfContents);
@@ -115,9 +110,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     })));
   }, [messages]);
 
-  // When a new message with image or quiz is added, update the current block message
   useEffect(() => {
-    const lastMessages = messages.slice(-5); // Look at the last 5 messages for efficiency
+    const lastMessages = messages.slice(-5);
     const blockMessage = lastMessages.find(m => (m.imagePrompt || m.quiz) && !m.isUser);
     
     if (blockMessage) {
@@ -143,7 +137,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }, [currentSection, processedCurrentSection]);
 
   useEffect(() => {
-    // Find the most recent non-user message about the current section that isn't a block-related message
     if (currentSection) {
       const sectionMessage = [...messages]
         .reverse()
@@ -162,7 +155,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }, [processedCurrentSection, messages]);
 
   useEffect(() => {
-    // Apply animations to related topics when they appear
     if (relatedTopicsRef.current && learningComplete) {
       console.log("Animating related topics:", processedRelatedTopics);
       const topics = relatedTopicsRef.current.querySelectorAll('.related-topic');
@@ -180,7 +172,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Toggle message expansion
   const toggleMessageExpansion = (messageId: string) => {
     setExpandedMessages(prev => {
       const newSet = new Set(prev);
@@ -193,7 +184,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     });
   };
 
-  // Function to get previous and next section based on current section
   const getAdjacentSections = () => {
     if (!currentSection) return { prev: null, next: null };
     
@@ -209,11 +199,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return { prev, next };
   };
 
-  // Render topic pill (improved version that doesn't overlap)
   const renderTopicPill = () => {
     if (!currentSection) return null;
     
-    // Remove asterisks from current section
     const cleanedSection = currentSection.replace(/\*\*/g, "");
     
     return (
@@ -242,7 +230,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     );
   };
 
-  // Handle specific block click within ContentBox
   const handleContentBoxBlockClick = (block: BlockType) => {
     if (currentSectionMessage) {
       console.log(`[ChatArea] Content box block clicked: ${block} for message: ${currentSectionMessage.id}`);
@@ -254,10 +241,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     }
   };
 
-  // Find the welcome message
   const welcomeMessage = messages.find(m => !m.isUser && m.isIntroduction && !m.tableOfContents);
   
-  // Find the introduction message that contains the table of contents
   const introMessage = messages.find(m => m.tableOfContents);
   
   console.log("[ChatArea][Debug] Welcome message:", welcomeMessage ? `ID: ${welcomeMessage.id}` : "None");
@@ -265,18 +250,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     `ID: ${introMessage.id}, TOC sections: ${introMessage.tableOfContents?.length || 0}` : 
     "None");
   
-  // Check if we have related topics to display and if learning is complete
   const shouldShowRelatedTopics = processedRelatedTopics.length > 0 && learningComplete;
   
-  // Get adjacent sections for navigation
   const { prev, next } = getAdjacentSections();
   
-  // Filter user messages to display in the chat flow
   const userMessages = messages.filter(m => m.isUser);
   console.log("Filtered user messages:", userMessages.length);
   
-  // Filter AI messages that are not special (TOC, welcome, etc.)
-  // FIXED: Properly exclude messages that are currently displayed in the content box
   const aiMessages = messages.filter(m => {
     const isRegularAIMessage = !m.isUser && 
                               !m.isIntroduction && 
@@ -284,11 +264,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                               !m.imagePrompt && 
                               !m.quiz;
     
-    // Exclude messages that are currently displayed in the content box
     const isInContentBox = currentSectionMessage && 
                           m.id === currentSectionMessage.id;
     
-    // Debug logging
     if (isRegularAIMessage && currentSectionMessage && m.id === currentSectionMessage.id) {
       console.log("Excluding message from chat flow - will be shown in content box:", m.id);
     }
@@ -298,10 +276,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   
   console.log("Filtered AI messages:", aiMessages.length);
 
-  // Check if a message should be truncated
   const shouldTruncate = (text: string) => text.length > 300;
   
-  // Truncate message text
   const truncateText = (text: string) => {
     if (text.length <= 300) return text;
     return text.substring(0, 300) + "...";
@@ -312,22 +288,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       className="flex-1 overflow-y-auto py-6 scrollbar-thin relative" 
       ref={chatHistoryRef}
     >
-      {/* Position topic pill at the top with proper spacing */}
       <div className="sticky top-0 z-10 mb-4 bg-gradient-to-b from-wonder-background via-wonder-background to-transparent pb-2">
         {currentSection && renderTopicPill()}
       </div>
       
-      {/* Main chat content - removed the overlapping journey section */}
       <div className="relative">
         <div className="space-y-6">
-          {/* Display welcome message first */}
           {welcomeMessage && (
             <div className="fade-scale-in mb-6 px-4">
               <ChatMessage message={welcomeMessage.text} isUser={welcomeMessage.isUser} />
             </div>
           )}
           
-          {/* Display the intro message with Table of Contents */}
           {introMessage && (
             <div className="fade-scale-in mb-6 px-4">
               <ChatMessage message={introMessage.text} isUser={introMessage.isUser}>
@@ -341,14 +313,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             </div>
           )}
           
-          {/* Place typing indicator within the message flow, right after the last message */}
           {showTypingIndicator && (
             <div className="px-4 mb-2">
               <TypingIndicator />
             </div>
           )}
           
-          {/* Display user and AI message pairs in sequence */}
           {userMessages.map((message, index) => {
             const aiMessage = aiMessages[index];
             
@@ -371,7 +341,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                         isUser={false} 
                       />
                       
-                      {/* Show expand/collapse button for long messages */}
                       {shouldTruncate(aiMessage.text) && (
                         <button 
                           onClick={() => toggleMessageExpansion(aiMessage.id)}
@@ -391,7 +360,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             );
           })}
           
-          {/* Display content box for current section if selected */}
           {currentSection && currentSectionMessage && (
             <div className="px-4 max-w-4xl mx-auto">
               <ContentBox
@@ -409,7 +377,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             </div>
           )}
           
-          {/* Show related topics at the bottom if learning is complete */}
           {shouldShowRelatedTopics && (
             <div className="mx-auto max-w-3xl px-4 mb-6" ref={relatedTopicsRef}>
               <div className="p-4 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-sm rounded-xl border border-wonder-purple/20 shadow-magical">
@@ -439,7 +406,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             </div>
           )}
           
-          {/* Show a message if all sections are completed but no related topics are displayed */}
           {learningComplete && !shouldShowRelatedTopics && (
             <div className="px-4 mt-8 mb-6 max-w-3xl mx-auto">
               <div className="p-4 bg-white/90 rounded-xl border border-wonder-purple/10 shadow-sm">

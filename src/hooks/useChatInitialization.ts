@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { processTopicsFromResponse } from "@/utils/topicUtils";
@@ -20,8 +21,8 @@ export const useChatInitialization = (
 ) => {
   useEffect(() => {
     const initializeChat = async () => {
-      // Show welcome message only
-      setMessages([
+      // Show welcome message only - using function to set messages
+      setMessages(() => [
         {
           id: "welcome",
           text: `Hi ${userName}! I'm your WonderWhiz assistant, created by Lovable to help you learn amazing things. What would you like to explore today?`,
@@ -91,6 +92,7 @@ export const useChatInitialization = (
               };
               
               console.log("Setting welcome message:", welcomeMessage);
+              // Using function to update messages
               setMessages(() => [welcomeMessage]);
               setShowTypingIndicator(false);
               
@@ -114,6 +116,7 @@ export const useChatInitialization = (
               };
               
               console.log("Setting fallback welcome message");
+              // Using function to update messages
               setMessages(() => [welcomeMessage]);
               setShowTypingIndicator(false);
               
