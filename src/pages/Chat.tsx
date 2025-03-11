@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ import { useTopicManagement } from "@/hooks/useTopicManagement";
 import { useSectionHandling } from "@/hooks/useSectionHandling";
 import { useInputHandling } from "@/hooks/useInputHandling";
 import { handleBlockClick as handleLearningBlockClick } from "@/services/learningBlockService";
+import { useOpenAI } from "@/hooks/useOpenAI";
 
 const Chat = () => {
   const navigate = useNavigate();
@@ -21,6 +23,9 @@ const Chat = () => {
   const [avatar, setAvatar] = useState(localStorage.getItem("wonderwhiz_avatar") || "explorer");
   const [userName, setUserName] = useState(localStorage.getItem("wonderwhiz_username") || "Explorer");
   const [language, setLanguage] = useState(localStorage.getItem("wonderwhiz_language") || "en");
+  
+  // Get the generateQuiz function from useOpenAI
+  const { generateQuiz } = useOpenAI();
   
   // Use our custom hooks to manage state and logic
   const chatState = useChatState(userName, ageRange, avatar, language);
