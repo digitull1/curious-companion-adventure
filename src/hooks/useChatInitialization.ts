@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { processTopicsFromResponse } from "@/utils/topicUtils";
 import { Message } from "@/types/chat";
@@ -19,6 +19,8 @@ export const useChatInitialization = (
   defaultSuggestedPrompts: string[],
   hasUserStarted: boolean
 ) => {
+  const initialized = useRef(false);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -39,10 +41,13 @@ export const useChatInitialization = (
       });
 
       // Initialize demo streak and points only once
-      const savedStreak = Math.floor(Math.random() * 5) + 1;
-      const savedPoints = Math.floor(Math.random() * 500);
-      setStreakCount(savedStreak);
-      setPoints(savedPoints);
+      if (!initialized.current) {
+        initialized.current = true;
+        const savedStreak = Math.floor(Math.random() * 5) + 1;
+        const savedPoints = Math.floor(Math.random() * 500);
+        setStreakCount(savedStreak);
+        setPoints(savedPoints);
+      }
 
       // Generate topics only if user has started and we're still mounted
       if (hasUserStarted && isMounted) {
@@ -102,4 +107,3 @@ export const useChatInitialization = (
 
   return;
 };
-
