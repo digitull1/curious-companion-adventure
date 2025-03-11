@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from "react";
 import { MessageCircle, Send, Sparkles, Lightbulb, Search, Mic, MicOff } from "lucide-react";
 import VoiceInput from "@/components/VoiceInput";
@@ -164,8 +165,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 disabled={!inputValue.trim() || isProcessing}
                 className={`px-4 h-10 flex items-center justify-center rounded-xl transition-all duration-300 
                   ${inputValue.trim() && !isProcessing
-                    ? "bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white shadow-magical 
-                       hover:shadow-magical-hover transform hover:-translate-y-0.5"
+                    ? "bg-gradient-to-r from-wonder-purple to-wonder-purple-dark text-white shadow-magical hover:shadow-magical-hover transform hover:-translate-y-0.5"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}
               >
                 {isProcessing ? (
