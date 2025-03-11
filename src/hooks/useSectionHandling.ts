@@ -1,18 +1,22 @@
 
 import { Message, MessageProcessingResult } from "@/types/chat";
 
+interface SectionHandlingProps {
+  handleTocSectionClick: (section: string) => void;
+  handleRelatedTopicClick: (topic: string) => void;
+}
+
 export const useSectionHandling = (
+  messages: Message[],
   selectedTopic: string | null,
-  currentSection: string | null,
   completedSections: string[],
   processMessage: (prompt: string, isUserMessage?: boolean, skipUserMessage?: boolean) => Promise<MessageProcessingResult>,
   setCurrentSection: (section: string | null) => void,
   setCompletedSections: (sectionsSetter: (prev: string[]) => string[]) => void,
-  setLearningProgress: (progressSetter: (prev: number) => number) => void,
-  setLearningComplete: (complete: boolean) => void,
-  messages: Message[]
-) => {
-  const handleSectionClick = (section: string) => {
+  setPoints: (pointsSetter: (prev: number) => number) => void,
+  setLearningProgress: (progressSetter: (prev: number) => number) => void
+): SectionHandlingProps => {
+  const handleTocSectionClick = (section: string) => {
     console.log(`[SectionHandling] Table of Contents section clicked: ${section}`);
     
     if (!selectedTopic) {
@@ -60,6 +64,11 @@ export const useSectionHandling = (
             console.log(`[SectionHandling] Updating learning progress: ${newProgress}% (increment: ${increment}, total sections: ${toc.length})`);
             return newProgress;
           });
+
+          setPoints(prevPoints => {
+            console.log(`[SectionHandling] Awarding points for completing section: +5 (current: ${prevPoints})`);
+            return prevPoints + 5;
+          });
         } else {
           console.error("[SectionHandling] Error processing section message:", result.error);
         }
@@ -69,5 +78,13 @@ export const useSectionHandling = (
       });
   };
 
-  return { handleSectionClick };
+  const handleRelatedTopicClick = (topic: string) => {
+    console.log(`[SectionHandling] Related topic clicked: ${topic}`);
+    processMessage(`Tell me about ${topic}`, false, true);
+  };
+
+  return {
+    handleTocSectionClick,
+    handleRelatedTopicClick
+  };
 };

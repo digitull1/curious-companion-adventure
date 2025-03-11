@@ -6,7 +6,6 @@ export interface Message {
   blocks?: BlockType[];
   showBlocks?: boolean;
   imagePrompt?: string;
-  imageUrl?: string;
   quiz?: Quiz;
   code?: CodeSnippet;
   tableOfContents?: string[];
