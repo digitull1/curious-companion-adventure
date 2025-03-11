@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -173,6 +172,23 @@ const Chat = () => {
     chatState.setPreviousTopics
   ]);
 
+  // Create a wrapper for handleBlockClick that provides the necessary parameters
+  const handleBlockClickWrapper = (type: BlockType, messageId: string, messageText: string) => {
+    handleLearningBlockClick(
+      type,
+      messageId,
+      messageText,
+      ageRange,
+      language,
+      chatState.setIsProcessing,
+      chatState.setShowTypingIndicator,
+      chatState.setPoints,
+      chatState.setMessages,
+      chatState.generateResponse,
+      generateQuiz
+    );
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-wonder-background to-white overflow-hidden relative">
       {/* Background pattern */}
@@ -195,10 +211,9 @@ const Chat = () => {
         onLanguageChange={handleLanguageChange}
       />
       
-      {/* Main Content Area */}
       <main className="flex-1 overflow-hidden backdrop-blur-sm relative z-10">
         <div className="w-full h-full mx-auto flex flex-col">
-          {/* Chat Messages */}
+          {/* Update ChatArea to use the wrapper function */}
           <ChatArea 
             messages={chatState.messages}
             showTypingIndicator={chatState.showTypingIndicator}
@@ -206,7 +221,7 @@ const Chat = () => {
             currentSection={chatState.currentSection}
             relatedTopics={chatState.relatedTopics}
             learningComplete={chatState.learningComplete}
-            onBlockClick={handleBlockClick}
+            onBlockClick={handleBlockClickWrapper}
             onTocSectionClick={handleTocSectionClick}
             onRelatedTopicClick={handleRelatedTopicClick}
             learningProgress={chatState.learningProgress}
