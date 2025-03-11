@@ -65,3 +65,93 @@ export const filterTopics = (topics: string[]): string[] => {
         .trim();
     });
 };
+
+/**
+ * Get an appropriate emoji for a topic based on its content
+ */
+export const getTopicEmoji = (topic: string): string => {
+  const lowerTopic = topic.toLowerCase();
+  
+  // Science topics
+  if (lowerTopic.includes('space') || lowerTopic.includes('planet') || lowerTopic.includes('star') || lowerTopic.includes('galaxy')) {
+    return '🚀';
+  }
+  if (lowerTopic.includes('animal') || lowerTopic.includes('wildlife') || lowerTopic.includes('pet')) {
+    return '🐾';
+  }
+  if (lowerTopic.includes('dinosaur') || lowerTopic.includes('prehistoric')) {
+    return '🦕';
+  }
+  if (lowerTopic.includes('ocean') || lowerTopic.includes('sea') || lowerTopic.includes('marine')) {
+    return '🌊';
+  }
+  if (lowerTopic.includes('weather') || lowerTopic.includes('climate')) {
+    return '🌦️';
+  }
+  if (lowerTopic.includes('experiment') || lowerTopic.includes('chemistry') || lowerTopic.includes('lab')) {
+    return '🧪';
+  }
+  if (lowerTopic.includes('volcano') || lowerTopic.includes('earthquake')) {
+    return '🌋';
+  }
+  if (lowerTopic.includes('robot') || lowerTopic.includes('technology') || lowerTopic.includes('computer')) {
+    return '🤖';
+  }
+  
+  // History topics
+  if (lowerTopic.includes('history') || lowerTopic.includes('ancient') || lowerTopic.includes('past')) {
+    return '📜';
+  }
+  if (lowerTopic.includes('egypt') || lowerTopic.includes('pyramid')) {
+    return '🏺';
+  }
+  if (lowerTopic.includes('castle') || lowerTopic.includes('knight') || lowerTopic.includes('medieval')) {
+    return '🏰';
+  }
+  if (lowerTopic.includes('dinosaur')) {
+    return '🦖';
+  }
+  
+  // Art topics
+  if (lowerTopic.includes('art') || lowerTopic.includes('craft') || lowerTopic.includes('paint')) {
+    return '🎨';
+  }
+  if (lowerTopic.includes('music') || lowerTopic.includes('instrument')) {
+    return '🎵';
+  }
+  
+  // Math topics
+  if (lowerTopic.includes('math') || lowerTopic.includes('number')) {
+    return '🔢';
+  }
+  
+  // Geography topics
+  if (lowerTopic.includes('map') || lowerTopic.includes('world') || lowerTopic.includes('country')) {
+    return '🗺️';
+  }
+  if (lowerTopic.includes('mountain') || lowerTopic.includes('volcano')) {
+    return '⛰️';
+  }
+  
+  // Activity topics
+  if (lowerTopic.includes('game') || lowerTopic.includes('play')) {
+    return '🎮';
+  }
+  if (lowerTopic.includes('cook') || lowerTopic.includes('food') || lowerTopic.includes('bake')) {
+    return '👨‍🍳';
+  }
+  if (lowerTopic.includes('garden') || lowerTopic.includes('plant') || lowerTopic.includes('flower')) {
+    return '🌱';
+  }
+  
+  // Default emojis for general categories
+  if (lowerTopic.includes('science')) return '🔬';
+  if (lowerTopic.includes('nature')) return '🌿';
+  if (lowerTopic.includes('book') || lowerTopic.includes('story')) return '📚';
+  if (lowerTopic.includes('sport') || lowerTopic.includes('exercise')) return '⚽';
+  
+  // Fallback to these general emojis if no specific match
+  const generalEmojis = ['✨', '🌟', '💡', '🔍', '🧠', '🌈', '🎓', '📝', '🌍', '🔮'];
+  const randomIndex = Math.floor(Math.random() * generalEmojis.length);
+  return generalEmojis[randomIndex];
+};
