@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -27,6 +28,9 @@ const Chat = () => {
   
   const chatState = useChatState(userName, ageRange, avatar, language);
   const { generateRelatedTopics } = useRelatedTopics(chatState.generateResponse);
+  
+  const [isInitialView, setIsInitialView] = useState(true);
+  const [hasUserStarted, setHasUserStarted] = useState(false);
   
   const { processMessage } = useMessageHandling(
     chatState.generateResponse,
@@ -104,9 +108,6 @@ const Chat = () => {
     isNewTopicRequest,
     handleNewTopicRequest
   );
-  
-  const [isInitialView, setIsInitialView] = useState(true);
-  const [hasUserStarted, setHasUserStarted] = useState(false);
 
   useChatInitialization(
     ageRange,
@@ -141,7 +142,7 @@ const Chat = () => {
 
   const clearChat = useCallback(() => {
     console.log("Clearing chat");
-    chatState.setMessages([
+    chatState.setMessages(() => [
       {
         id: "welcome-new",
         text: "Chat cleared! What would you like to explore now?",

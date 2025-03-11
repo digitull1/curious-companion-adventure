@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import { ChevronRight, CheckCircle2, BookOpen, ArrowRight } from "lucide-react";
 import { animate, spring } from "@motionone/dom";
@@ -85,6 +86,12 @@ const TableOfContents = ({
         </div>
       </div>
     );
+  }
+  
+  // Don't render anything if there are no sections
+  if (!sections || sections.length === 0) {
+    console.log("[TableOfContents] No sections provided, not rendering TOC");
+    return null;
   }
   
   useEffect(() => {

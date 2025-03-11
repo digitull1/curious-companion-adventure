@@ -69,7 +69,7 @@ const processRelatedTopics = (topics: string[]): string[] => {
   return topics.filter(t => t && typeof t === 'string' && t.trim().length > 0);
 };
 
-const ChatArea: React.FC<ChatAreaProps> = ({
+const ChatArea = ({
   messages,
   showTypingIndicator,
   completedSections,
@@ -82,7 +82,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   learningProgress,
   isInitialView = false,
   onStartLearning
-}) => {
+}: ChatAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
   const relatedTopicsRef = useRef<HTMLDivElement>(null);
@@ -267,10 +267,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     const isInContentBox = currentSectionMessage && 
                           m.id === currentSectionMessage.id;
     
-    if (isRegularAIMessage && currentSectionMessage && m.id === currentSectionMessage.id) {
-      console.log("Excluding message from chat flow - will be shown in content box:", m.id);
-    }
-    
     return isRegularAIMessage && !isInContentBox;
   });
   
@@ -281,6 +277,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const truncateText = (text: string) => {
     if (text.length <= 300) return text;
     return text.substring(0, 300) + "...";
+  };
+
+  const shouldShowInitialTOC = () => {
+    return isInitialView && introMessage && introMessage.tableOfContents && introMessage.tableOfContents.length > 0;
   };
 
   return (
@@ -300,7 +300,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             </div>
           )}
           
-          {introMessage && (
+          {introMessage && !isInitialView && (
             <div className="fade-scale-in mb-6 px-4">
               <ChatMessage message={introMessage.text} isUser={introMessage.isUser}>
                 <TableOfContents 
@@ -308,6 +308,21 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   completedSections={completedSections}
                   currentSection={currentSection}
                   onSectionClick={onTocSectionClick}
+                />
+              </ChatMessage>
+            </div>
+          )}
+          
+          {shouldShowInitialTOC() && (
+            <div className="fade-scale-in mb-6 px-4">
+              <ChatMessage message={introMessage.text} isUser={introMessage.isUser}>
+                <TableOfContents 
+                  sections={introMessage.tableOfContents || []} 
+                  completedSections={completedSections}
+                  currentSection={currentSection}
+                  onSectionClick={onTocSectionClick}
+                  isInitialView={true}
+                  onStartLearning={onStartLearning}
                 />
               </ChatMessage>
             </div>

@@ -25,6 +25,7 @@ export function useOpenAI() {
         throw new Error("Invalid response data");
       }
       
+      console.log("Response received successfully:", data.content.substring(0, 100) + "...");
       return data.content;
     } catch (error) {
       console.error("Error generating response:", error);
@@ -35,8 +36,9 @@ export function useOpenAI() {
     }
   };
   
-  // Fallback mock responses when API requests fail
   const generateMockResponse = (prompt: string, language: string = "en") => {
+    console.log("Generating mock response for prompt:", prompt.substring(0, 50) + "...");
+    
     // Simulate API call with timeout
     return new Promise<string>(resolve => {
       setTimeout(() => {
@@ -52,6 +54,9 @@ export function useOpenAI() {
             response = `Our solar system is an incredible place filled with planets, moons, asteroids, and comets! The Sun sits at the center, and eight planets orbit around it. From closest to farthest from the Sun, they are: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune. Each planet is unique - Earth is the only one we know has life, Jupiter has a giant storm called the Great Red Spot, and Saturn has beautiful rings made of ice and rock particles!\n\nSpace is mostly empty, but it's also filled with amazing objects. Stars are giant balls of gas that produce their own light and heat through a process called nuclear fusion. Galaxies are enormous collections of stars, gas, and dust held together by gravity. Our galaxy is called the Milky Way, and it contains billions of stars, including our Sun. Scientists are constantly making new discoveries about space using powerful telescopes and spacecraft!`;
           } else if (prompt.toLowerCase().includes("robot") || prompt.toLowerCase().includes("ai")) {
             response = `Robots and artificial intelligence (AI) are amazing technologies that help us solve problems and make our lives easier! Robots are machines that can be programmed to perform tasks automatically. Some robots build cars in factories, others explore dangerous places like volcanoes or the deep ocean, and some even help doctors perform surgery with super-precise movements.\n\nArtificial intelligence is the technology that allows computers to learn from experience and make decisions, kind of like humans do. AI helps your favorite video games create challenges that adapt to how you play, powers the voice assistants that answer your questions, and helps scientists analyze huge amounts of data to make new discoveries. As technology continues to advance, robots and AI will become even more helpful and do things we can barely imagine today!`;
+          } else if (prompt.toLowerCase().includes("generate")) {
+            // Special case for topic generation prompts
+            response = "Dinosaurs, Space Exploration, How Plants Grow, Volcanoes and Earthquakes, Ancient Egypt, The Human Body";
           } else {
             response = `That's a great question! Curiosity is the first step to learning amazing things about our world. When we ask questions and explore new ideas, we're exercising our brains just like athletes exercise their muscles. Scientists, inventors, and explorers throughout history have made incredible discoveries because they were curious and wanted to understand how things work.\n\nLearning is an adventure that never ends! Every day, people around the world are making new discoveries and creating new inventions. Some questions have answers we already know, while others are mysteries waiting to be solved. The more you learn, the more connections your brain makes between different subjects, which helps you come up with creative ideas and solve problems in new ways. What other fascinating topics would you like to explore today?`;
           }
@@ -60,7 +65,7 @@ export function useOpenAI() {
           // For non-English languages, return a generic response that acknowledges the language
           resolve(`I'm responding in your selected language (${language}). Let's explore fascinating topics together! What would you like to learn about today?`);
         }
-      }, 1500);
+      }, 1000);
     });
   };
   
@@ -124,7 +129,6 @@ export function useOpenAI() {
     return generateMockImageUrl(prompt);
   };
   
-  // Fallback mock image URLs when API requests fail
   const generateMockImageUrl = (prompt: string) => {
     console.log("Generating mock image URL for prompt:", prompt.substring(0, 50) + "...");
     
@@ -186,7 +190,6 @@ export function useOpenAI() {
     }
   };
   
-  // Fallback mock quiz when API requests fail
   const generateMockQuiz = (topic: string, language: string = "en") => {
     console.log("Generating mock quiz for:", topic);
     

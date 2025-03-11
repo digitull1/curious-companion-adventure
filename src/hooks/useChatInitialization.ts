@@ -21,7 +21,7 @@ export const useChatInitialization = (
 ) => {
   useEffect(() => {
     const initializeChat = async () => {
-      // Show welcome message only - using function to set messages
+      // Always show welcome message first
       setMessages(() => [
         {
           id: "welcome",
@@ -33,17 +33,17 @@ export const useChatInitialization = (
         }
       ]);
 
+      // Initialize streak and points regardless of whether user has started
+      const savedStreak = Math.floor(Math.random() * 5) + 1; // Random 1-5 for demo
+      const savedPoints = Math.floor(Math.random() * 500); // Random points for demo
+      setStreakCount(savedStreak);
+      setPoints(savedPoints);
+
       // Only generate topics if user has started
       if (hasUserStarted) {
         try {
           console.log("Chat component mounted, initializing...");
           console.log("User data:", { userName, ageRange, avatar, language });
-          
-          // Initialize streak and points
-          const savedStreak = Math.floor(Math.random() * 5) + 1; // Random 1-5 for demo
-          const savedPoints = Math.floor(Math.random() * 500); // Random points for demo
-          setStreakCount(savedStreak);
-          setPoints(savedPoints);
           
           // Set initial loading state
           setShowTypingIndicator(true);
@@ -72,30 +72,6 @@ export const useChatInitialization = (
               
               setSuggestedTopics(finalTopics);
               
-              // Create personalized welcome message with name
-              let welcomeText = "";
-              
-              if (language === "en") {
-                welcomeText = `Hi ${userName}! I'm your WonderWhiz assistant, created by leading IB educationalists and Cambridge University child psychologists. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`;
-              } else {
-                // This will be translated by the API for other languages
-                welcomeText = `Hi ${userName}! I'm your WonderWhiz assistant. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`;
-              }
-              
-              const welcomeMessage: Message = {
-                id: "welcome",
-                text: welcomeText,
-                isUser: false,
-                blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
-                showBlocks: true,
-                isIntroduction: true
-              };
-              
-              console.log("Setting welcome message:", welcomeMessage);
-              // Using function to update messages
-              setMessages(() => [welcomeMessage]);
-              setShowTypingIndicator(false);
-              
               // Auto-show suggested prompts after welcome
               setTimeout(() => {
                 setShowSuggestedPrompts(true);
@@ -105,35 +81,29 @@ export const useChatInitialization = (
               console.error("Error generating personalized topics:", error);
               setSuggestedTopics(defaultSuggestedPrompts);
               
-              // Fallback welcome message
-              const welcomeMessage: Message = {
-                id: "welcome",
-                text: `Hi ${userName}! I'm your WonderWhiz assistant. I'm here to help you learn fascinating topics in depth. What would you like to explore today?`,
-                isUser: false,
-                blocks: ["did-you-know", "mind-blowing", "amazing-stories", "see-it", "quiz"],
-                showBlocks: true,
-                isIntroduction: true
-              };
-              
-              console.log("Setting fallback welcome message");
-              // Using function to update messages
-              setMessages(() => [welcomeMessage]);
-              setShowTypingIndicator(false);
-              
               // Auto-show suggested prompts after welcome
               setTimeout(() => {
                 setShowSuggestedPrompts(true);
               }, 800);
+            } finally {
+              setShowTypingIndicator(false);
             }
           };
           
           generatePersonalizedTopics();
         } catch (error) {
           console.error("Error initializing chat:", error);
+          setShowTypingIndicator(false);
         }
+      } else {
+        // Even if user hasn't started, show suggested prompts
+        setSuggestedTopics(defaultSuggestedPrompts);
+        setTimeout(() => {
+          setShowSuggestedPrompts(true);
+        }, 800);
       }
     };
 
     initializeChat();
-  }, [ageRange, avatar, language, userName, generateResponse, hasUserStarted]);
+  }, [ageRange, avatar, language, userName, generateResponse, hasUserStarted, setMessages, setPoints, setShowSuggestedPrompts, setShowTypingIndicator, setStreakCount, setSuggestedTopics, defaultSuggestedPrompts]);
 };
