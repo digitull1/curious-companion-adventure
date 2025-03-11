@@ -78,6 +78,35 @@ const Chat = () => {
     chatState.setLearningProgress
   );
   
+  // Initialize input handling hook with proper parameters
+  const {
+    isListening,
+    setIsListening,
+    handleInputChange,
+    handleKeyDown,
+    handleSendMessage,
+    handleVoiceInput,
+    toggleListening,
+    handleSuggestedPromptClick,
+    handleBlockClick
+  } = useInputHandling(
+    chatState.inputValue,
+    chatState.setInputValue,
+    chatState.isProcessing,
+    processMessage,
+    chatState.selectedTopic,
+    chatState.topicSectionsGenerated,
+    chatState.learningComplete,
+    chatState.setPreviousTopics,
+    chatState.setTopicSectionsGenerated,
+    chatState.setCompletedSections,
+    chatState.setCurrentSection,
+    chatState.setLearningComplete,
+    chatState.setRelatedTopics,
+    isNewTopicRequest,
+    handleNewTopicRequest
+  );
+  
   // Initialize chat - optimized to reduce rerenders
   useChatInitialization(
     ageRange,
@@ -93,17 +122,6 @@ const Chat = () => {
     chatState.setPoints,
     chatState.defaultSuggestedPrompts
   );
-
-  // Memoized event handlers to reduce rerenders
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    chatState.setInputValue(e.target.value);
-  }, [chatState.setInputValue]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && chatState.inputValue.trim() && !chatState.isProcessing) {
-      handleSendMessage();
-    }
-  }, [chatState.inputValue, chatState.isProcessing]);
 
   const handleAgeRangeChange = useCallback((newRange: string) => {
     setAgeRange(newRange);
@@ -121,92 +139,6 @@ const Chat = () => {
     clearChat();
   }, []);
 
-  const handleSendMessage = async () => {
-    if (!chatState.inputValue.trim() || chatState.isProcessing) return;
-
-    console.log("Handling send message with input:", chatState.inputValue);
-    console.log("Current state - selectedTopic:", chatState.selectedTopic, 
-                "topicSectionsGenerated:", chatState.topicSectionsGenerated, 
-                "learningComplete:", chatState.learningComplete);
-
-    // If starting a new topic after completing previous one
-    if (chatState.learningComplete && chatState.topicSectionsGenerated) {
-      // Save the previous topic before resetting
-      if (chatState.selectedTopic) {
-        console.log("Saving previous topic before starting new one:", chatState.selectedTopic);
-        chatState.setPreviousTopics(prev => [...prev, chatState.selectedTopic!]);
-      }
-      
-      // Reset topic-related states
-      console.log("Resetting topic states for new topic");
-      chatState.setTopicSectionsGenerated(false);
-      chatState.setCompletedSections([]);
-      chatState.setCurrentSection(null);
-      chatState.setLearningComplete(false);
-      chatState.setRelatedTopics([]);
-    }
-
-    // Check if this is a new topic request (not a follow-up on sections)
-    const isTopicRequest = isNewTopicRequest(
-      chatState.inputValue, 
-      chatState.selectedTopic, 
-      chatState.topicSectionsGenerated
-    );
-    
-    console.log("Handle send message - isNewTopicRequest:", isTopicRequest);
-    
-    // If it's a new topic, generate table of contents
-    if (isTopicRequest) {
-      await handleNewTopicRequest();
-    } else {
-      // Handle regular messages
-      console.log("Handling regular message (not a new topic)");
-      await processMessage(chatState.inputValue);
-    }
-  };
-
-  const handleBlockClick = useCallback((type: BlockType, messageId: string, messageText: string) => {
-    handleLearningBlockClick(
-      type,
-      messageId,
-      messageText,
-      ageRange,
-      language,
-      chatState.setIsProcessing,
-      chatState.setShowTypingIndicator,
-      chatState.setPoints,
-      chatState.setMessages,
-      chatState.generateResponse,
-      chatState.generateQuiz
-    );
-  }, [
-    ageRange, 
-    language, 
-    chatState.setIsProcessing, 
-    chatState.setShowTypingIndicator, 
-    chatState.setPoints, 
-    chatState.setMessages, 
-    chatState.generateResponse, 
-    chatState.generateQuiz
-  ]);
-
-  const handleSuggestedPromptClick = useCallback((prompt: string) => {
-    console.log("Suggested prompt clicked:", prompt);
-    chatState.setInputValue(prompt);
-    // Auto-send the suggestion
-    setTimeout(() => {
-      handleSendMessage();
-    }, 100);
-  }, [chatState.setInputValue]);
-
-  const handleVoiceInput = useCallback((transcript: string) => {
-    chatState.setInputValue(transcript);
-  }, [chatState.setInputValue]);
-  
-  const toggleListening = useCallback(() => {
-    chatState.setIsListening(prev => !prev);
-  }, [chatState.setIsListening]);
-  
   const clearChat = useCallback(() => {
     console.log("Clearing chat");
     chatState.setMessages([
@@ -285,7 +217,7 @@ const Chat = () => {
             isProcessing={chatState.isProcessing}
             selectedTopic={chatState.selectedTopic}
             suggestedPrompts={chatState.suggestedTopics.length > 0 ? chatState.suggestedTopics : chatState.defaultSuggestedPrompts}
-            isListening={chatState.isListening}
+            isListening={isListening}
             showSuggestedPrompts={chatState.showSuggestedPrompts}
             onInputChange={handleInputChange}
             onKeyDown={handleKeyDown}

@@ -1,14 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
-import { ArrowUpCircle } from "lucide-react";
-import ChatMessage from "@/components/ChatMessage";
-import ChatInput from "@/components/ChatInput";
-import LearningBlock, { BlockType } from "@/components/LearningBlock";
+
+import React, { useRef } from "react";
+import { BlockType } from "@/types/chat";
 import Header from "@/components/Header";
 import ChatArea from "@/components/ChatArea";
-import TypingIndicator from "@/components/TypingIndicator";
-import TableOfContents from "@/components/TableOfContents";
-import ImageBlock from "@/components/ImageBlock";
-import QuizBlock from "@/components/QuizBlock";
+import ChatInput from "@/components/ChatInput";
 
 interface Message {
   id: string;
@@ -21,6 +16,9 @@ interface Message {
     question: string;
     options: string[];
     correctAnswer: number;
+    funFact?: string;
+    answered?: boolean;
+    selectedAnswer?: number;
   };
   code?: {
     snippet: string;
@@ -58,6 +56,8 @@ interface ChatInterfaceProps {
   toggleListening: () => void;
   onSuggestedPromptClick: (prompt: string) => void;
   setShowSuggestedPrompts: (show: boolean) => void;
+  language?: string;
+  onLanguageChange?: (language: string) => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
@@ -87,14 +87,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onVoiceInput,
   toggleListening,
   onSuggestedPromptClick,
-  setShowSuggestedPrompts
+  setShowSuggestedPrompts,
+  language = "en",
+  onLanguageChange = () => {}
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatHistoryRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, showTypingIndicator]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -109,6 +106,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         points={points}
         learningProgress={learningProgress}
         topicSectionsGenerated={topicSectionsGenerated}
+        language={language}
+        onLanguageChange={onLanguageChange}
       />
       <main className="flex-1 overflow-hidden relative">
         <ChatArea 
@@ -140,6 +139,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           setShowSuggestedPrompts={setShowSuggestedPrompts}
         />
       </main>
+      <div ref={messagesEndRef} />
     </div>
   );
 };
